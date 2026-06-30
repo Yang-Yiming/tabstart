@@ -153,32 +153,41 @@ export function HeatmapWidget() {
         )}
       </div>
 
-      <div className="flex gap-1 overflow-x-auto pb-1">
-        <div className="flex flex-col gap-1 pt-6">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex flex-col gap-1.5 pt-7">
           {dayLabels.map((label) => (
-            <div key={label} className="h-3 text-[10px] leading-3 text-text-muted">
+            <div key={label} className="h-3.5 text-[10px] leading-[14px] text-text-muted">
               {label[0]}
             </div>
           ))}
         </div>
         {weeks.map((days, weekIdx) => (
-          <div key={weekIdx} className="flex flex-col gap-1">
-            {days.map((day) => {
+          <div key={weekIdx} className="flex flex-col gap-1.5">
+            {days.map((day, dayIdx) => {
               const value = getValue(day)
               const key = formatKey(day)
               const isSelected = selected ? formatKey(selected) === key : false
+              const showMonth = dayIdx === 0 && day.getDate() <= 7
               return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-label={key}
-                  onClick={() => setSelected(day)}
-                  className={[
-                    'h-3 w-3 rounded-sm transition',
-                    intensityClass(value),
-                    isSelected ? 'ring-2 ring-accent dark:ring-accent-dark' : 'hover:ring-2 hover:ring-accent/50',
-                  ].join(' ')}
-                />
+                <div key={key} className="relative">
+                  {showMonth && (
+                    <span className="absolute -top-5 left-0 whitespace-nowrap text-[10px] text-text-muted">
+                      {day.toLocaleDateString('en-US', { month: 'short' })}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    aria-label={key}
+                    onClick={() => setSelected(day)}
+                    className={[
+                      'h-3.5 w-3.5 rounded-sm transition',
+                      intensityClass(value),
+                      isSelected
+                        ? 'ring-2 ring-accent dark:ring-accent-dark'
+                        : 'hover:ring-2 hover:ring-accent/50',
+                    ].join(' ')}
+                  />
+                </div>
               )
             })}
           </div>
@@ -188,7 +197,7 @@ export function HeatmapWidget() {
       <div className="flex items-center gap-2 text-xs text-text-muted">
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((v) => (
-          <div key={v} className={['h-3 w-3 rounded-sm', intensityClass(v)].join(' ')} />
+          <div key={v} className={['h-3.5 w-3.5 rounded-sm', intensityClass(v)].join(' ')} />
         ))}
         <span>More</span>
       </div>
@@ -200,7 +209,7 @@ function intensityClass(value: number) {
   const base = 'bg-emerald-500'
   switch (value) {
     case 0:
-      return 'bg-panel-highlight dark:bg-panel-highlight-dark'
+      return 'bg-slate-200 dark:bg-panel-highlight-dark'
     case 1:
       return `${base}/30`
     case 2:
