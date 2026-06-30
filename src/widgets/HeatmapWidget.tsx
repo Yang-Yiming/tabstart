@@ -16,15 +16,6 @@ const DEFAULT_TOPICS = ['论文', '代码']
 const WEEKS = 24
 const MAX_VALUE = 4
 
-function startOfWeek(date: Date) {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
 function addDays(date: Date, days: number) {
   const d = new Date(date)
   d.setDate(d.getDate() + days)
@@ -43,14 +34,14 @@ export function HeatmapWidget() {
   const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? DEFAULT_TOPICS[0])
   const [selected, setSelected] = useState<Date | null>(null)
 
-  const today = new Date()
-  const endWeek = startOfWeek(today)
-  const startWeek = addDays(endWeek, -(WEEKS - 1) * 7)
-
   const weeks = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayWeekday = today.getDay() === 0 ? 6 : today.getDay() - 1
     const result: Date[][] = []
+    const end = addDays(today, -todayWeekday)
     for (let w = 0; w < WEEKS; w++) {
-      const monday = addDays(startWeek, w * 7)
+      const monday = addDays(end, -(WEEKS - 1 - w) * 7)
       const days: Date[] = []
       for (let d = 0; d < 7; d++) {
         days.push(addDays(monday, d))
@@ -58,7 +49,7 @@ export function HeatmapWidget() {
       result.push(days)
     }
     return result
-  }, [startWeek])
+  }, [])
 
   const getValue = (date: Date) => {
     return store.data[activeTopic]?.[formatKey(date)] ?? 0
@@ -154,7 +145,8 @@ export function HeatmapWidget() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <div className="flex flex-col gap-1.5 pt-7">
+        <div className="flex flex-col gap-1.5">
+          <div className="h-3.5" />
           {dayLabels.map((label) => (
             <div key={label} className="h-3.5 text-[10px] leading-[14px] text-text-muted">
               {label[0]}
@@ -163,31 +155,37 @@ export function HeatmapWidget() {
         </div>
         {weeks.map((days, weekIdx) => (
           <div key={weekIdx} className="flex flex-col gap-1.5">
-            {days.map((day, dayIdx) => {
+            {(() => {
+              const firstDayOfWeek = days[0]
+              const showMonth = firstDayOfWeek.getDate() <= 7
+              return (
+                <div className="h-3.5">
+                  {showMonth && (
+                    <span className="whitespace-nowrap text-[10px] text-text-muted">
+                      {firstDayOfWeek.toLocaleDateString('en-US', { month: 'short' })}
+                    </span>
+                  )}
+                </div>
+              )
+            })()}
+            {days.map((day) => {
               const value = getValue(day)
               const key = formatKey(day)
               const isSelected = selected ? formatKey(selected) === key : false
-              const showMonth = dayIdx === 0 && day.getDate() <= 7
               return (
-                <div key={key} className="relative">
-                  {showMonth && (
-                    <span className="absolute -top-5 left-0 whitespace-nowrap text-[10px] text-text-muted">
-                      {day.toLocaleDateString('en-US', { month: 'short' })}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    aria-label={key}
-                    onClick={() => setSelected(day)}
-                    className={[
-                      'h-3.5 w-3.5 rounded-sm transition',
-                      intensityClass(value),
-                      isSelected
-                        ? 'ring-2 ring-accent dark:ring-accent-dark'
-                        : 'hover:ring-2 hover:ring-accent/50',
-                    ].join(' ')}
-                  />
-                </div>
+                <button
+                  key={key}
+                  type="button"
+                  aria-label={key}
+                  onClick={() => setSelected(day)}
+                  className={[
+                    'h-3.5 w-3.5 rounded-sm transition',
+                    intensityClass(value),
+                    isSelected
+                      ? 'ring-2 ring-accent dark:ring-accent-dark'
+                      : 'hover:ring-2 hover:ring-accent/50',
+                  ].join(' ')}
+                />
               )
             })}
           </div>
