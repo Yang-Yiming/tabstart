@@ -25,7 +25,7 @@ export function ClockWidget() {
 
   return (
     <WidgetCard className="flex flex-col items-center justify-center text-center">
-      <div className="font-mono text-6xl font-semibold tracking-tight text-text-primary sm:text-7xl">
+      <div className="font-mono text-6xl font-semibold tracking-tight text-text-primary dark:text-text-primary-dark sm:text-7xl">
         {time}
       </div>
       <div className="mt-2 text-lg text-text-muted">{date}</div>

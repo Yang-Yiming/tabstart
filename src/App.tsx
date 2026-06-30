@@ -31,7 +31,7 @@ export default function App() {
       <div className="relative mx-auto max-w-5xl">
         <header className="mb-10 text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
-            <h1 className="text-3xl font-medium tracking-tight text-text-primary">
+            <h1 className="text-3xl font-medium tracking-tight text-text-primary dark:text-text-primary-dark">
               {greeting}
             </h1>
             <button

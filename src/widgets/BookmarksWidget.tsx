@@ -41,7 +41,7 @@ export function BookmarksWidget() {
                       href={link.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-text-primary transition hover:bg-panel-highlight dark:hover:bg-panel-highlight-dark"
+                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-text-primary transition hover:bg-panel-highlight dark:text-text-primary-dark dark:hover:bg-panel-highlight-dark"
                     >
                       <Icon className="h-4 w-4 text-text-muted" />
                       <span className="text-sm">{link.title}</span>

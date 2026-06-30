@@ -44,7 +44,7 @@ export function SearchWidget() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search the web..."
-          className="flex-1 bg-transparent text-xl text-text-primary placeholder:text-text-muted focus:outline-none"
+          className="flex-1 bg-transparent text-xl text-text-primary placeholder:text-text-muted focus:outline-none dark:text-text-primary-dark"
         />
         <button
           type="button"

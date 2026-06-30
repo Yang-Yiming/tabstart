@@ -47,14 +47,14 @@ export function PomodoroWidget() {
               'rounded-md px-3 py-1 text-xs font-medium transition',
               mode === m
                 ? 'bg-accent text-white dark:bg-accent-dark dark:text-page-dark'
-                : 'text-text-muted hover:text-text-primary',
+                : 'text-text-muted hover:text-text-primary dark:hover:text-text-primary-dark',
             ].join(' ')}
           >
             {m}
           </button>
         ))}
       </div>
-      <div className="font-mono text-5xl font-semibold text-text-primary">
+      <div className="font-mono text-5xl font-semibold text-text-primary dark:text-text-primary-dark">
         {minutes}:{seconds}
       </div>
       <div className="flex gap-2">
@@ -68,7 +68,7 @@ export function PomodoroWidget() {
         <button
           type="button"
           onClick={() => switchMode(mode)}
-          className="rounded-lg bg-panel-highlight p-2 text-text-primary transition hover:bg-accent/10 dark:bg-panel-highlight-dark"
+          className="rounded-lg bg-panel-highlight p-2 text-text-primary transition hover:bg-accent/10 dark:bg-panel-highlight-dark dark:text-text-primary-dark"
         >
           <RotateCcw className="h-5 w-5" />
         </button>

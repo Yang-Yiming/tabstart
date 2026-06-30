@@ -13,7 +13,7 @@ export function NotesWidget() {
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         placeholder="Jot something down..."
-        className="min-h-0 flex-1 resize-none rounded-xl bg-panel-highlight p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none dark:bg-panel-highlight-dark"
+        className="min-h-0 flex-1 resize-none rounded-xl bg-panel-highlight p-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none dark:bg-panel-highlight-dark dark:text-text-primary-dark"
       />
       <div className="text-right text-xs text-text-muted">{notes.length} chars</div>
     </WidgetCard>
