@@ -144,30 +144,16 @@ export function HeatmapWidget() {
         )}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <div className="flex flex-col gap-1.5">
-          <div className="h-3.5" />
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex flex-col gap-1.5 pt-0.5">
           {dayLabels.map((label) => (
-            <div key={label} className="h-3.5 text-[10px] leading-[14px] text-text-muted">
+            <div key={label} className="h-3 w-3 text-[9px] leading-3 text-text-muted">
               {label[0]}
             </div>
           ))}
         </div>
         {weeks.map((days, weekIdx) => (
           <div key={weekIdx} className="flex flex-col gap-1.5">
-            {(() => {
-              const firstDayOfWeek = days[0]
-              const showMonth = firstDayOfWeek.getDate() <= 7
-              return (
-                <div className="h-3.5">
-                  {showMonth && (
-                    <span className="whitespace-nowrap text-[10px] text-text-muted">
-                      {firstDayOfWeek.toLocaleDateString('en-US', { month: 'short' })}
-                    </span>
-                  )}
-                </div>
-              )
-            })()}
             {days.map((day) => {
               const value = getValue(day)
               const key = formatKey(day)
@@ -179,7 +165,7 @@ export function HeatmapWidget() {
                   aria-label={key}
                   onClick={() => setSelected(day)}
                   className={[
-                    'h-3.5 w-3.5 rounded-sm transition',
+                    'h-3 w-3 rounded-[2px] transition',
                     intensityClass(value),
                     isSelected
                       ? 'ring-2 ring-accent dark:ring-accent-dark'
@@ -192,10 +178,10 @@ export function HeatmapWidget() {
         ))}
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-text-muted">
+      <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((v) => (
-          <div key={v} className={['h-3.5 w-3.5 rounded-sm', intensityClass(v)].join(' ')} />
+          <div key={v} className={['h-3 w-3 rounded-[2px]', intensityClass(v)].join(' ')} />
         ))}
         <span>More</span>
       </div>
@@ -207,13 +193,13 @@ function intensityClass(value: number) {
   const base = 'bg-emerald-500'
   switch (value) {
     case 0:
-      return 'bg-slate-200 dark:bg-panel-highlight-dark'
+      return 'bg-slate-200 dark:bg-slate-700'
     case 1:
-      return `${base}/30`
+      return `${base}/40`
     case 2:
-      return `${base}/50`
+      return `${base}/60`
     case 3:
-      return `${base}/75`
+      return `${base}/80`
     case 4:
     default:
       return base
