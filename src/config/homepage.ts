@@ -35,8 +35,9 @@ export interface HomepageConfig {
 export const homepageConfig: HomepageConfig = {
   title: 'Launchpad',
   widgets: [
-    { id: 'clock', columnSpan: 4, rowSpan: 1 },
+    { id: 'clock', columnSpan: 2, rowSpan: 1 },
     { id: 'search', columnSpan: 4, rowSpan: 1 },
+    { id: 'heatmap', columnSpan: 4, rowSpan: 2 },
     { id: 'bookmarks', columnSpan: 2, rowSpan: 2 },
     { id: 'notes', columnSpan: 2, rowSpan: 2 },
   ],

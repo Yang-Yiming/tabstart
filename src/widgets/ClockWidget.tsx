@@ -17,18 +17,17 @@ export function ClockWidget() {
   })
 
   const date = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
+    weekday: 'short',
+    month: 'short',
     day: 'numeric',
   })
 
   return (
-    <WidgetCard className="flex flex-col items-center justify-center text-center">
-      <div className="font-mono text-6xl font-semibold tracking-tight text-text-primary dark:text-text-primary-dark sm:text-7xl">
+    <WidgetCard className="flex h-full flex-col items-center justify-center text-center">
+      <div className="font-mono text-3xl font-semibold tracking-tight text-text-primary dark:text-text-primary-dark sm:text-4xl">
         {time}
       </div>
-      <div className="mt-2 text-lg text-text-muted">{date}</div>
+      <div className="mt-1 text-sm text-text-muted">{date}</div>
     </WidgetCard>
   )
 }

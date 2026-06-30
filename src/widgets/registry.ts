@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { HeatmapWidget } from './HeatmapWidget'
 import type { WidgetId } from './types'
 import { ClockWidget } from './ClockWidget'
 import { SearchWidget } from './SearchWidget'
@@ -14,4 +15,5 @@ export const widgetRegistry: Record<WidgetId, ComponentType> = {
   notes: NotesWidget,
   pomodoro: PomodoroWidget,
   weather: WeatherWidget,
+  heatmap: HeatmapWidget,
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [stored, setStored] = useState<T>(initialValue)
 
   useEffect(() => {
@@ -12,10 +12,13 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
     } catch {}
   }, [key])
 
-  const setValue = (value: T) => {
+  const setValue = (value: T | ((prev: T) => T)) => {
     try {
-      setStored(value)
-      window.localStorage.setItem(key, JSON.stringify(value))
+      setStored((prev) => {
+        const next = typeof value === 'function' ? (value as (prev: T) => T)(prev) : value
+        window.localStorage.setItem(key, JSON.stringify(next))
+        return next
+      })
     } catch {}
   }
 
