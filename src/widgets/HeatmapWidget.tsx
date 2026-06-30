@@ -13,7 +13,7 @@ interface HeatmapStore {
 }
 
 const DEFAULT_TOPICS = ['论文', '代码']
-const WEEKS = 24
+const WEEKS = 53
 const MAX_VALUE = 4
 
 function addDays(date: Date, days: number) {
@@ -51,6 +51,21 @@ export function HeatmapWidget() {
     return result
   }, [])
 
+  const monthLabels = useMemo(() => {
+    const labels: { weekIdx: number; label: string }[] = []
+    weeks.forEach((days, idx) => {
+      const firstDay = days[0]
+      const prevMonth = idx > 0 ? weeks[idx - 1][0].getMonth() : -1
+      if (firstDay.getDate() <= 7 && firstDay.getMonth() !== prevMonth) {
+        labels.push({
+          weekIdx: idx,
+          label: firstDay.toLocaleDateString('en-US', { month: 'short' }),
+        })
+      }
+    })
+    return labels
+  }, [weeks])
+
   const getValue = (date: Date) => {
     return store.data[activeTopic]?.[formatKey(date)] ?? 0
   }
@@ -85,7 +100,6 @@ export function HeatmapWidget() {
     }
   }
 
-  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const selectedValue = selected ? getValue(selected) : 0
 
   return (
@@ -144,44 +158,64 @@ export function HeatmapWidget() {
         )}
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        <div className="flex flex-col gap-1.5 pt-0.5">
-          {dayLabels.map((label) => (
-            <div key={label} className="h-3 w-3 text-[9px] leading-3 text-text-muted">
-              {label[0]}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex flex-col gap-[3px] pt-5">
+          {['Mon', 'Wed', 'Fri'].map((label) => (
+            <div
+              key={label}
+              className="flex h-[10px] items-center text-[10px] leading-[10px] text-text-muted"
+            >
+              {label}
             </div>
           ))}
         </div>
-        {weeks.map((days, weekIdx) => (
-          <div key={weekIdx} className="flex flex-col gap-1.5">
-            {days.map((day) => {
-              const value = getValue(day)
-              const key = formatKey(day)
-              const isSelected = selected ? formatKey(selected) === key : false
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-label={key}
-                  onClick={() => setSelected(day)}
-                  className={[
-                    'h-3 w-3 rounded-[2px] transition',
-                    intensityClass(value),
-                    isSelected
-                      ? 'ring-2 ring-accent dark:ring-accent-dark'
-                      : 'hover:ring-2 hover:ring-accent/50',
-                  ].join(' ')}
-                />
-              )
-            })}
+
+        <div className="relative">
+          <div className="pointer-events-none absolute -top-5 left-0 flex h-4 w-full">
+            {monthLabels.map(({ weekIdx, label }) => (
+              <span
+                key={`${label}-${weekIdx}`}
+                className="absolute text-[10px] text-text-muted"
+                style={{ left: `${weekIdx * 13}px` }}
+              >
+                {label}
+              </span>
+            ))}
           </div>
-        ))}
+
+          <div className="flex gap-[3px]">
+            {weeks.map((days, weekIdx) => (
+              <div key={weekIdx} className="flex flex-col gap-[3px]">
+                {days.map((day) => {
+                  const value = getValue(day)
+                  const key = formatKey(day)
+                  const isSelected = selected ? formatKey(selected) === key : false
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-label={key}
+                      onClick={() => setSelected(day)}
+                      className={[
+                        'h-[10px] w-[10px] rounded-[2px] transition',
+                        intensityClass(value),
+                        isSelected
+                          ? 'ring-2 ring-accent dark:ring-accent-dark'
+                          : 'hover:ring-2 hover:ring-accent/50',
+                      ].join(' ')}
+                    />
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
+      <div className="flex items-center justify-end gap-1.5 text-[10px] text-text-muted">
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((v) => (
-          <div key={v} className={['h-3 w-3 rounded-[2px]', intensityClass(v)].join(' ')} />
+          <div key={v} className={['h-[10px] w-[10px] rounded-[2px]', intensityClass(v)].join(' ')} />
         ))}
         <span>More</span>
       </div>
@@ -193,13 +227,13 @@ function intensityClass(value: number) {
   const base = 'bg-emerald-500'
   switch (value) {
     case 0:
-      return 'bg-slate-200 dark:bg-slate-700'
+      return 'bg-slate-200 dark:bg-slate-800'
     case 1:
-      return `${base}/40`
+      return `${base}/30`
     case 2:
-      return `${base}/60`
+      return `${base}/50`
     case 3:
-      return `${base}/80`
+      return `${base}/75`
     case 4:
     default:
       return base
