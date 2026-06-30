@@ -37,7 +37,7 @@ export function PomodoroWidget() {
 
   return (
     <WidgetCard className="flex h-full flex-col items-center justify-center gap-4 text-center">
-      <div className="flex gap-2 rounded-lg bg-panel-highlight p-1">
+      <div className="flex gap-2 rounded-lg bg-panel-highlight p-1 dark:bg-panel-highlight-dark">
         {(Object.keys(MODES) as Array<keyof typeof MODES>).map((m) => (
           <button
             key={m}
@@ -45,7 +45,9 @@ export function PomodoroWidget() {
             onClick={() => switchMode(m)}
             className={[
               'rounded-md px-3 py-1 text-xs font-medium transition',
-              mode === m ? 'bg-cyan text-midnight' : 'text-text-muted hover:text-text-primary',
+              mode === m
+                ? 'bg-accent text-white dark:bg-accent-dark dark:text-page-dark'
+                : 'text-text-muted hover:text-text-primary',
             ].join(' ')}
           >
             {m}
@@ -59,14 +61,14 @@ export function PomodoroWidget() {
         <button
           type="button"
           onClick={() => setRunning((r) => !r)}
-          className="rounded-lg bg-cyan p-2 text-midnight transition hover:bg-cyan/90"
+          className="rounded-lg bg-accent p-2 text-white transition hover:bg-accent/90 dark:bg-accent-dark dark:text-page-dark"
         >
           {running ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
         </button>
         <button
           type="button"
           onClick={() => switchMode(mode)}
-          className="rounded-lg bg-panel-highlight p-2 text-text-primary transition hover:bg-cyan/10"
+          className="rounded-lg bg-panel-highlight p-2 text-text-primary transition hover:bg-accent/10 dark:bg-panel-highlight-dark"
         >
           <RotateCcw className="h-5 w-5" />
         </button>

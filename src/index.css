@@ -5,11 +5,19 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
+}
+
+.dark {
   color-scheme: dark;
 }
 
 body {
-  @apply m-0 min-h-screen bg-midnight text-text-primary antialiased;
+  @apply m-0 min-h-screen bg-page text-text-primary antialiased;
+  background: radial-gradient(ellipse at 50% 0%, #FFFFFF 0%, #F6F7FA 60%);
+}
+
+.dark body {
   background: radial-gradient(ellipse at 50% 0%, #151B2B 0%, #0B0F19 60%);
 }
 
@@ -24,6 +32,10 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid #38BDF8;
+  outline: 2px solid #0284C7;
   outline-offset: 2px;
+}
+
+.dark :focus-visible {
+  outline-color: #38BDF8;
 }

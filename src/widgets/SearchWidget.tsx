@@ -37,7 +37,7 @@ export function SearchWidget() {
   return (
     <WidgetCard>
       <form onSubmit={handleSubmit} className="flex items-center gap-3">
-        <Search className="h-6 w-6 shrink-0 text-cyan" />
+        <Search className="h-6 w-6 shrink-0 text-accent dark:text-accent-dark" />
         <input
           ref={inputRef}
           type="text"
@@ -49,7 +49,7 @@ export function SearchWidget() {
         <button
           type="button"
           onClick={cycleEngine}
-          className="shrink-0 rounded-lg bg-panel-highlight px-3 py-1.5 text-sm font-medium text-cyan transition hover:bg-cyan/10"
+          className="shrink-0 rounded-lg bg-panel-highlight px-3 py-1.5 text-sm font-medium text-accent transition hover:bg-accent/10 dark:bg-panel-highlight-dark dark:text-accent-dark"
         >
           {engine?.name ?? 'Search'}
         </button>
