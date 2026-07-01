@@ -34,6 +34,12 @@ export function HeatmapWidget() {
   const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? DEFAULT_TOPICS[0])
   const [selected, setSelected] = useState<Date | null>(null)
 
+  const todayKey = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return formatKey(d)
+  }, [])
+
   const weeks = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -159,17 +165,6 @@ export function HeatmapWidget() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <div className="flex flex-col gap-[3px] pt-5">
-          {['Mon', 'Wed', 'Fri'].map((label) => (
-            <div
-              key={label}
-              className="flex h-[10px] items-center text-[10px] leading-[10px] text-text-muted"
-            >
-              {label}
-            </div>
-          ))}
-        </div>
-
         <div className="relative">
           <div className="pointer-events-none absolute -top-5 left-0 flex h-4 w-full">
             {monthLabels.map(({ weekIdx, label }) => (
@@ -201,7 +196,9 @@ export function HeatmapWidget() {
                         intensityClass(value),
                         isSelected
                           ? 'ring-2 ring-accent dark:ring-accent-dark'
-                          : 'hover:ring-2 hover:ring-accent/50',
+                          : key === todayKey
+                            ? 'ring-1 ring-inset ring-blue-500 dark:ring-blue-400'
+                            : 'hover:ring-2 hover:ring-accent/50',
                       ].join(' ')}
                     />
                   )
