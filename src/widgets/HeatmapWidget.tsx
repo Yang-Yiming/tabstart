@@ -10,6 +10,7 @@ interface TopicData {
 interface HeatmapStore {
   topics: string[]
   data: Record<string, TopicData>
+  goals: Record<string, number>
 }
 
 const DEFAULT_TOPICS = ['论文', '代码']
@@ -30,6 +31,7 @@ export function HeatmapWidget() {
   const [store, setStore] = useLocalStorage<HeatmapStore>('homepage-heatmap', {
     topics: DEFAULT_TOPICS,
     data: {},
+    goals: {},
   })
   const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? DEFAULT_TOPICS[0])
   const [selected, setSelected] = useState<Date | null>(null)
@@ -98,8 +100,10 @@ export function HeatmapWidget() {
     setStore((prev) => {
       const topics = prev.topics.filter((t) => t !== topic)
       const data = { ...prev.data }
+      const goals = { ...prev.goals }
       delete data[topic]
-      return { topics, data }
+      delete goals[topic]
+      return { topics, data, goals }
     })
     if (activeTopic === topic) {
       setActiveTopic(store.topics.find((t) => t !== topic) ?? '')
@@ -107,6 +111,21 @@ export function HeatmapWidget() {
   }
 
   const selectedValue = selected ? getValue(selected) : 0
+
+  const total = useMemo(() => {
+    const topicData = store.data[activeTopic] ?? {}
+    return Object.values(topicData).reduce((sum, v) => sum + v, 0)
+  }, [store.data, activeTopic])
+
+  const goal = store.goals[activeTopic] ?? 0
+  const goalMet = goal > 0 && total >= goal
+
+  const setGoal = (value: number) => {
+    setStore((prev) => ({
+      ...prev,
+      goals: { ...prev.goals, [activeTopic]: Math.max(0, value) },
+    }))
+  }
 
   return (
     <WidgetCard className="flex h-full flex-col gap-4">
@@ -131,6 +150,23 @@ export function HeatmapWidget() {
               {topic}
             </button>
           ))}
+          <span className="mx-1 text-sm text-text-muted">|</span>
+          <div className="flex items-center gap-1 text-sm">
+            <span className="text-text-muted">Goal</span>
+            <input
+              type="number"
+              min={0}
+              value={goal || ''}
+              placeholder="—"
+              onChange={(e) => setGoal(Number(e.target.value) || 0)}
+              className="w-12 rounded border border-panel-highlight bg-transparent px-1 py-0.5 text-center text-sm text-text-primary outline-none transition focus:border-accent dark:border-panel-highlight-dark dark:text-text-primary-dark dark:focus:border-accent-dark [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            {goal > 0 && (
+              <span className={goalMet ? 'text-emerald-500' : 'text-amber-500'}>
+                ({total}/{goal})
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={addTopic}
@@ -193,7 +229,7 @@ export function HeatmapWidget() {
                       onClick={() => setSelected(day)}
                       className={[
                         'h-[10px] w-[10px] rounded-[2px] transition',
-                        intensityClass(value),
+                        intensityClass(value, goalMet),
                         isSelected
                           ? 'ring-2 ring-accent dark:ring-accent-dark'
                           : key === todayKey
@@ -212,7 +248,7 @@ export function HeatmapWidget() {
       <div className="flex items-center justify-end gap-1.5 text-[10px] text-text-muted">
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((v) => (
-          <div key={v} className={['h-[10px] w-[10px] rounded-[2px]', intensityClass(v)].join(' ')} />
+          <div key={v} className={['h-[10px] w-[10px] rounded-[2px]', intensityClass(v, goalMet)].join(' ')} />
         ))}
         <span>More</span>
       </div>
@@ -220,19 +256,33 @@ export function HeatmapWidget() {
   )
 }
 
-function intensityClass(value: number) {
-  const base = 'bg-emerald-500'
+function intensityClass(value: number, goalMet: boolean) {
+  if (goalMet) {
+    switch (value) {
+      case 0:
+        return 'bg-slate-200 dark:bg-slate-800'
+      case 1:
+        return 'bg-emerald-500/30'
+      case 2:
+        return 'bg-emerald-500/50'
+      case 3:
+        return 'bg-emerald-500/75'
+      case 4:
+      default:
+        return 'bg-emerald-500'
+    }
+  }
   switch (value) {
     case 0:
       return 'bg-slate-200 dark:bg-slate-800'
     case 1:
-      return `${base}/30`
+      return 'bg-amber-500/30'
     case 2:
-      return `${base}/50`
+      return 'bg-amber-500/50'
     case 3:
-      return `${base}/75`
+      return 'bg-amber-500/75'
     case 4:
     default:
-      return base
+      return 'bg-amber-500'
   }
 }
