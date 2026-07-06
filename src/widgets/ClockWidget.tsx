@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { WidgetCard } from '../components/WidgetCard'
 
 export function ClockWidget() {
   const [now, setNow] = useState(new Date())
@@ -9,25 +8,26 @@ export function ClockWidget() {
     return () => clearInterval(id)
   }, [])
 
-  const time = now.toLocaleTimeString('en-US', {
+  const time = now.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
     hour12: false,
   })
 
-  const date = now.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
+  const date = now.toLocaleDateString('zh-CN', {
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
   })
 
   return (
-    <WidgetCard className="flex h-full flex-col items-center justify-center text-center">
-      <div className="font-mono text-3xl font-semibold tracking-tight text-text-primary dark:text-text-primary-dark sm:text-4xl">
+    <div className="flex flex-col items-center justify-center text-center">
+      <div className="text-7xl font-light tracking-tight text-white drop-shadow-lg sm:text-8xl md:text-9xl">
         {time}
       </div>
-      <div className="mt-1 text-sm text-text-muted">{date}</div>
-    </WidgetCard>
+      <div className="mt-3 text-lg font-light tracking-wide text-white/80 drop-shadow-md">
+        {date}
+      </div>
+    </div>
   )
 }

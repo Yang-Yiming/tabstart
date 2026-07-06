@@ -129,7 +129,7 @@ export function HeatmapWidget() {
 
   return (
     <WidgetCard className="flex h-full flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {store.topics.map((topic) => (
             <button
@@ -143,26 +143,26 @@ export function HeatmapWidget() {
               className={[
                 'rounded-full px-3 py-1 text-sm font-medium transition',
                 topic === activeTopic
-                  ? 'bg-accent text-white dark:bg-accent-dark dark:text-page-dark'
-                  : 'bg-panel-highlight text-text-primary hover:bg-accent/10 dark:bg-panel-highlight-dark dark:text-text-primary-dark',
+                  ? 'bg-white/25 text-white'
+                  : 'bg-white/10 text-white/80 hover:bg-white/15',
               ].join(' ')}
             >
               {topic}
             </button>
           ))}
-          <span className="mx-1 text-sm text-text-muted">|</span>
+          <span className="mx-1 text-sm text-white/40">|</span>
           <div className="flex items-center gap-1 text-sm">
-            <span className="text-text-muted">Goal</span>
+            <span className="text-white/50">Goal</span>
             <input
               type="number"
               min={0}
               value={goal || ''}
               placeholder="—"
               onChange={(e) => setGoal(Number(e.target.value) || 0)}
-              className="w-12 rounded border border-panel-highlight bg-transparent px-1 py-0.5 text-center text-sm text-text-primary outline-none transition focus:border-accent dark:border-panel-highlight-dark dark:text-text-primary-dark dark:focus:border-accent-dark [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-12 rounded border border-white/10 bg-white/10 px-1 py-0.5 text-center text-sm text-white outline-none transition focus:border-white/30 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
             {goal > 0 && (
-              <span className={goalMet ? 'text-emerald-500' : 'text-amber-500'}>
+              <span className={goalMet ? 'text-emerald-300' : 'text-amber-300'}>
                 ({total}/{goal})
               </span>
             )}
@@ -170,7 +170,7 @@ export function HeatmapWidget() {
           <button
             type="button"
             onClick={addTopic}
-            className="rounded-full px-3 py-1 text-sm font-medium text-text-muted transition hover:bg-panel-highlight dark:hover:bg-panel-highlight-dark"
+            className="rounded-full px-3 py-1 text-sm font-medium text-white/60 transition hover:bg-white/10"
           >
             + New
           </button>
@@ -178,21 +178,21 @@ export function HeatmapWidget() {
 
         {selected && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-text-muted">{formatKey(selected)}</span>
+            <span className="text-sm text-white/50">{formatKey(selected)}</span>
             <button
               type="button"
               onClick={() => selected && setValue(selected, -1)}
-              className="rounded-lg bg-panel-highlight p-1 text-text-primary transition hover:bg-accent/10 dark:bg-panel-highlight-dark dark:text-text-primary-dark"
+              className="rounded-lg bg-white/10 p-1 text-white transition hover:bg-white/20"
             >
               <Minus className="h-4 w-4" />
             </button>
-            <span className="min-w-[1.5rem] text-center font-mono text-sm text-text-primary dark:text-text-primary-dark">
+            <span className="min-w-[1.5rem] text-center font-mono text-sm text-white">
               {selectedValue}
             </span>
             <button
               type="button"
               onClick={() => selected && setValue(selected, 1)}
-              className="rounded-lg bg-panel-highlight p-1 text-text-primary transition hover:bg-accent/10 dark:bg-panel-highlight-dark dark:text-text-primary-dark"
+              className="rounded-lg bg-white/10 p-1 text-white transition hover:bg-white/20"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -206,7 +206,7 @@ export function HeatmapWidget() {
             {monthLabels.map(({ weekIdx, label }) => (
               <span
                 key={`${label}-${weekIdx}`}
-                className="absolute text-[10px] text-text-muted"
+                className="absolute text-[10px] text-white/50"
                 style={{ left: `${weekIdx * 13}px` }}
               >
                 {label}
@@ -231,10 +231,10 @@ export function HeatmapWidget() {
                         'h-[10px] w-[10px] rounded-[2px] transition',
                         intensityClass(value, goalMet),
                         isSelected
-                          ? 'ring-2 ring-accent dark:ring-accent-dark'
+                          ? 'ring-2 ring-white/80'
                           : key === todayKey
-                            ? 'ring-1 ring-inset ring-blue-500 dark:ring-blue-400'
-                            : 'hover:ring-2 hover:ring-accent/50',
+                            ? 'ring-1 ring-inset ring-white/60'
+                            : 'hover:ring-2 hover:ring-white/40',
                       ].join(' ')}
                     />
                   )
@@ -245,7 +245,7 @@ export function HeatmapWidget() {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-1.5 text-[10px] text-text-muted">
+      <div className="flex items-center justify-end gap-1.5 text-[10px] text-white/50">
         <span>Less</span>
         {[0, 1, 2, 3, 4].map((v) => (
           <div key={v} className={['h-[10px] w-[10px] rounded-[2px]', intensityClass(v, goalMet)].join(' ')} />
@@ -260,29 +260,29 @@ function intensityClass(value: number, goalMet: boolean) {
   if (goalMet) {
     switch (value) {
       case 0:
-        return 'bg-slate-200 dark:bg-slate-800'
+        return 'bg-white/10'
       case 1:
-        return 'bg-emerald-500/30'
+        return 'bg-emerald-300/30'
       case 2:
-        return 'bg-emerald-500/50'
+        return 'bg-emerald-300/50'
       case 3:
-        return 'bg-emerald-500/75'
+        return 'bg-emerald-300/75'
       case 4:
       default:
-        return 'bg-emerald-500'
+        return 'bg-emerald-300'
     }
   }
   switch (value) {
     case 0:
-      return 'bg-slate-200 dark:bg-slate-800'
+      return 'bg-white/10'
     case 1:
-      return 'bg-amber-500/30'
+      return 'bg-amber-300/30'
     case 2:
-      return 'bg-amber-500/50'
+      return 'bg-amber-300/50'
     case 3:
-      return 'bg-amber-500/75'
+      return 'bg-amber-300/75'
     case 4:
     default:
-      return 'bg-amber-500'
+      return 'bg-amber-300'
   }
 }

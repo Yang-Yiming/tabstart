@@ -22,8 +22,15 @@ export interface WidgetLayout {
   rowSpan?: number
 }
 
+export interface BackgroundConfig {
+  src: string
+  overlay: number
+  blur?: number
+}
+
 export interface HomepageConfig {
   title: string
+  background: BackgroundConfig
   widgets: WidgetLayout[]
   search: {
     defaultEngine: string
@@ -34,12 +41,15 @@ export interface HomepageConfig {
 
 export const homepageConfig: HomepageConfig = {
   title: 'Launchpad',
+  background: {
+    src: 'https://wallpapershome.com/images/pages/pic_h/28239.jpg',
+    overlay: 0.35,
+    blur: 0,
+  },
   widgets: [
-    { id: 'clock', columnSpan: 2, rowSpan: 1 },
-    { id: 'search', columnSpan: 4, rowSpan: 1 },
-    { id: 'heatmap', columnSpan: 4, rowSpan: 2 },
     { id: 'bookmarks', columnSpan: 2, rowSpan: 2 },
     { id: 'notes', columnSpan: 2, rowSpan: 2 },
+    { id: 'heatmap', columnSpan: 4, rowSpan: 2 },
   ],
   search: {
     defaultEngine: 'google',
