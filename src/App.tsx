@@ -1,4 +1,4 @@
-import { Image, Moon, Sun, Upload } from 'lucide-react'
+import { Globe, Image, Link, Moon, Sun, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Grid } from './components/Grid'
 import { SearchWidget } from './widgets/SearchWidget'
@@ -28,6 +28,10 @@ export default function App() {
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resetFileBgRef = useRef(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [urlInputOpen, setUrlInputOpen] = useState(false)
+  const [urlValue, setUrlValue] = useState('')
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -57,6 +61,17 @@ export default function App() {
     }
   }, [fileUrl])
 
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+        setUrlInputOpen(false)
+      }
+    }
+    window.addEventListener('click', onClick)
+    return () => window.removeEventListener('click', onClick)
+  }, [])
+
   const backgroundSrc = bg.mode === 'file' && fileUrl ? fileUrl : bg.src
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,8 +83,23 @@ export default function App() {
     setBg({ ...bg, mode: 'file', src: url })
   }
 
-  const setUrlBackground = (src: string) => {
-    setBg({ ...bg, mode: 'url', src })
+  const applyBingBackground = async () => {
+    setMenuOpen(false)
+    try {
+      const response = await fetch('https://bing.ee123.net/img/4k')
+      setBg({ ...bg, mode: 'url', src: response.url })
+    } catch {
+      setBg({ ...bg, mode: 'url', src: 'https://bing.ee123.net/img/4k' })
+    }
+  }
+
+  const handleUrlApply = () => {
+    const trimmed = urlValue.trim()
+    if (!trimmed) return
+    setBg({ ...bg, mode: 'url', src: trimmed })
+    setUrlInputOpen(false)
+    setUrlValue('')
+    setMenuOpen(false)
   }
 
   return (
@@ -85,24 +115,87 @@ export default function App() {
       />
 
       <div className="absolute right-5 top-5 z-50 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
-          aria-label="Upload background"
-          title="Upload background"
-        >
-          <Upload className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setUrlBackground(homepageConfig.background.src)}
-          className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
-          aria-label="Use default background"
-          title="Use default background"
-        >
-          <Image className="h-4 w-4" />
-        </button>
+        <div ref={menuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen((v) => !v)
+              setUrlInputOpen(false)
+            }}
+            className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
+            aria-label="Wallpaper"
+            title="Wallpaper"
+          >
+            <Image className="h-4 w-4" />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-1.5 shadow-2xl backdrop-blur-2xl">
+              {urlInputOpen ? (
+                <div className="flex flex-col gap-2 p-2">
+                  <input
+                    type="text"
+                    value={urlValue}
+                    onChange={(e) => setUrlValue(e.target.value)}
+                    placeholder="输入图片URL..."
+                    autoFocus
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUrlInputOpen(false)
+                        setUrlValue('')
+                      }}
+                      className="flex-1 rounded-xl px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10"
+                    >
+                      返回
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleUrlApply}
+                      className="flex-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-white transition hover:bg-white/20"
+                    >
+                      应用
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fileInputRef.current?.click()
+                      setMenuOpen(false)
+                    }}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                  >
+                    <Upload className="h-4 w-4" />
+                    本地图片
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUrlInputOpen(true)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                  >
+                    <Link className="h-4 w-4" />
+                    在线链接
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyBingBackground}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Bing 每日图像
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <button
           type="button"
           onClick={() => setDark((d) => !d)}
