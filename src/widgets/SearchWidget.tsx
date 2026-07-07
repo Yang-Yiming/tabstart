@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Search, Trash2 } from 'lucide-react'
+import { ArrowRight, Search, Trash2 } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { homepageConfig } from '../config/homepage'
 
@@ -8,13 +8,12 @@ const MAX_HISTORY = 8
 
 export function SearchWidget() {
   const [query, setQuery] = useState('')
-  const [engineKey, setEngineKey] = useState(homepageConfig.search.defaultEngine)
   const [history, setHistory] = useLocalStorage<string[]>(HISTORY_KEY, [])
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const engine = homepageConfig.search.engines[engineKey]
+  const engine = homepageConfig.search.engines[homepageConfig.search.defaultEngine]
 
   const addHistory = (term: string) => {
     const trimmed = term.trim()
@@ -38,12 +37,6 @@ export function SearchWidget() {
     if (!trimmed || !engine) return
     addHistory(trimmed)
     window.location.href = engine.url + encodeURIComponent(trimmed)
-  }
-
-  const cycleEngine = () => {
-    const keys = Object.keys(homepageConfig.search.engines)
-    const next = keys[(keys.indexOf(engineKey) + 1) % keys.length]
-    setEngineKey(next)
   }
 
   useEffect(() => {
@@ -79,9 +72,9 @@ export function SearchWidget() {
     <div ref={containerRef} className="relative w-full">
       <form
         onSubmit={handleSubmit}
-        className="group flex items-center gap-3 rounded-full border border-white/10 bg-black/25 px-5 py-3.5 shadow-2xl backdrop-blur-2xl transition-all duration-300 focus-within:border-white/25 focus-within:bg-black/35 focus-within:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.45)] hover:border-white/20 hover:bg-black/30"
+        className="group relative mx-auto flex w-[85%] max-w-lg items-center rounded-full border border-white/25 bg-gradient-to-r from-orange-300/40 to-blue-300/40 px-12 py-3.5 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] backdrop-blur-2xl transition-all duration-500 ease-in-out hover:w-[95%] hover:border-white/40 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] focus-within:w-[95%] focus-within:border-white/40 focus-within:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)]"
       >
-        <Search className="h-5 w-5 shrink-0 text-white/70" />
+        <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
         <input
           ref={inputRef}
           type="text"
@@ -89,19 +82,19 @@ export function SearchWidget() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder="搜索"
-          className="flex-1 bg-transparent text-lg text-white placeholder:text-white/50 focus:outline-none"
+          className="w-full bg-transparent text-center text-lg text-white placeholder:text-white/70 focus:outline-none"
         />
         <button
-          type="button"
-          onClick={cycleEngine}
-          className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80 transition hover:bg-white/20"
+          type="submit"
+          className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-white/80 opacity-0 transition-all duration-300 hover:bg-white/10 group-hover:opacity-100 group-focus-within:opacity-100"
+          aria-label="搜索"
         >
-          {engine?.name ?? 'Search'}
+          <ArrowRight className="h-5 w-5" />
         </button>
       </form>
 
       {open && filteredHistory.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-3xl border border-white/10 bg-black/30 p-3 shadow-2xl backdrop-blur-2xl">
+        <div className="absolute left-0 right-0 top-full z-50 mx-auto mt-3 w-[95%] max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-black/30 p-3 shadow-2xl backdrop-blur-2xl">
           <ul className="flex flex-col gap-1">
             {filteredHistory.map((item) => (
               <li key={item} className="flex items-center gap-2">
