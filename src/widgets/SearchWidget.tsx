@@ -72,9 +72,9 @@ export function SearchWidget() {
     <div ref={containerRef} className="relative w-full">
       <form
         onSubmit={handleSubmit}
-        className="group relative mx-auto flex w-[85%] max-w-lg items-center rounded-full border border-white/25 bg-gradient-to-r from-orange-300/40 to-blue-300/40 px-12 py-3.5 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] backdrop-blur-2xl transition-all duration-500 ease-in-out hover:w-[95%] hover:border-white/40 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] focus-within:w-[95%] focus-within:border-white/40 focus-within:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)]"
+        className="group relative mx-auto flex w-[85%] max-w-xl items-center rounded-full border border-white/25 bg-gradient-to-r from-orange-300/40 to-blue-300/40 px-12 py-2.5 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] backdrop-blur-2xl transition-all duration-500 ease-in-out hover:w-[95%] hover:border-white/40 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] focus-within:w-[95%] focus-within:border-white/40 focus-within:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)]"
       >
-        <Search className="pointer-events-none absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
+        <Search className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
         <input
           ref={inputRef}
           type="text"
@@ -89,7 +89,7 @@ export function SearchWidget() {
           className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-white/80 opacity-0 transition-all duration-300 hover:bg-white/10 group-hover:opacity-100 group-focus-within:opacity-100"
           aria-label="搜索"
         >
-          <ArrowRight className="h-5 w-5" />
+          <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
