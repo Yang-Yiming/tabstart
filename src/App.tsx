@@ -12,6 +12,11 @@ interface BackgroundState {
   mode: 'url' | 'file'
 }
 
+interface BingCache {
+  date: string
+  url: string
+}
+
 export default function App() {
   const [dark, setDark] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -25,6 +30,7 @@ export default function App() {
     overlay: homepageConfig.background.overlay,
     mode: 'url',
   })
+  const [bingCache, setBingCache] = useLocalStorage<BingCache | null>('homepage-bing-cache', null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resetFileBgRef = useRef(false)
@@ -85,11 +91,20 @@ export default function App() {
 
   const applyBingBackground = async () => {
     setMenuOpen(false)
+    const today = new Date().toISOString().slice(0, 10)
+
+    if (bingCache?.date === today) {
+      setBg({ ...bg, mode: 'url', src: bingCache.url })
+      return
+    }
+
     try {
       const response = await fetch('https://bing.ee123.net/img/4k')
+      setBingCache({ date: today, url: response.url })
       setBg({ ...bg, mode: 'url', src: response.url })
     } catch {
-      setBg({ ...bg, mode: 'url', src: 'https://bing.ee123.net/img/4k' })
+      const fallback = 'https://bing.ee123.net/img/4k'
+      setBg({ ...bg, mode: 'url', src: fallback })
     }
   }
 
@@ -104,7 +119,7 @@ export default function App() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
+      className="relative min-h-screen overflow-hidden bg-contain bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${backgroundSrc})` }}
     >
       <div
