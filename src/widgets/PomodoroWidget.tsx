@@ -37,38 +37,38 @@ export function PomodoroWidget() {
 
   return (
     <WidgetCard className="flex h-full flex-col items-center justify-center gap-4 text-center">
-      <div className="flex gap-2 rounded-lg bg-panel-highlight p-1 dark:bg-panel-highlight-dark">
+      <div className="flex gap-1 rounded-xl bg-white/10 p-1">
         {(Object.keys(MODES) as Array<keyof typeof MODES>).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => switchMode(m)}
             className={[
-              'rounded-md px-3 py-1 text-xs font-medium transition',
+              'rounded-lg px-3 py-1 text-xs font-medium transition',
               mode === m
-                ? 'bg-accent text-white dark:bg-accent-dark dark:text-page-dark'
-                : 'text-text-muted hover:text-text-primary dark:hover:text-text-primary-dark',
+                ? 'bg-white text-text-primary shadow-sm'
+                : 'text-white/70 hover:text-white',
             ].join(' ')}
           >
             {m}
           </button>
         ))}
       </div>
-      <div className="font-mono text-5xl font-semibold text-text-primary dark:text-text-primary-dark">
+      <div className="font-mono text-5xl font-semibold text-white">
         {minutes}:{seconds}
       </div>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => setRunning((r) => !r)}
-          className="rounded-lg bg-accent p-2 text-white transition hover:bg-accent/90 dark:bg-accent-dark dark:text-page-dark"
+          className="rounded-xl bg-white/10 p-2 text-white transition hover:bg-white/20"
         >
           {running ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
         </button>
         <button
           type="button"
           onClick={() => switchMode(mode)}
-          className="rounded-lg bg-panel-highlight p-2 text-text-primary transition hover:bg-accent/10 dark:bg-panel-highlight-dark dark:text-text-primary-dark"
+          className="rounded-xl bg-white/10 p-2 text-white transition hover:bg-white/20"
         >
           <RotateCcw className="h-5 w-5" />
         </button>
