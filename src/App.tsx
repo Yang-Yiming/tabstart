@@ -119,7 +119,7 @@ export default function App() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden bg-contain bg-center bg-no-repeat"
+      className="relative min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${backgroundSrc})` }}
     >
       <div
