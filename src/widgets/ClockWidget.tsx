@@ -25,7 +25,7 @@ export function ClockWidget() {
       <div className="text-6xl font-light tracking-tight text-white drop-shadow-lg sm:text-7xl md:text-8xl">
         {time}
       </div>
-      <div className="mt-3 text-lg font-light tracking-wide text-white/80 drop-shadow-md">
+      <div className="mt-1 text-lg font-light tracking-wide text-white/80 drop-shadow-md">
         {date}
       </div>
     </div>

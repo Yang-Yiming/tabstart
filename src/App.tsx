@@ -233,10 +233,10 @@ export default function App() {
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24">
         <div className="w-full max-w-5xl">
-          <div className="mx-auto mb-10 max-w-3xl">
+          <div className="mx-auto mb-4 max-w-3xl">
             <ClockWidget />
           </div>
-          <div className="mx-auto mb-16 max-w-2xl">
+          <div className="mx-auto mb-10 max-w-2xl">
             <SearchWidget />
           </div>
           <Grid />
