@@ -118,18 +118,20 @@ export default function App() {
   }
 
   return (
-    <div
-      className="relative min-h-screen overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${backgroundSrc})` }}
-    >
+    <>
       <div
-        className="pointer-events-none absolute inset-0"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${backgroundSrc})` }}
+      />
+      <div
+        className="pointer-events-none fixed inset-0"
         style={{
           background: `radial-gradient(ellipse at 50% 0%, rgba(0,0,0,${Math.max(0.1, bg.overlay - 0.15)}) 0%, rgba(0,0,0,${bg.overlay}) 70%)`,
         }}
       />
 
-      <div className="absolute right-5 top-5 z-50 flex items-center gap-2">
+      <div className="relative">
+        <div className="absolute right-5 top-5 z-50 flex items-center gap-2">
         <div ref={menuRef} className="relative">
           <button
             type="button"
@@ -241,5 +243,6 @@ export default function App() {
         </div>
       </div>
     </div>
+    </>
   )
 }
