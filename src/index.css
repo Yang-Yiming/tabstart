@@ -35,3 +35,38 @@ button {
 .dark :focus-visible {
   outline-color: rgba(255, 255, 255, 0.6);
 }
+
+.dashboard-grid .react-grid-placeholder {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  opacity: 1;
+  backdrop-filter: blur(20px);
+}
+
+.dashboard-grid .react-grid-item {
+  transition:
+    transform 220ms ease,
+    width 220ms ease,
+    height 220ms ease;
+}
+
+.dashboard-grid .react-grid-item.react-draggable-dragging,
+.dashboard-grid .react-grid-item.resizing {
+  z-index: 30;
+  transition: none;
+}
+
+.dashboard-grid .react-resizable-handle {
+  bottom: 10px;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.dashboard-grid .react-grid-item:hover .react-resizable-handle,
+.dashboard-grid .react-grid-item.resizing .react-resizable-handle {
+  opacity: 0.75;
+}

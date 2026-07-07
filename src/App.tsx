@@ -1,6 +1,6 @@
-import { Globe, Image, Link, Moon, Sun, Upload } from 'lucide-react'
+import { Check, Globe, Image, Link, Moon, Pencil, Sun, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Grid } from './components/Grid'
+import { Dashboard } from './components/Dashboard'
 import { SearchWidget } from './widgets/SearchWidget'
 import { ClockWidget } from './widgets/ClockWidget'
 import { homepageConfig } from './config/homepage'
@@ -37,6 +37,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [urlInputOpen, setUrlInputOpen] = useState(false)
   const [urlValue, setUrlValue] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -132,96 +133,112 @@ export default function App() {
 
       <div className="relative">
         <div className="absolute right-5 top-5 z-50 flex items-center gap-2">
-        <div ref={menuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => {
-              setMenuOpen((v) => !v)
-              setUrlInputOpen(false)
-            }}
-            className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
-            aria-label="Wallpaper"
-            title="Wallpaper"
-          >
-            <Image className="h-4 w-4" />
-          </button>
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen((v) => !v)
+                setUrlInputOpen(false)
+              }}
+              className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
+              aria-label="Wallpaper"
+              title="Wallpaper"
+            >
+              <Image className="h-4 w-4" />
+            </button>
 
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-1.5 shadow-2xl backdrop-blur-2xl">
-              {urlInputOpen ? (
-                <div className="flex flex-col gap-2 p-2">
-                  <input
-                    type="text"
-                    value={urlValue}
-                    onChange={(e) => setUrlValue(e.target.value)}
-                    placeholder="输入图片URL..."
-                    autoFocus
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none"
-                  />
-                  <div className="flex gap-2">
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-1.5 shadow-2xl backdrop-blur-2xl">
+                {urlInputOpen ? (
+                  <div className="flex flex-col gap-2 p-2">
+                    <input
+                      type="text"
+                      value={urlValue}
+                      onChange={(e) => setUrlValue(e.target.value)}
+                      placeholder="输入图片URL..."
+                      autoFocus
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUrlInputOpen(false)
+                          setUrlValue('')
+                        }}
+                        className="flex-1 rounded-xl px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10"
+                      >
+                        返回
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleUrlApply}
+                        className="flex-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-white transition hover:bg-white/20"
+                      >
+                        应用
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
                     <button
                       type="button"
                       onClick={() => {
-                        setUrlInputOpen(false)
-                        setUrlValue('')
+                        fileInputRef.current?.click()
+                        setMenuOpen(false)
                       }}
-                      className="flex-1 rounded-xl px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
                     >
-                      返回
+                      <Upload className="h-4 w-4" />
+                      本地图片
                     </button>
                     <button
                       type="button"
-                      onClick={handleUrlApply}
-                      className="flex-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-white transition hover:bg-white/20"
+                      onClick={() => setUrlInputOpen(true)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
                     >
-                      应用
+                      <Link className="h-4 w-4" />
+                      在线链接
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyBingBackground}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Bing 每日图像
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      fileInputRef.current?.click()
-                      setMenuOpen(false)
-                    }}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
-                  >
-                    <Upload className="h-4 w-4" />
-                    本地图片
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUrlInputOpen(true)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
-                  >
-                    <Link className="h-4 w-4" />
-                    在线链接
-                  </button>
-                  <button
-                    type="button"
-                    onClick={applyBingBackground}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/80 transition hover:bg-white/10"
-                  >
-                    <Globe className="h-4 w-4" />
-                    Bing 每日图像
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                )}
+              </div>
+            )}
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setDark((d) => !d)}
-          className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
-          aria-label="Toggle theme"
-        >
-          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setIsEditing((value) => !value)}
+            className={[
+              'rounded-full border p-2.5 shadow-lg backdrop-blur-xl transition',
+              isEditing
+                ? 'border-white/25 bg-white/20 text-white'
+                : 'border-white/15 bg-black/20 text-white/80 hover:bg-white/10 hover:text-white',
+            ].join(' ')}
+            aria-label={isEditing ? 'Done editing' : 'Edit widgets'}
+            title={isEditing ? 'Done' : 'Edit widgets'}
+          >
+            {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDark((d) => !d)}
+            className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
+            aria-label="Toggle theme"
+            title="Theme"
+          >
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        </div>
 
       <input
         ref={fileInputRef}
@@ -239,7 +256,7 @@ export default function App() {
           <div className="mx-auto mb-10 max-w-2xl">
             <SearchWidget />
           </div>
-          <Grid />
+          <Dashboard isEditing={isEditing} />
         </div>
       </div>
     </div>

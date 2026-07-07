@@ -1,2 +1,2 @@
-export { widgetRegistry } from './registry'
-export type { WidgetId, WidgetProps } from './types'
+export { widgetMetaById, widgetMetaList, widgetRegistry } from './registry'
+export type { WidgetId, WidgetMeta, WidgetProps } from './types'
