@@ -17,7 +17,7 @@ export const widgetMetaList: WidgetMeta[] = [
   { id: 'notes', name: 'Quick Notes', defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
   { id: 'heatmap', name: 'Heatmap', defaultW: 4, defaultH: 2, minW: 3, minH: 2 },
   { id: 'streak', name: 'Streak', defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
-  { id: 'pomodoro', name: 'Pomodoro', defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
+  { id: 'pomodoro', name: 'Pomodoro', defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
   { id: 'weather', name: 'Weather', defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
 ]
 
