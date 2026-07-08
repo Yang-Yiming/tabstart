@@ -15,7 +15,6 @@ interface HeatmapStore {
 
 const DEFAULT_TOPICS = ['论文', '代码']
 const WEEKS = 53
-const MAX_VALUE = 4
 
 function addDays(date: Date, days: number) {
   const d = new Date(date)
@@ -82,7 +81,7 @@ export function HeatmapWidget() {
     const key = formatKey(date)
     setStore((prev) => {
       const topicData = { ...(prev.data[activeTopic] ?? {}) }
-      const next = Math.max(0, Math.min(MAX_VALUE, (topicData[key] ?? 0) + delta))
+      const next = Math.max(0, (topicData[key] ?? 0) + delta)
       topicData[key] = next
       return { ...prev, data: { ...prev.data, [activeTopic]: topicData } }
     })
@@ -222,14 +221,14 @@ export function HeatmapWidget() {
                   const key = formatKey(day)
                   const isSelected = selected ? formatKey(selected) === key : false
                   return (
-                    <button
+                     <button
                       key={key}
                       type="button"
-                      aria-label={key}
+                      aria-label={`${key}: ${value}`}
                       onClick={() => setSelected(day)}
+                      style={intensityStyle(value, goal)}
                       className={[
                         'h-[10px] w-[10px] rounded-[2px] transition',
-                        intensityClass(value, goalMet),
                         isSelected
                           ? 'ring-2 ring-white/80'
                           : key === todayKey
@@ -247,8 +246,8 @@ export function HeatmapWidget() {
 
       <div className="flex items-center justify-end gap-1.5 text-[10px] text-white/50">
         <span>Less</span>
-        {[0, 1, 2, 3, 4].map((v) => (
-          <div key={v} className={['h-[10px] w-[10px] rounded-[2px]', intensityClass(v, goalMet)].join(' ')} />
+        {legendValues(goal).map((v, i) => (
+          <div key={i} className="h-[10px] w-[10px] rounded-[2px]" style={intensityStyle(v, goal)} />
         ))}
         <span>More</span>
       </div>
@@ -256,33 +255,32 @@ export function HeatmapWidget() {
   )
 }
 
-function intensityClass(value: number, goalMet: boolean) {
-  if (goalMet) {
-    switch (value) {
-      case 0:
-        return 'bg-white/10'
-      case 1:
-        return 'bg-emerald-300/30'
-      case 2:
-        return 'bg-emerald-300/50'
-      case 3:
-        return 'bg-emerald-300/75'
-      case 4:
-      default:
-        return 'bg-emerald-300'
-    }
+function intensityStyle(value: number, goal: number): React.CSSProperties {
+  if (goal <= 0) {
+    if (value === 0) return { backgroundColor: 'rgba(255,255,255,0.1)' }
+    const opacity = Math.min(0.1 + 0.15 * value, 1)
+    return { backgroundColor: `rgba(252,211,77,${opacity.toFixed(2)})` }
   }
-  switch (value) {
-    case 0:
-      return 'bg-white/10'
-    case 1:
-      return 'bg-amber-300/30'
-    case 2:
-      return 'bg-amber-300/50'
-    case 3:
-      return 'bg-amber-300/75'
-    case 4:
-    default:
-      return 'bg-amber-300'
+
+  if (value < goal) {
+    const opacity = 0.1 + 0.9 * (value / goal)
+    return { backgroundColor: `rgba(252,211,77,${opacity.toFixed(2)})` }
   }
+
+  const ratio = Math.min((value - goal) / goal, 1)
+  const r = Math.round(110 - 105 * ratio)
+  const g = Math.round(231 - 81 * ratio)
+  const b = Math.round(183 - 78 * ratio)
+  return { backgroundColor: `rgb(${r},${g},${b})` }
+}
+
+function legendValues(goal: number): number[] {
+  if (goal <= 0) return [0, 1, 2, 3, 4]
+  return [
+    0,
+    Math.max(1, Math.round(goal * 0.33)),
+    goal,
+    Math.round(goal * 1.5),
+    goal * 2,
+  ]
 }
