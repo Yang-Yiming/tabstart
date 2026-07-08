@@ -220,46 +220,46 @@ export function SearchWidget() {
             </div>
           </div>
         )}
-      </div>
 
-      {historyOpen && !engineDropdownOpen && filteredHistory.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-40 mx-auto mt-3 w-[95%] max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-black/30 p-3 shadow-2xl backdrop-blur-2xl">
-          <ul className="flex flex-col gap-1">
-            {filteredHistory.map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery(item)
-                    inputRef.current?.focus()
-                  }}
-                  className="flex-1 truncate rounded-xl px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10"
-                >
-                  {item}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeHistory(item)}
-                  className="rounded-xl p-2 text-white/50 transition hover:bg-white/10 hover:text-white/80"
-                  aria-label="Remove from history"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-1 border-t border-white/10 pt-2">
-            <button
-              type="button"
-              onClick={clearHistory}
-              className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs text-white/50 transition hover:bg-white/10 hover:text-white/80"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              清除历史记录
-            </button>
+        {historyOpen && !engineDropdownOpen && filteredHistory.length > 0 && (
+          <div className="absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl border border-white/10 bg-black/30 p-3 shadow-2xl backdrop-blur-2xl">
+            <ul className="flex flex-col gap-1">
+              {filteredHistory.map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery(item)
+                      inputRef.current?.focus()
+                    }}
+                    className="flex-1 truncate rounded-xl px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10"
+                  >
+                    {item}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeHistory(item)}
+                    className="rounded-xl p-2 text-white/50 transition hover:bg-white/10 hover:text-white/80"
+                    aria-label="Remove from history"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-1 border-t border-white/10 pt-2">
+              <button
+                type="button"
+                onClick={clearHistory}
+                className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs text-white/50 transition hover:bg-white/10 hover:text-white/80"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                清除历史记录
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
