@@ -2,44 +2,25 @@ import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Minus, Plus } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import {
+  DEFAULT_ACTIVITY_TOPICS,
+  addDays,
+  formatDateKey,
+  getTopicValue,
+  useActivityStore,
+} from './activity'
 
-interface TopicData {
-  [dateKey: string]: number
-}
-
-interface HeatmapStore {
-  topics: string[]
-  data: Record<string, TopicData>
-  goals: Record<string, number>
-}
-
-const DEFAULT_TOPICS = ['论文', '代码']
 const WEEKS = 53
 
-function addDays(date: Date, days: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
-
-function formatKey(date: Date) {
-  return date.toISOString().split('T')[0]
-}
-
 export function HeatmapWidget() {
-  const [store, setStore] = useLocalStorage<HeatmapStore>('homepage-heatmap', {
-    topics: DEFAULT_TOPICS,
-    data: {},
-    goals: {},
-  })
-  const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? DEFAULT_TOPICS[0])
+  const [store, setStore] = useActivityStore()
+  const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? DEFAULT_ACTIVITY_TOPICS[0])
   const [selected, setSelected] = useState<Date | null>(null)
 
   const todayKey = useMemo(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
-    return formatKey(d)
+    return formatDateKey(d)
   }, [])
 
   const weeks = useMemo(() => {
@@ -75,11 +56,11 @@ export function HeatmapWidget() {
   }, [weeks])
 
   const getValue = (date: Date) => {
-    return store.data[activeTopic]?.[formatKey(date)] ?? 0
+    return getTopicValue(store, activeTopic, date)
   }
 
   const setValue = (date: Date, delta: number) => {
-    const key = formatKey(date)
+    const key = formatDateKey(date)
     setStore((prev) => {
       const topicData = { ...(prev.data[activeTopic] ?? {}) }
       const next = Math.max(0, (topicData[key] ?? 0) + delta)
@@ -203,7 +184,7 @@ export function HeatmapWidget() {
             </button>
             {selected && (
               <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1">
-                <span className="font-mono text-xs text-white/50">{formatKey(selected)}</span>
+                <span className="font-mono text-xs text-white/50">{formatDateKey(selected)}</span>
                 <button
                   type="button"
                   onClick={() => selected && setValue(selected, -1)}
@@ -247,8 +228,8 @@ export function HeatmapWidget() {
                 <div key={weekIdx} className="flex flex-col gap-[4px]">
                   {days.map((day) => {
                     const value = getValue(day)
-                    const key = formatKey(day)
-                    const isSelected = selected ? formatKey(selected) === key : false
+                    const key = formatDateKey(day)
+                    const isSelected = selected ? formatDateKey(selected) === key : false
                     return (
                       <button
                         key={key}

@@ -9,12 +9,14 @@ export const widgetRegistry: Record<WidgetId, ElementType> = {
   pomodoro: lazy(() => import('./PomodoroWidget').then((module) => ({ default: module.PomodoroWidget }))),
   weather: lazy(() => import('./WeatherWidget').then((module) => ({ default: module.WeatherWidget }))),
   heatmap: lazy(() => import('./HeatmapWidget').then((module) => ({ default: module.HeatmapWidget }))),
+  streak: lazy(() => import('./StreakWidget').then((module) => ({ default: module.StreakWidget }))),
 }
 
 export const widgetMetaList: WidgetMeta[] = [
   { id: 'bookmarks', name: 'Bookmarks', defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
   { id: 'notes', name: 'Quick Notes', defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
   { id: 'heatmap', name: 'Heatmap', defaultW: 4, defaultH: 2, minW: 3, minH: 2 },
+  { id: 'streak', name: 'Streak', defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
   { id: 'pomodoro', name: 'Pomodoro', defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
   { id: 'weather', name: 'Weather', defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
 ]
@@ -25,6 +27,7 @@ export const widgetMetaById: Record<WidgetId, WidgetMeta> = {
   bookmarks: widgetMetaList[0],
   notes: widgetMetaList[1],
   heatmap: widgetMetaList[2],
-  pomodoro: widgetMetaList[3],
-  weather: widgetMetaList[4],
+  streak: widgetMetaList[3],
+  pomodoro: widgetMetaList[4],
+  weather: widgetMetaList[5],
 }
