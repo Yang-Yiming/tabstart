@@ -1,6 +1,10 @@
 import { Check, Globe, Image, Link, Moon, Pencil, Sun, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Dashboard } from './components/Dashboard'
+import { MouseHalo } from './components/MouseHalo'
+import { SettingsPanel } from './components/SettingsPanel'
+import { AppearanceContext } from './components/AppearanceContext'
+import { defaultMouseHaloConfig, type MouseHaloConfig } from './config/mouseHalo'
 import { SearchWidget } from './widgets/SearchWidget'
 import { ClockWidget } from './widgets/ClockWidget'
 import { homepageConfig } from './config/homepage'
@@ -29,6 +33,8 @@ export default function App() {
     prefersDark() ? 'dark' : 'light',
   )
   const dark = theme === 'dark'
+
+  const [haloConfig, setHaloConfig] = useLocalStorage<MouseHaloConfig>('homepage-mouse-halo', defaultMouseHaloConfig)
 
   const [bg, setBg] = useLocalStorage<BackgroundState>('homepage-background', {
     src: homepageConfig.background.src,
@@ -261,6 +267,7 @@ export default function App() {
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
+          <SettingsPanel haloConfig={haloConfig} onHaloChange={setHaloConfig} />
         </div>
 
       <input
@@ -271,7 +278,8 @@ export default function App() {
         onChange={handleFileChange}
       />
 
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24">
+      <AppearanceContext.Provider value={haloConfig}>
+        <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24">
         <div className="w-full max-w-5xl">
           <div className="mx-auto mb-4 max-w-3xl">
             <ClockWidget />
@@ -282,7 +290,10 @@ export default function App() {
           {dashboardReady && <Dashboard isEditing={isEditing} />}
         </div>
       </div>
-    </div>
+      </AppearanceContext.Provider>
+      <MouseHalo config={haloConfig} />
+      </div>
+
     </>
   )
 }

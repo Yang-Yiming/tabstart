@@ -1,11 +1,24 @@
-import type { MouseEvent, ReactNode } from 'react'
+import { useContext, type MouseEvent, type ReactNode } from 'react'
+import { AppearanceContext } from './AppearanceContext'
+import { defaultShineConfig } from '../config/mouseHalo'
 
 interface WidgetCardProps {
   children: ReactNode
   className?: string
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '')
+  const r = parseInt(clean.substring(0, 2), 16)
+  const g = parseInt(clean.substring(2, 4), 16)
+  const b = parseInt(clean.substring(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export function WidgetCard({ children, className = '' }: WidgetCardProps) {
+  const { shine: rawShine } = useContext(AppearanceContext)
+  const shine = rawShine ?? defaultShineConfig
+
   const handleMove = (e: MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget
     const rect = el.getBoundingClientRect()
@@ -14,6 +27,13 @@ export function WidgetCard({ children, className = '' }: WidgetCardProps) {
     el.style.setProperty('--shine-x', `${x}%`)
     el.style.setProperty('--shine-y', `${y}%`)
   }
+
+  const mainColor = shine.enabled
+    ? hexToRgba(shine.color, shine.opacity)
+    : undefined
+  const hoverColor = shine.enabled
+    ? hexToRgba(shine.color, shine.opacity * 0.65)
+    : undefined
 
   return (
     <div
@@ -26,19 +46,23 @@ export function WidgetCard({ children, className = '' }: WidgetCardProps) {
         'dark:border-white/10 dark:bg-black/15 dark:hover:border-white/20 dark:hover:bg-black/20',
         className,
       ].join(' ')}
-      style={{
-        backgroundImage:
-          'radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 0%), rgba(255,255,255,0.18) 0%, transparent 60%)',
-      }}
+      style={
+        mainColor
+          ? {
+              backgroundImage: `radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 0%), ${mainColor} 0%, transparent 60%)`,
+            }
+          : undefined
+      }
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          background:
-            'radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 0%), rgba(255,255,255,0.12) 0%, transparent 45%)',
-        }}
-      />
+      {shine.enabled && hoverColor && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          style={{
+            background: `radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 0%), ${hoverColor} 0%, transparent 45%)`,
+          }}
+        />
+      )}
       <div className="relative z-10">{children}</div>
     </div>
   )
