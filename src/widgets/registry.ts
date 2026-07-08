@@ -39,7 +39,7 @@ export const widgetGroups: WidgetGroup[] = [
     name: 'Pomodoro',
     variants: [
       { id: 'compact', label: 'Small', component: PomodoroCompact, defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
-      { id: 'large', label: 'Large', component: PomodoroLarge, defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
+      { id: 'large', label: 'Large', component: PomodoroLarge, defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
     ],
   },
   {

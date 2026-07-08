@@ -1,10 +1,10 @@
 import { Suspense } from 'react'
 import type { ResolvedVariant } from '../widgets/types'
 
-const CELL = 112
+const CELL = 128
 const GAP = 16
 const MAX_W = 240
-const MAX_H = 150
+const MAX_H = 240
 
 interface Props {
   variant: ResolvedVariant

@@ -63,7 +63,7 @@ export function WidgetCard({ children, className = '' }: WidgetCardProps) {
           }}
         />
       )}
-      <div className="relative z-10">{children}</div>
+      {children}
     </div>
   )
 }
