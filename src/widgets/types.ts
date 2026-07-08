@@ -1,6 +1,6 @@
 import type { ElementType } from 'react'
 
-export type WidgetId = 'clock' | 'search' | 'bookmarks' | 'notes' | 'pomodoro' | 'weather' | 'heatmap' | 'streak'
+export type WidgetId = 'clock' | 'search' | 'bookmarks' | 'notes' | 'pomodoro' | 'heatmap' | 'streak'
 
 export interface WidgetProps {
   className?: string

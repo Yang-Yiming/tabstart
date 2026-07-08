@@ -9,7 +9,6 @@ const PomodoroLarge = lazy(() =>
 )
 const Bookmarks = lazy(() => import('./BookmarksWidget').then((m) => ({ default: m.BookmarksWidget })))
 const Notes = lazy(() => import('./NotesWidget').then((m) => ({ default: m.NotesWidget })))
-const Weather = lazy(() => import('./WeatherWidget').then((m) => ({ default: m.WeatherWidget })))
 const Heatmap = lazy(() => import('./HeatmapWidget').then((m) => ({ default: m.HeatmapWidget })))
 const Streak = lazy(() => import('./StreakWidget').then((m) => ({ default: m.StreakWidget })))
 
@@ -41,11 +40,6 @@ export const widgetGroups: WidgetGroup[] = [
       { id: 'compact', label: 'Small', component: PomodoroCompact, defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
       { id: 'large', label: 'Large', component: PomodoroLarge, defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
     ],
-  },
-  {
-    id: 'weather',
-    name: 'Weather',
-    variants: [{ id: 'default', label: 'Weather', component: Weather, defaultW: 1, defaultH: 2, minW: 1, minH: 2 }],
   },
 ]
 
