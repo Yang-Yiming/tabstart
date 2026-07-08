@@ -16,6 +16,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive)
 const BREAKPOINTS = { lg: 960, md: 640, sm: 0 }
 const COLS = { lg: 4, md: 2, sm: 1 }
 const LAYOUT_KEY = 'homepage-widget-layouts-v1'
+const GRID_ROW_HEIGHT = 112
 
 const DEFAULT_LAYOUTS: Layouts = {
   lg: [
@@ -190,7 +191,7 @@ export function Dashboard({ isEditing }: Props) {
         layouts={normalizedLayouts}
         breakpoints={BREAKPOINTS}
         cols={COLS}
-        rowHeight={120}
+        rowHeight={GRID_ROW_HEIGHT}
         margin={[16, 16]}
         containerPadding={[0, 0]}
         isDraggable={isEditing}

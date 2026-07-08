@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { Minus, Plus } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -127,135 +128,164 @@ export function HeatmapWidget() {
   }
 
   return (
-    <WidgetCard className="flex h-full flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          {store.topics.map((topic) => (
-            <button
-              key={topic}
-              type="button"
-              onClick={() => setActiveTopic(topic)}
-              onContextMenu={(e) => {
-                e.preventDefault()
-                removeTopic(topic)
-              }}
-              className={[
-                'rounded-full px-3 py-1 text-sm font-medium transition',
-                topic === activeTopic
-                  ? 'bg-white/25 text-white'
-                  : 'bg-white/10 text-white/80 hover:bg-white/15',
-              ].join(' ')}
-            >
-              {topic}
-            </button>
-          ))}
-          <span className="mx-1 text-sm text-white/40">|</span>
-          <div className="flex items-center gap-1 text-sm">
-            <span className="text-white/50">Goal</span>
-            <input
-              type="number"
-              min={0}
-              value={goal || ''}
-              placeholder="—"
-              onChange={(e) => setGoal(Number(e.target.value) || 0)}
-              className="w-12 rounded border border-white/10 bg-white/10 px-1 py-0.5 text-center text-sm text-white outline-none transition focus:border-white/30 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
+    <WidgetCard className="h-full p-4">
+      <div className="flex h-full flex-col gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {store.topics.map((topic) => (
+              <button
+                key={topic}
+                type="button"
+                onClick={() => setActiveTopic(topic)}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  removeTopic(topic)
+                }}
+                className={[
+                  'rounded-full px-3 py-1 text-sm font-medium transition',
+                  topic === activeTopic
+                    ? 'bg-white/25 text-white'
+                    : 'bg-white/10 text-white/80 hover:bg-white/15',
+                ].join(' ')}
+              >
+                {topic}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-1 text-white/70">
+              <span className="text-white/45">Goal</span>
+              <button
+                type="button"
+                onClick={() => setGoal(goal - 1)}
+                className="rounded-full p-0.5 text-white/55 transition hover:bg-white/15 hover:text-white"
+                aria-label="Decrease goal"
+                title="Decrease goal"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <input
+                type="number"
+                min={0}
+                value={goal || ''}
+                placeholder="--"
+                onChange={(e) => setGoal(Number(e.target.value) || 0)}
+                className="w-9 bg-transparent px-0.5 text-center text-sm text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+              <button
+                type="button"
+                onClick={() => setGoal(goal + 1)}
+                className="rounded-full p-0.5 text-white/55 transition hover:bg-white/15 hover:text-white"
+                aria-label="Increase goal"
+                title="Increase goal"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
             {goal > 0 && (
-              <span className={goalMet ? 'text-emerald-300' : 'text-amber-300'}>
-                ({total}/{goal})
+              <span
+                className={[
+                  'rounded-full px-2.5 py-1 font-medium',
+                  goalMet ? 'bg-emerald-400/15 text-emerald-200' : 'bg-amber-300/15 text-amber-200',
+                ].join(' ')}
+              >
+                {total}/{goal}
               </span>
             )}
-          </div>
-          <button
-            type="button"
-            onClick={addTopic}
-            className="rounded-full px-3 py-1 text-sm font-medium text-white/60 transition hover:bg-white/10"
-          >
-            + New
-          </button>
-        </div>
-
-        {selected && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-white/50">{formatKey(selected)}</span>
             <button
               type="button"
-              onClick={() => selected && setValue(selected, -1)}
-              className="rounded-lg bg-white/10 p-1 text-white transition hover:bg-white/20"
+              onClick={addTopic}
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 font-medium text-white/60 transition hover:bg-white/10 hover:text-white"
             >
-              <Minus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
+              New
             </button>
-            <span className="min-w-[1.5rem] text-center font-mono text-sm text-white">
-              {selectedValue}
-            </span>
-            <button
-              type="button"
-              onClick={() => selected && setValue(selected, 1)}
-              className="rounded-lg bg-white/10 p-1 text-white transition hover:bg-white/20"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <div className="relative">
-          <div className="pointer-events-none absolute -top-5 left-0 flex h-4 w-full">
-            {monthLabels.map(({ weekIdx, label }) => (
-              <span
-                key={`${label}-${weekIdx}`}
-                className="absolute text-[10px] text-white/50"
-                style={{ left: `${weekIdx * 13}px` }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex gap-[3px]">
-            {weeks.map((days, weekIdx) => (
-              <div key={weekIdx} className="flex flex-col gap-[3px]">
-                {days.map((day) => {
-                  const value = getValue(day)
-                  const key = formatKey(day)
-                  const isSelected = selected ? formatKey(selected) === key : false
-                  return (
-                     <button
-                      key={key}
-                      type="button"
-                      aria-label={`${key}: ${value}`}
-                      onClick={() => setSelected(day)}
-                      style={intensityStyle(value, goal)}
-                      className={[
-                        'h-[10px] w-[10px] rounded-[2px] transition',
-                        isSelected
-                          ? 'ring-2 ring-white/80'
-                          : key === todayKey
-                            ? 'ring-1 ring-inset ring-white/60'
-                            : 'hover:ring-2 hover:ring-white/40',
-                      ].join(' ')}
-                    />
-                  )
-                })}
+            {selected && (
+              <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1">
+                <span className="font-mono text-xs text-white/50">{formatKey(selected)}</span>
+                <button
+                  type="button"
+                  onClick={() => selected && setValue(selected, -1)}
+                  className="rounded-full p-0.5 text-white/55 transition hover:bg-white/15 hover:text-white"
+                  aria-label="Decrease selected day"
+                  title="Decrease selected day"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <span className="min-w-4 text-center font-mono text-xs text-white">{selectedValue}</span>
+                <button
+                  type="button"
+                  onClick={() => selected && setValue(selected, 1)}
+                  className="rounded-full p-0.5 text-white/55 transition hover:bg-white/15 hover:text-white"
+                  aria-label="Increase selected day"
+                  title="Increase selected day"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-end gap-1.5 text-[10px] text-white/50">
-        <span>Less</span>
-        {legendValues(goal).map((v, i) => (
-          <div key={i} className="h-[10px] w-[10px] rounded-[2px]" style={intensityStyle(v, goal)} />
-        ))}
-        <span>More</span>
+        <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
+          <div className="min-w-[680px]">
+            <div className="relative h-4">
+              {monthLabels.map(({ weekIdx, label }) => (
+                <span
+                  key={`${label}-${weekIdx}`}
+                  className="absolute text-xs text-white/50"
+                  style={{ left: `${(weekIdx / WEEKS) * 100}%` }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-[repeat(53,minmax(0,1fr))] gap-[4px]">
+              {weeks.map((days, weekIdx) => (
+                <div key={weekIdx} className="flex flex-col gap-[4px]">
+                  {days.map((day) => {
+                    const value = getValue(day)
+                    const key = formatKey(day)
+                    const isSelected = selected ? formatKey(selected) === key : false
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-label={`${key}: ${value}`}
+                        onClick={() => setSelected(day)}
+                        style={intensityStyle(value, goal)}
+                        className={[
+                          'aspect-square w-full rounded-[3px] transition',
+                          isSelected
+                            ? 'ring-2 ring-white/80'
+                            : key === todayKey
+                              ? 'ring-1 ring-inset ring-white/60'
+                              : 'hover:ring-2 hover:ring-white/40',
+                        ].join(' ')}
+                      />
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-1.5 text-[10px] text-white/50">
+          <span>Less</span>
+          {legendValues(goal).map((v, i) => (
+            <div key={i} className="h-3 w-3 rounded-[3px]" style={intensityStyle(v, goal)} />
+          ))}
+          <span>More</span>
+        </div>
       </div>
     </WidgetCard>
   )
 }
 
-function intensityStyle(value: number, goal: number): React.CSSProperties {
+function intensityStyle(value: number, goal: number): CSSProperties {
   if (goal <= 0) {
     if (value === 0) return { backgroundColor: 'rgba(255,255,255,0.1)' }
     const opacity = Math.min(0.1 + 0.15 * value, 1)
