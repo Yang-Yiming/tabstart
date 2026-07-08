@@ -1,33 +1,96 @@
-import { lazy, type ElementType } from 'react'
-import type { WidgetId, WidgetMeta } from './types'
+import { lazy } from 'react'
+import type { ResolvedVariant, WidgetGroup, WidgetId } from './types'
 
-export const widgetRegistry: Record<WidgetId, ElementType> = {
-  clock: lazy(() => import('./ClockWidget').then((module) => ({ default: module.ClockWidget }))),
-  search: lazy(() => import('./SearchWidget').then((module) => ({ default: module.SearchWidget }))),
-  bookmarks: lazy(() => import('./BookmarksWidget').then((module) => ({ default: module.BookmarksWidget }))),
-  notes: lazy(() => import('./NotesWidget').then((module) => ({ default: module.NotesWidget }))),
-  pomodoro: lazy(() => import('./PomodoroWidget').then((module) => ({ default: module.PomodoroWidget }))),
-  weather: lazy(() => import('./WeatherWidget').then((module) => ({ default: module.WeatherWidget }))),
-  heatmap: lazy(() => import('./HeatmapWidget').then((module) => ({ default: module.HeatmapWidget }))),
-  streak: lazy(() => import('./StreakWidget').then((module) => ({ default: module.StreakWidget }))),
-}
+const PomodoroCompact = lazy(() =>
+  import('./PomodoroWidget').then((m) => ({ default: m.PomodoroCompactWidget })),
+)
+const PomodoroLarge = lazy(() =>
+  import('./PomodoroWidget').then((m) => ({ default: m.PomodoroLargeWidget })),
+)
+const Bookmarks = lazy(() => import('./BookmarksWidget').then((m) => ({ default: m.BookmarksWidget })))
+const Notes = lazy(() => import('./NotesWidget').then((m) => ({ default: m.NotesWidget })))
+const Weather = lazy(() => import('./WeatherWidget').then((m) => ({ default: m.WeatherWidget })))
+const Heatmap = lazy(() => import('./HeatmapWidget').then((m) => ({ default: m.HeatmapWidget })))
+const Streak = lazy(() => import('./StreakWidget').then((m) => ({ default: m.StreakWidget })))
 
-export const widgetMetaList: WidgetMeta[] = [
-  { id: 'bookmarks', name: 'Bookmarks', defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
-  { id: 'notes', name: 'Quick Notes', defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
-  { id: 'heatmap', name: 'Heatmap', defaultW: 4, defaultH: 2, minW: 3, minH: 2 },
-  { id: 'streak', name: 'Streak', defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
-  { id: 'pomodoro', name: 'Pomodoro', defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
-  { id: 'weather', name: 'Weather', defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
+export const widgetGroups: WidgetGroup[] = [
+  {
+    id: 'bookmarks',
+    name: 'Bookmarks',
+    variants: [{ id: 'default', label: 'Bookmarks', component: Bookmarks, defaultW: 2, defaultH: 2, minW: 2, minH: 2 }],
+  },
+  {
+    id: 'notes',
+    name: 'Quick Notes',
+    variants: [{ id: 'default', label: 'Notes', component: Notes, defaultW: 2, defaultH: 2, minW: 2, minH: 2 }],
+  },
+  {
+    id: 'heatmap',
+    name: 'Heatmap',
+    variants: [{ id: 'default', label: 'Heatmap', component: Heatmap, defaultW: 4, defaultH: 2, minW: 3, minH: 2 }],
+  },
+  {
+    id: 'streak',
+    name: 'Streak',
+    variants: [{ id: 'default', label: 'Streak', component: Streak, defaultW: 1, defaultH: 1, minW: 1, minH: 1 }],
+  },
+  {
+    id: 'pomodoro',
+    name: 'Pomodoro',
+    variants: [
+      { id: 'compact', label: 'Small', component: PomodoroCompact, defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
+      { id: 'large', label: 'Large', component: PomodoroLarge, defaultW: 1, defaultH: 2, minW: 1, minH: 2 },
+    ],
+  },
+  {
+    id: 'weather',
+    name: 'Weather',
+    variants: [{ id: 'default', label: 'Weather', component: Weather, defaultW: 1, defaultH: 2, minW: 1, minH: 2 }],
+  },
 ]
 
-export const widgetMetaById: Record<WidgetId, WidgetMeta> = {
-  clock: { id: 'clock', name: 'Clock', defaultW: 4, defaultH: 1, minW: 2, minH: 1 },
-  search: { id: 'search', name: 'Search', defaultW: 4, defaultH: 1, minW: 2, minH: 1 },
-  bookmarks: widgetMetaList[0],
-  notes: widgetMetaList[1],
-  heatmap: widgetMetaList[2],
-  streak: widgetMetaList[3],
-  pomodoro: widgetMetaList[4],
-  weather: widgetMetaList[5],
+const groupById: Record<string, WidgetGroup> = Object.fromEntries(
+  widgetGroups.map((group) => [group.id, group]),
+)
+
+export function variantKey(widgetId: WidgetId, variantId: string): string {
+  const group = groupById[widgetId]
+  if (group && group.variants.length === 1) return widgetId
+  return `${widgetId}:${variantId}`
+}
+
+export const variantByKey: Record<string, ResolvedVariant> = (() => {
+  const map: Record<string, ResolvedVariant> = {}
+  for (const group of widgetGroups) {
+    for (const variant of group.variants) {
+      const key = variantKey(group.id, variant.id)
+      map[key] = {
+        key,
+        widgetId: group.id,
+        variantId: variant.id,
+        groupName: group.name,
+        label: variant.label,
+        component: variant.component,
+        defaultW: variant.defaultW,
+        defaultH: variant.defaultH,
+        minW: variant.minW ?? 1,
+        minH: variant.minH ?? 1,
+      }
+    }
+  }
+  return map
+})()
+
+const LEGACY_KEYS: Record<string, string> = {
+  pomodoro: 'pomodoro:compact',
+}
+
+export function resolveVariant(key: string): ResolvedVariant | undefined {
+  return variantByKey[key] ?? variantByKey[LEGACY_KEYS[key] ?? '']
+}
+
+export function canonicalKey(key: string): string {
+  if (variantByKey[key]) return key
+  const legacy = LEGACY_KEYS[key]
+  return legacy && variantByKey[legacy] ? legacy : key
 }

@@ -5,8 +5,8 @@ import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { widgetMetaById, widgetMetaList, widgetRegistry } from '../widgets/registry'
-import type { WidgetId } from '../widgets/types'
+import { canonicalKey, resolveVariant, variantKey, widgetGroups } from '../widgets/registry'
+import { WidgetPreview } from './WidgetPreview'
 
 interface Props {
   isEditing: boolean
@@ -46,17 +46,18 @@ function cloneLayouts(layouts: Layouts): Layouts {
 }
 
 function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS): Layout {
-  const meta = widgetMetaById[item.i as WidgetId]
+  const variant = resolveVariant(item.i)
   const cols = COLS[breakpoint]
-  const minW = Math.min(meta?.minW ?? 1, cols)
+  const minW = Math.min(variant?.minW ?? 1, cols)
   const w = Math.min(Math.max(item.w, minW), cols)
 
   return {
     ...item,
+    i: canonicalKey(item.i),
     x: Math.min(item.x, Math.max(0, cols - w)),
     w,
     minW,
-    minH: meta?.minH ?? item.minH ?? 1,
+    minH: variant?.minH ?? item.minH ?? 1,
   }
 }
 
@@ -64,7 +65,7 @@ function normalizeLayouts(layouts: Layouts): Layouts {
   return (Object.keys(COLS) as Array<keyof typeof COLS>).reduce<Layouts>((result, breakpoint) => {
     const source = layouts[breakpoint] ?? DEFAULT_LAYOUTS[breakpoint] ?? []
     result[breakpoint] = source
-      .filter((item) => item.i in widgetRegistry)
+      .filter((item) => resolveVariant(item.i))
       .map((item) => withWidgetLimits(item, breakpoint))
     return result
   }, {})
@@ -74,18 +75,18 @@ function nextY(layout: Layout[]) {
   return layout.reduce((max, item) => Math.max(max, item.y + item.h), 0)
 }
 
-function createLayoutItem(id: WidgetId, breakpoint: keyof typeof COLS, layout: Layout[]): Layout {
-  const meta = widgetMetaById[id]
+function createLayoutItem(key: string, breakpoint: keyof typeof COLS, layout: Layout[]): Layout {
+  const variant = resolveVariant(key)!
   const cols = COLS[breakpoint]
-  const w = Math.min(meta.defaultW, cols)
+  const w = Math.min(variant.defaultW, cols)
   return {
-    i: id,
+    i: key,
     x: 0,
     y: nextY(layout),
     w,
-    h: meta.defaultH,
-    minW: Math.min(meta.minW ?? 1, cols),
-    minH: meta.minH,
+    h: variant.defaultH,
+    minW: Math.min(variant.minW, cols),
+    minH: variant.minH,
   }
 }
 
@@ -96,7 +97,10 @@ export function Dashboard({ isEditing }: Props) {
   const [addPanelOpen, setAddPanelOpen] = useState(false)
 
   const normalizedLayouts = useMemo(() => normalizeLayouts(layouts), [layouts])
-  const activeIds = useMemo(() => new Set((normalizedLayouts.lg ?? []).map((item) => item.i)), [normalizedLayouts])
+  const activeKeys = useMemo(
+    () => new Set((normalizedLayouts.lg ?? []).map((item) => item.i)),
+    [normalizedLayouts],
+  )
 
   const handleLayoutChange = useCallback(
     (_currentLayout: Layout[], allLayouts: Layouts) => {
@@ -106,11 +110,11 @@ export function Dashboard({ isEditing }: Props) {
   )
 
   const handleRemove = useCallback(
-    (id: WidgetId) => {
+    (key: string) => {
       setLayouts((prev) => {
         const next = cloneLayouts(normalizeLayouts(prev))
-        for (const key of Object.keys(COLS)) {
-          next[key] = (next[key] ?? []).filter((item) => item.i !== id)
+        for (const bp of Object.keys(COLS)) {
+          next[bp] = (next[bp] ?? []).filter((item) => item.i !== key)
         }
         return next
       })
@@ -119,13 +123,13 @@ export function Dashboard({ isEditing }: Props) {
   )
 
   const handleAdd = useCallback(
-    (id: WidgetId) => {
+    (key: string) => {
       setLayouts((prev) => {
         const next = cloneLayouts(normalizeLayouts(prev))
-        for (const breakpoint of Object.keys(COLS) as Array<keyof typeof COLS>) {
-          const layout = next[breakpoint] ?? []
-          if (!layout.some((item) => item.i === id)) {
-            next[breakpoint] = [...layout, createLayoutItem(id, breakpoint, layout)]
+        for (const bp of Object.keys(COLS) as Array<keyof typeof COLS>) {
+          const layout = next[bp] ?? []
+          if (!layout.some((item) => item.i === key)) {
+            next[bp] = [...layout, createLayoutItem(key, bp, layout)]
           }
         }
         return next
@@ -140,15 +144,19 @@ export function Dashboard({ isEditing }: Props) {
     setAddPanelOpen(false)
   }, [setLayouts])
 
-  const availableWidgets = useMemo(
-    () => widgetMetaList.filter((meta) => !activeIds.has(meta.id)),
-    [activeIds],
+  const availableGroups = useMemo(
+    () =>
+      widgetGroups.filter((group) =>
+        group.variants.some((v) => !activeKeys.has(variantKey(group.id, v.id))),
+      ),
+    [activeKeys],
   )
 
   const renderedWidgets = useMemo(() => {
     return (normalizedLayouts.lg ?? []).map((item) => {
-      const WidgetComponent = widgetRegistry[item.i as WidgetId]
-      if (!WidgetComponent) return null
+      const variant = resolveVariant(item.i)
+      if (!variant) return null
+      const WidgetComponent = variant.component
 
       return (
         <div key={item.i} className="group/widget relative h-full">
@@ -173,7 +181,7 @@ export function Dashboard({ isEditing }: Props) {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleRemove(item.i as WidgetId)
+                  handleRemove(item.i)
                 }}
                 className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-black/25 p-1.5 text-white/65 shadow-lg backdrop-blur-xl transition hover:bg-red-500/20 hover:text-red-100"
                 aria-label="Remove widget"
@@ -209,26 +217,11 @@ export function Dashboard({ isEditing }: Props) {
       </ResponsiveGridLayout>
 
       {isEditing && (
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-5 flex flex-col items-center gap-3">
           {addPanelOpen ? (
-            <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/35 p-3 shadow-2xl backdrop-blur-2xl">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-2">
-                  {availableWidgets.length === 0 ? (
-                    <span className="px-2 py-1.5 text-sm text-white/45">All widgets are on the page.</span>
-                  ) : (
-                    availableWidgets.map((meta) => (
-                      <button
-                        key={meta.id}
-                        type="button"
-                        onClick={() => handleAdd(meta.id)}
-                        className="rounded-full bg-white/10 px-3 py-1.5 text-sm text-white/80 transition hover:bg-white/18 hover:text-white"
-                      >
-                        {meta.name}
-                      </button>
-                    ))
-                  )}
-                </div>
+            <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-black/35 p-5 shadow-2xl backdrop-blur-2xl">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-white/85">Add a Widget</span>
                 <button
                   type="button"
                   onClick={() => setAddPanelOpen(false)}
@@ -239,6 +232,35 @@ export function Dashboard({ isEditing }: Props) {
                   <X className="h-4 w-4" />
                 </button>
               </div>
+
+              {availableGroups.length === 0 ? (
+                <p className="py-6 text-center text-sm text-white/45">All widgets are on the page.</p>
+              ) : (
+                <div className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto pr-1">
+                  {availableGroups.map((group) => {
+                    const openVariants = group.variants.filter(
+                      (v) => !activeKeys.has(variantKey(group.id, v.id)),
+                    )
+                    if (openVariants.length === 0) return null
+                    return (
+                      <div key={group.id} className="flex flex-col gap-3">
+                        <span className="text-xs font-medium uppercase tracking-[0.16em] text-white/40">
+                          {group.name}
+                        </span>
+                        <div className="flex flex-wrap items-end gap-5">
+                          {openVariants.map((v) => {
+                            const key = variantKey(group.id, v.id)
+                            const resolved = resolveVariant(key)!
+                            return (
+                              <WidgetPreview key={key} variant={resolved} onClick={() => handleAdd(key)} />
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           ) : (
             <button
