@@ -42,8 +42,8 @@ export interface HomepageConfig {
 export const homepageConfig: HomepageConfig = {
   title: 'Launchpad',
   background: {
-    src: 'https://wallpapershome.com/images/pages/pic_h/28239.jpg',
-    overlay: 0.35,
+    src: '',
+    overlay: 0.3,
     blur: 0,
   },
   widgets: [

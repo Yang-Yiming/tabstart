@@ -1,21 +1,14 @@
-import type { ComponentType } from 'react'
-import { HeatmapWidget } from './HeatmapWidget'
+import { lazy, type ElementType } from 'react'
 import type { WidgetId, WidgetMeta } from './types'
-import { ClockWidget } from './ClockWidget'
-import { SearchWidget } from './SearchWidget'
-import { BookmarksWidget } from './BookmarksWidget'
-import { NotesWidget } from './NotesWidget'
-import { PomodoroWidget } from './PomodoroWidget'
-import { WeatherWidget } from './WeatherWidget'
 
-export const widgetRegistry: Record<WidgetId, ComponentType> = {
-  clock: ClockWidget,
-  search: SearchWidget,
-  bookmarks: BookmarksWidget,
-  notes: NotesWidget,
-  pomodoro: PomodoroWidget,
-  weather: WeatherWidget,
-  heatmap: HeatmapWidget,
+export const widgetRegistry: Record<WidgetId, ElementType> = {
+  clock: lazy(() => import('./ClockWidget').then((module) => ({ default: module.ClockWidget }))),
+  search: lazy(() => import('./SearchWidget').then((module) => ({ default: module.SearchWidget }))),
+  bookmarks: lazy(() => import('./BookmarksWidget').then((module) => ({ default: module.BookmarksWidget }))),
+  notes: lazy(() => import('./NotesWidget').then((module) => ({ default: module.NotesWidget }))),
+  pomodoro: lazy(() => import('./PomodoroWidget').then((module) => ({ default: module.PomodoroWidget }))),
+  weather: lazy(() => import('./WeatherWidget').then((module) => ({ default: module.WeatherWidget }))),
+  heatmap: lazy(() => import('./HeatmapWidget').then((module) => ({ default: module.HeatmapWidget }))),
 }
 
 export const widgetMetaList: WidgetMeta[] = [

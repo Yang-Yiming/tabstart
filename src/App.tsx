@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard'
 import { SearchWidget } from './widgets/SearchWidget'
 import { ClockWidget } from './widgets/ClockWidget'
 import { homepageConfig } from './config/homepage'
-import { useLocalStorage } from './hooks/useLocalStorage'
+import { useLocalStorage, useStoredState } from './hooks/useLocalStorage'
 
 interface BackgroundState {
   src: string
@@ -17,13 +17,18 @@ interface BingCache {
   url: string
 }
 
+type IdleCallback = (deadline: IdleDeadline) => void
+
 export default function App() {
-  const [dark, setDark] = useState(() => {
+  const prefersDark = () => {
     if (typeof window === 'undefined') return false
-    const stored = window.localStorage.getItem('homepage-theme')
-    if (stored) return stored === 'dark'
     return window.matchMedia('(prefers-color-scheme: dark)').matches
-  })
+  }
+  const [theme, setTheme] = useStoredState<'dark' | 'light'>(
+    'homepage-theme',
+    prefersDark() ? 'dark' : 'light',
+  )
+  const dark = theme === 'dark'
 
   const [bg, setBg] = useLocalStorage<BackgroundState>('homepage-background', {
     src: homepageConfig.background.src,
@@ -38,6 +43,7 @@ export default function App() {
   const [urlInputOpen, setUrlInputOpen] = useState(false)
   const [urlValue, setUrlValue] = useState('')
   const [isEditing, setIsEditing] = useState(false)
+  const [dashboardReady, setDashboardReady] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -47,8 +53,22 @@ export default function App() {
     } else {
       root.classList.remove('dark')
     }
-    window.localStorage.setItem('homepage-theme', dark ? 'dark' : 'light')
   }, [dark])
+
+  useEffect(() => {
+    const idle =
+      window.requestIdleCallback ??
+      ((callback: IdleCallback) =>
+        window.setTimeout(() => {
+          callback({
+            didTimeout: false,
+            timeRemaining: () => 0,
+          })
+        }, 80))
+    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout
+    const id = idle(() => setDashboardReady(true))
+    return () => cancelIdle(id)
+  }, [])
 
   useEffect(() => {
     if (resetFileBgRef.current) return
@@ -122,7 +142,10 @@ export default function App() {
     <>
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${backgroundSrc})` }}
+        style={{
+          backgroundColor: '#121826',
+          backgroundImage: backgroundSrc ? `url(${backgroundSrc})` : undefined,
+        }}
       />
       <div
         className="pointer-events-none fixed inset-0"
@@ -231,7 +254,7 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setDark((d) => !d)}
+            onClick={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
             className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
             aria-label="Toggle theme"
             title="Theme"
@@ -256,7 +279,7 @@ export default function App() {
           <div className="mx-auto mb-10 max-w-2xl">
             <SearchWidget />
           </div>
-          <Dashboard isEditing={isEditing} />
+          {dashboardReady && <Dashboard isEditing={isEditing} />}
         </div>
       </div>
     </div>

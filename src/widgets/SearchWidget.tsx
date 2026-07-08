@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ArrowRight, Search, Trash2 } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { homepageConfig } from '../config/homepage'
@@ -71,18 +71,14 @@ const normalizeHistoryItem = (item: unknown): HistoryItem => {
 
 export function SearchWidget() {
   const [query, setQuery] = useState('')
-  const [history, setHistory] = useState<HistoryItem[]>(() => {
-    try {
-      const raw = window.localStorage.getItem(HISTORY_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) {
-          return parsed.map(normalizeHistoryItem).filter((item) => item.query.trim() !== '')
-        }
-      }
-    } catch {}
-    return []
-  })
+  const [rawHistory, setHistory] = useLocalStorage<unknown[]>(HISTORY_KEY, [])
+  const history = useMemo(
+    () =>
+      Array.isArray(rawHistory)
+        ? rawHistory.map(normalizeHistoryItem).filter((item) => item.query.trim() !== '')
+        : [],
+    [rawHistory],
+  )
   const [storedEngine, setEngineKey] = useLocalStorage<string>(
     ENGINE_KEY,
     homepageConfig.search.defaultEngine
@@ -99,24 +95,23 @@ export function SearchWidget() {
   const engine = homepageConfig.search.engines[engineKey]
   const meta = engineMeta[engineKey]
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
-    } catch {}
-  }, [history])
-
   const addHistory = (term: string, engineKey: EngineKey) => {
     const trimmed = term.trim()
     if (!trimmed) return
     setHistory((prev) => {
-      const next = prev.filter((item) => item.query.toLowerCase() !== trimmed.toLowerCase())
+      const normalized = Array.isArray(prev)
+        ? prev.map(normalizeHistoryItem).filter((item) => item.query.trim() !== '')
+        : []
+      const next = normalized.filter((item) => item.query.toLowerCase() !== trimmed.toLowerCase())
       next.unshift({ query: trimmed, engine: engineKey })
       return next.slice(0, MAX_HISTORY)
     })
   }
 
   const removeHistory = (query: string) => {
-    setHistory((prev) => prev.filter((item) => item.query !== query))
+    setHistory((prev) =>
+      (Array.isArray(prev) ? prev.map(normalizeHistoryItem) : []).filter((item) => item.query !== query),
+    )
   }
 
   const clearHistory = () => setHistory([])

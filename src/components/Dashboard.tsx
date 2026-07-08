@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { GripVertical, Plus, RotateCcw, X } from 'lucide-react'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import type { Layout, Layouts } from 'react-grid-layout'
@@ -86,7 +86,9 @@ function createLayoutItem(id: WidgetId, breakpoint: keyof typeof COLS, layout: L
 }
 
 export function Dashboard({ isEditing }: Props) {
-  const [layouts, setLayouts] = useLocalStorage<Layouts>(LAYOUT_KEY, DEFAULT_LAYOUTS)
+  const [layouts, setLayouts] = useLocalStorage<Layouts>(LAYOUT_KEY, DEFAULT_LAYOUTS, {
+    debounceMs: 350,
+  })
   const [addPanelOpen, setAddPanelOpen] = useState(false)
 
   const normalizedLayouts = useMemo(() => normalizeLayouts(layouts), [layouts])
@@ -147,7 +149,9 @@ export function Dashboard({ isEditing }: Props) {
       return (
         <div key={item.i} className="group/widget relative h-full">
           <div className="h-full [&>*]:h-full">
-            <WidgetComponent />
+            <Suspense fallback={<div className="h-full rounded-2xl bg-black/20 backdrop-blur-xl" />}>
+              <WidgetComponent />
+            </Suspense>
           </div>
 
           {isEditing && (

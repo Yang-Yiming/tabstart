@@ -2,7 +2,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 import { WidgetCard } from '../components/WidgetCard'
 
 export function NotesWidget() {
-  const [notes, setNotes] = useLocalStorage('homepage-notes', '')
+  const [notes, setNotes] = useLocalStorage('homepage-notes', '', { debounceMs: 500 })
 
   return (
     <WidgetCard className="flex h-full flex-col gap-3">
