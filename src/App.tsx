@@ -21,8 +21,6 @@ interface BingCache {
   url: string
 }
 
-type IdleCallback = (deadline: IdleDeadline) => void
-
 export default function App() {
   const prefersDark = () => {
     if (typeof window === 'undefined') return false
@@ -49,7 +47,6 @@ export default function App() {
   const [urlInputOpen, setUrlInputOpen] = useState(false)
   const [urlValue, setUrlValue] = useState('')
   const [isEditing, setIsEditing] = useState(false)
-  const [dashboardReady, setDashboardReady] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -60,21 +57,6 @@ export default function App() {
       root.classList.remove('dark')
     }
   }, [dark])
-
-  useEffect(() => {
-    const idle =
-      window.requestIdleCallback ??
-      ((callback: IdleCallback) =>
-        window.setTimeout(() => {
-          callback({
-            didTimeout: false,
-            timeRemaining: () => 0,
-          })
-        }, 80))
-    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout
-    const id = idle(() => setDashboardReady(true))
-    return () => cancelIdle(id)
-  }, [])
 
   useEffect(() => {
     if (resetFileBgRef.current) return
@@ -287,7 +269,7 @@ export default function App() {
           <div className="mx-auto mb-10 max-w-2xl">
             <SearchWidget />
           </div>
-          {dashboardReady && <Dashboard isEditing={isEditing} />}
+          <Dashboard isEditing={isEditing} />
         </div>
       </div>
       </AppearanceContext.Provider>

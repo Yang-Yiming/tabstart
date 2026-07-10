@@ -197,7 +197,7 @@ export function Dashboard({ isEditing }: Props) {
   }, [handleRemove, isEditing, normalizedLayouts])
 
   return (
-    <div className="dashboard-grid relative">
+    <div className={['dashboard-grid relative', isEditing ? 'is-editing' : ''].join(' ')}>
       <ResponsiveGridLayout
         layouts={normalizedLayouts}
         breakpoints={BREAKPOINTS}

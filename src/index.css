@@ -77,9 +77,16 @@ button {
   backdrop-filter: blur(20px);
 }
 
-.dashboard-grid .react-grid-item {
+.dashboard-grid .react-grid-item.react-grid-item {
+  transition: none;
+}
+
+.dashboard-grid .react-grid-layout {
+  transition: none;
+}
+
+.dashboard-grid.is-editing .react-grid-item.react-grid-item {
   transition:
-    transform 220ms ease,
     width 220ms ease,
     height 220ms ease;
 }
