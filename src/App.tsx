@@ -1,5 +1,5 @@
 import { Check, Globe, Image, Link, Moon, Pencil, Sun, Upload } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { MouseHalo } from './components/MouseHalo'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -8,17 +8,13 @@ import { defaultMouseHaloConfig, type MouseHaloConfig } from './config/mouseHalo
 import { SearchWidget } from './widgets/SearchWidget'
 import { ClockWidget } from './widgets/ClockWidget'
 import { homepageConfig } from './config/homepage'
+import { fetchBingDailyImage, isBingImageUrl, localDateKey, type BingDailyImage } from './lib/bingImage'
 import { useLocalStorage, useStoredState } from './hooks/useLocalStorage'
 
 interface BackgroundState {
   src: string
   overlay: number
-  mode: 'url' | 'file'
-}
-
-interface BingCache {
-  date: string
-  url: string
+  mode: 'url' | 'file' | 'bing'
 }
 
 export default function App() {
@@ -34,15 +30,19 @@ export default function App() {
 
   const [haloConfig, setHaloConfig] = useLocalStorage<MouseHaloConfig>('homepage-mouse-halo', defaultMouseHaloConfig)
 
-  const [bg, setBg] = useLocalStorage<BackgroundState>('homepage-background', {
+  const [bg, setBg, bgHydrated] = useStoredState<BackgroundState>('homepage-background', {
     src: homepageConfig.background.src,
     overlay: homepageConfig.background.overlay,
     mode: 'url',
   })
-  const [bingCache, setBingCache] = useLocalStorage<BingCache | null>('homepage-bing-cache', null)
+  const [bingCache, setBingCache, bingCacheHydrated] = useStoredState<BingDailyImage | null>(
+    'homepage-bing-cache',
+    null,
+  )
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resetFileBgRef = useRef(false)
+  const autoCheckedBingDateRef = useRef<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [urlInputOpen, setUrlInputOpen] = useState(false)
   const [urlValue, setUrlValue] = useState('')
@@ -98,23 +98,45 @@ export default function App() {
     setBg({ ...bg, mode: 'file', src: url })
   }
 
-  const applyBingBackground = async () => {
-    setMenuOpen(false)
-    const today = new Date().toISOString().slice(0, 10)
+  const refreshBingBackground = useCallback(async () => {
+    const today = localDateKey()
 
     if (bingCache?.date === today) {
-      setBg({ ...bg, mode: 'url', src: bingCache.url })
+      setBg((current) => ({ ...current, mode: 'bing', src: bingCache.url }))
       return
     }
 
-    try {
-      const response = await fetch('https://bing.ee123.net/img/4k')
-      setBingCache({ date: today, url: response.url })
-      setBg({ ...bg, mode: 'url', src: response.url })
-    } catch {
-      const fallback = 'https://bing.ee123.net/img/4k'
-      setBg({ ...bg, mode: 'url', src: fallback })
-    }
+    const image = await fetchBingDailyImage()
+    setBingCache(image)
+    setBg((current) => ({ ...current, mode: 'bing', src: image.url }))
+  }, [bingCache?.date, bingCache?.url, setBg, setBingCache])
+
+  useEffect(() => {
+    if (!bgHydrated || !bingCacheHydrated) return
+
+    const today = localDateKey()
+    if (autoCheckedBingDateRef.current === today) return
+
+    const isCurrentBingBackground =
+      bg.mode === 'bing' ||
+      isBingImageUrl(bg.src, bingCache?.url)
+
+    if (!isCurrentBingBackground) return
+
+    autoCheckedBingDateRef.current = today
+    refreshBingBackground().catch(() => {})
+  }, [
+    bg.mode,
+    bg.src,
+    bgHydrated,
+    bingCache?.url,
+    bingCacheHydrated,
+    refreshBingBackground,
+  ])
+
+  const applyBingBackground = async () => {
+    setMenuOpen(false)
+    await refreshBingBackground()
   }
 
   const handleUrlApply = () => {
