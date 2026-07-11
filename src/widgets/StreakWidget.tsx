@@ -10,8 +10,8 @@ export function StreakWidget() {
   const safeTopic = topics.includes(activeTopic) ? activeTopic : topics[0]
 
   const stats = useMemo(
-    () => calculateStreakStats(store.data[safeTopic] ?? {}),
-    [store.data, safeTopic],
+    () => calculateStreakStats(store.data[safeTopic] ?? {}, store.goals[safeTopic] ?? 1),
+    [store.data, store.goals, safeTopic],
   )
 
   const switchTopic = () => {

@@ -51,19 +51,20 @@ function addDateKeyDays(key: string, days: number) {
   return date.toISOString().split('T')[0]
 }
 
-export function calculateStreakStats(topicData: TopicData = {}, today = new Date()): StreakStats {
+export function calculateStreakStats(topicData: TopicData = {}, goal = 1, today = new Date()): StreakStats {
+  const effectiveGoal = Math.max(1, goal)
   const normalizedToday = new Date(today)
   normalizedToday.setHours(0, 0, 0, 0)
 
   let current = 0
   for (let offset = 0; ; offset++) {
     const key = formatDateKey(addDays(normalizedToday, -offset))
-    if ((topicData[key] ?? 0) <= 0) break
+    if ((topicData[key] ?? 0) < effectiveGoal) break
     current += 1
   }
 
   const activeKeys = Object.entries(topicData)
-    .filter(([, value]) => value > 0)
+    .filter(([, value]) => value >= effectiveGoal)
     .map(([key]) => key)
     .sort()
 
