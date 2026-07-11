@@ -93,13 +93,7 @@ export function HeatmapWidget() {
 
   const selectedValue = selected ? getValue(selected) : 0
 
-  const total = useMemo(() => {
-    const topicData = store.data[activeTopic] ?? {}
-    return Object.values(topicData).reduce((sum, v) => sum + v, 0)
-  }, [store.data, activeTopic])
-
   const goal = store.goals[activeTopic] ?? 0
-  const goalMet = goal > 0 && total >= goal
 
   const setGoal = (value: number) => {
     setStore((prev) => ({
@@ -164,16 +158,6 @@ export function HeatmapWidget() {
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
-            {goal > 0 && (
-              <span
-                className={[
-                  'rounded-full px-2.5 py-1 font-medium',
-                  goalMet ? 'bg-emerald-400/15 text-emerald-200' : 'bg-amber-300/15 text-amber-200',
-                ].join(' ')}
-              >
-                {total}/{goal}
-              </span>
-            )}
             <button
               type="button"
               onClick={addTopic}
@@ -209,7 +193,7 @@ export function HeatmapWidget() {
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 overflow-x-auto pb-0.5">
+        <div className="min-w-0 flex-1 overflow-x-auto px-0.5 pb-0.5">
           <div className="min-w-[680px]">
             <div className="relative h-4">
               {monthLabels.map(({ weekIdx, label }) => (
