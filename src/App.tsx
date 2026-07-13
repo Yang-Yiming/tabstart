@@ -1,15 +1,13 @@
-import { Check, Globe, Image, Link, Moon, Pencil, Sun, Upload } from 'lucide-react'
+import { Check, Globe, Image, Link, Pencil, Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dashboard } from './components/Dashboard'
-import { MouseHalo } from './components/MouseHalo'
 import { SettingsPanel } from './components/SettingsPanel'
-import { AppearanceContext } from './components/AppearanceContext'
-import { defaultMouseHaloConfig, type MouseHaloConfig } from './config/mouseHalo'
+import type { ThemeMode } from './config/theme'
 import { SearchWidget } from './widgets/SearchWidget'
 import { ClockWidget } from './widgets/ClockWidget'
 import { homepageConfig } from './config/homepage'
 import { fetchBingDailyImage, isBingImageUrl, localDateKey, type BingDailyImage } from './lib/bingImage'
-import { useLocalStorage, useStoredState } from './hooks/useLocalStorage'
+import { useStoredState } from './hooks/useLocalStorage'
 
 interface BackgroundState {
   src: string
@@ -18,17 +16,11 @@ interface BackgroundState {
 }
 
 export default function App() {
-  const prefersDark = () => {
-    if (typeof window === 'undefined') return false
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-  }
-  const [theme, setTheme] = useStoredState<'dark' | 'light'>(
-    'homepage-theme',
-    prefersDark() ? 'dark' : 'light',
+  const [theme, setTheme] = useStoredState<ThemeMode>('homepage-theme', 'system')
+  const [systemDark, setSystemDark] = useState(() =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches,
   )
-  const dark = theme === 'dark'
-
-  const [haloConfig, setHaloConfig] = useLocalStorage<MouseHaloConfig>('homepage-mouse-halo', defaultMouseHaloConfig)
+  const dark = theme === 'dark' || (theme === 'system' && systemDark)
 
   const [bg, setBg, bgHydrated] = useStoredState<BackgroundState>('homepage-background', {
     src: homepageConfig.background.src,
@@ -57,6 +49,14 @@ export default function App() {
       root.classList.remove('dark')
     }
   }, [dark])
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (event: MediaQueryListEvent) => setSystemDark(event.matches)
+    setSystemDark(media.matches)
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [])
 
   useEffect(() => {
     if (resetFileBgRef.current) return
@@ -262,16 +262,7 @@ export default function App() {
             {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
           </button>
 
-          <button
-            type="button"
-            onClick={() => setTheme((value) => (value === 'dark' ? 'light' : 'dark'))}
-            className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
-            aria-label="Toggle theme"
-            title="Theme"
-          >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          <SettingsPanel haloConfig={haloConfig} onHaloChange={setHaloConfig} />
+          <SettingsPanel theme={theme} onThemeChange={setTheme} />
         </div>
 
       <input
@@ -282,8 +273,7 @@ export default function App() {
         onChange={handleFileChange}
       />
 
-      <AppearanceContext.Provider value={haloConfig}>
-        <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24">
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24">
         <div className="w-full max-w-5xl">
           <div className="mx-auto mb-4 max-w-3xl">
             <ClockWidget />
@@ -294,8 +284,6 @@ export default function App() {
           <Dashboard isEditing={isEditing} />
         </div>
       </div>
-      </AppearanceContext.Provider>
-      <MouseHalo config={haloConfig} />
       </div>
 
     </>
