@@ -11,17 +11,22 @@ A personal browser start page & launchpad dashboard for your new tab.
 
 ## Getting Started
 
+### install to your browser (Edge/Chrome)
+```bash
+bun install
+bun run build:extension
+```
+load `dist` folder as an unpacked extension in your browser
+
+### check the lookings
 ```bash
 bun install
 bun run dev
 ```
 
-## Build
+## preview
 
-```bash
-bun run build   # outputs to dist/
-bun run preview # preview the build
-```
+![](public/assets/tabstart.jpg)
 
 ## License
 
