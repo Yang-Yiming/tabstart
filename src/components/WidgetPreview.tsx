@@ -19,9 +19,16 @@ export function WidgetPreview({ variant, onClick }: Props) {
   const h = Math.round(fullH * scale)
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      }}
       className="group/preview flex flex-col items-center gap-2"
       title={`Add ${variant.groupName} · ${variant.label}`}
     >
@@ -44,6 +51,6 @@ export function WidgetPreview({ variant, onClick }: Props) {
       <span className="text-[11px] font-medium text-white/55 transition group-hover/preview:text-white">
         {variant.label}
       </span>
-    </button>
+    </div>
   )
 }

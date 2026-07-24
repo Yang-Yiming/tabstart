@@ -11,6 +11,7 @@ const Bookmarks = lazy(() => import('./BookmarksWidget').then((m) => ({ default:
 const Notes = lazy(() => import('./NotesWidget').then((m) => ({ default: m.NotesWidget })))
 const Heatmap = lazy(() => import('./HeatmapWidget').then((m) => ({ default: m.HeatmapWidget })))
 const Streak = lazy(() => import('./StreakWidget').then((m) => ({ default: m.StreakWidget })))
+const Todo = lazy(() => import('./TodoWidget').then((m) => ({ default: m.TodoWidget })))
 
 export const widgetGroups: WidgetGroup[] = [
   {
@@ -32,6 +33,11 @@ export const widgetGroups: WidgetGroup[] = [
     id: 'streak',
     name: 'Streak',
     variants: [{ id: 'default', label: 'Streak', component: Streak, defaultW: 1, defaultH: 1, minW: 1, minH: 1 }],
+  },
+  {
+    id: 'todo',
+    name: 'Tasks',
+    variants: [{ id: 'default', label: 'Today', component: Todo, defaultW: 2, defaultH: 2, minW: 2, minH: 2 }],
   },
   {
     id: 'pomodoro',
