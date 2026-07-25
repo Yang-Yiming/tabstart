@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
-import { Check, ChevronRight, Circle, Plus, Repeat2, Target, Trash2 } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat2, Target, Trash2 } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
+import { formatDateKey } from './activity'
 import {
+  addDays,
   isCompleted,
+  isOverdue,
   isRecurring,
-  isScheduledForToday,
+  isScheduledForDate,
   recurrenceCompletionKey,
   useTodoStore,
   type TodoHorizon,
@@ -33,12 +36,19 @@ export function TodoWidget() {
   const [draft, setDraft] = useState('')
   const [recurrence, setRecurrence] = useState<TodoRecurrence>('none')
   const [parentId, setParentId] = useState('')
+  const [selectedDate, setSelectedDate] = useState(() => new Date())
 
   const goals = useMemo(() => store.items.filter((item) => item.horizon === 'goal'), [store.items])
   const visibleItems = useMemo(() => {
-    if (view === 'daily') return store.items.filter((item) => isScheduledForToday(item))
+    if (view === 'daily') {
+      const todayKey = formatDateKey(new Date())
+      const selectedKey = formatDateKey(selectedDate)
+      return store.items
+        .filter((item) => isScheduledForDate(item, selectedDate) || (selectedKey === todayKey && isOverdue(item)))
+        .sort((a, b) => Number(isOverdue(b)) - Number(isOverdue(a)))
+    }
     return store.items.filter((item) => item.horizon === view)
-  }, [store.items, view])
+  }, [selectedDate, store.items, view])
 
   const addItem = () => {
     const title = draft.trim()
@@ -49,6 +59,7 @@ export function TodoWidget() {
       horizon: view as TodoHorizon,
       recurrence: view === 'goal' ? 'none' : recurrence,
       parentId: view === 'goal' || !parentId ? undefined : parentId,
+      scheduledDate: view === 'daily' ? formatDateKey(selectedDate) : undefined,
       createdAt: new Date().toISOString(),
       completedDates: recurrence === 'none' ? undefined : [],
     }
@@ -59,7 +70,7 @@ export function TodoWidget() {
   }
 
   const toggleItem = (item: TodoItem) => {
-    const completionKey = recurrenceCompletionKey(item)
+    const completionKey = recurrenceCompletionKey(item, selectedDate)
     setStore((prev) => ({
       ...prev,
       items: prev.items.map((candidate) => {
@@ -84,30 +95,61 @@ export function TodoWidget() {
     }))
   }
 
-  const completedCount = visibleItems.filter((item) => isCompleted(item)).length
+  const completedCount = visibleItems.filter((item) => isCompleted(item, selectedDate)).length
+  const selectedDateLabel = formatDateLabel(selectedDate)
 
   return (
     <WidgetCard className="flex h-full flex-col gap-3 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex rounded-full bg-white/[0.08] p-0.5">
-          {VIEW_LABELS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => {
-                setView(option.id)
-                setAdding(false)
-              }}
-              className={[
-                'rounded-full px-3 py-1 text-[11px] font-medium transition',
-                view === option.id
-                  ? 'bg-white/20 text-white shadow-sm'
-                  : 'text-white/45 hover:text-white/80',
-              ].join(' ')}
-            >
-              {option.label}
-            </button>
-          ))}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <div className="flex shrink-0 rounded-full bg-white/[0.08] p-0.5">
+            {VIEW_LABELS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setView(option.id)
+                  setAdding(false)
+                }}
+                className={[
+                  'rounded-full px-3 py-1 text-[11px] font-medium transition',
+                  view === option.id
+                    ? 'bg-white/20 text-white shadow-sm'
+                    : 'text-white/45 hover:text-white/80',
+                ].join(' ')}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {view === 'daily' && (
+            <div className="flex min-w-0 items-center rounded-full bg-white/[0.06] p-0.5">
+              <button
+                type="button"
+                onClick={() => setSelectedDate((date) => addDays(date, -1))}
+                className="rounded-full p-1 text-white/40 transition hover:bg-white/10 hover:text-white"
+                aria-label="Previous day"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedDate(new Date())}
+                className="max-w-16 truncate px-1 text-[10px] font-medium text-white/65 transition hover:text-white"
+                title="Return to today"
+              >
+                {selectedDateLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedDate((date) => addDays(date, 1))}
+                className="rounded-full p-1 text-white/40 transition hover:bg-white/10 hover:text-white"
+                aria-label="Next day"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
         <span className="font-mono text-[10px] text-white/35">
           {view === 'goal' ? `${visibleItems.length} active` : `${completedCount}/${visibleItems.length}`}
@@ -133,7 +175,7 @@ export function TodoWidget() {
         ) : (
           <div className="space-y-0.5">
             {visibleItems.map((item) => (
-              <TaskRow key={item.id} item={item} goals={goals} onToggle={toggleItem} onRemove={removeItem} />
+              <TaskRow key={item.id} item={item} goals={goals} date={selectedDate} onToggle={toggleItem} onRemove={removeItem} />
             ))}
           </div>
         )}
@@ -211,13 +253,15 @@ export function TodoWidget() {
 interface TaskRowProps {
   item: TodoItem
   goals: TodoItem[]
+  date: Date
   onToggle: (item: TodoItem) => void
   onRemove: (id: string) => void
 }
 
-function TaskRow({ item, goals, onToggle, onRemove }: TaskRowProps) {
-  const done = isCompleted(item)
+function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps) {
+  const done = isCompleted(item, date)
   const goal = goals.find((candidate) => candidate.id === item.parentId)
+  const overdue = isOverdue(item)
   return (
     <div className="group/task flex min-h-8 items-center gap-2 rounded-lg px-1.5 transition hover:bg-white/[0.06]">
       <button type="button" onClick={() => onToggle(item)} className="shrink-0 text-white/45 transition hover:text-emerald-200" aria-label={done ? 'Mark incomplete' : 'Complete task'}>
@@ -225,8 +269,9 @@ function TaskRow({ item, goals, onToggle, onRemove }: TaskRowProps) {
       </button>
       <div className="min-w-0 flex-1">
         <div className={['truncate text-[13px] leading-tight transition', done ? 'text-white/30 line-through' : 'text-white/85'].join(' ')}>{item.title}</div>
-        {(goal || isRecurring(item)) && (
+        {(goal || isRecurring(item) || overdue) && (
           <div className="mt-0.5 flex items-center gap-2 truncate text-[9px] text-white/30">
+            {overdue && <span className="text-amber-200/70">Overdue</span>}
             {goal && <span className="truncate">{goal.title}</span>}
             {isRecurring(item) && <span className="flex items-center gap-0.5"><Repeat2 className="h-2.5 w-2.5" />{item.recurrence}</span>}
           </div>
@@ -235,6 +280,15 @@ function TaskRow({ item, goals, onToggle, onRemove }: TaskRowProps) {
       <button type="button" onClick={() => onRemove(item.id)} className="shrink-0 p-1 text-white/0 transition group-hover/task:text-white/30 hover:!text-red-200" aria-label="Delete task"><Trash2 className="h-3 w-3" /></button>
     </div>
   )
+}
+
+function formatDateLabel(date: Date) {
+  const key = formatDateKey(date)
+  const today = formatDateKey(new Date())
+  const tomorrow = formatDateKey(addDays(new Date(), 1))
+  if (key === today) return 'Today'
+  if (key === tomorrow) return 'Tomorrow'
+  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 interface GoalRowProps {

@@ -9,6 +9,7 @@ export interface TodoItem {
   title: string
   horizon: TodoHorizon
   parentId?: string
+  scheduledDate?: string
   recurrence: TodoRecurrence
   createdAt: string
   completedAt?: string
@@ -57,11 +58,35 @@ export function isCompleted(item: TodoItem, date = new Date()) {
   return item.completedDates?.includes(recurrenceCompletionKey(item, date)) ?? false
 }
 
-export function isScheduledForToday(item: TodoItem, date = new Date()) {
+export function addDays(date: Date, days: number) {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+export function dateFromKey(key: string) {
+  return new Date(`${key}T12:00:00`)
+}
+
+function startDate(item: TodoItem) {
+  return item.scheduledDate ?? formatDateKey(new Date(item.createdAt))
+}
+
+export function isScheduledForDate(item: TodoItem, date = new Date()) {
   if (item.horizon !== 'daily') return false
+  const targetKey = formatDateKey(date)
+  const startKey = startDate(item)
+  if (targetKey < startKey) return false
+  if (item.recurrence === 'none') return targetKey === startKey
+  if (item.recurrence === 'weekly') return date.getDay() === dateFromKey(startKey).getDay()
   if (item.recurrence === 'weekdays') {
     const day = date.getDay()
     return day !== 0 && day !== 6
   }
   return true
+}
+
+export function isOverdue(item: TodoItem, today = new Date()) {
+  if (item.horizon !== 'daily' || isRecurring(item) || isCompleted(item)) return false
+  return startDate(item) < formatDateKey(today)
 }
