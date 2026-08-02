@@ -5,17 +5,6 @@ export interface SearchEngine {
   url: string
 }
 
-export interface BookmarkLink {
-  title: string
-  url: string
-  icon: string
-}
-
-export interface BookmarkGroup {
-  title: string
-  links: BookmarkLink[]
-}
-
 export interface WidgetLayout {
   id: WidgetId
   columnSpan?: number
@@ -36,7 +25,6 @@ export interface HomepageConfig {
     defaultEngine: string
     engines: Record<string, SearchEngine>
   }
-  bookmarks: BookmarkGroup[]
 }
 
 export const homepageConfig: HomepageConfig = {
@@ -61,21 +49,4 @@ export const homepageConfig: HomepageConfig = {
       alphaxiv: { name: 'AlphaXiv', url: 'https://www.alphaxiv.org/?query=' },
     },
   },
-  bookmarks: [
-    {
-      title: 'Work',
-      links: [
-        { title: 'Gmail', url: 'https://mail.google.com', icon: 'Mail' },
-        { title: 'Calendar', url: 'https://calendar.google.com', icon: 'Calendar' },
-        { title: 'GitHub', url: 'https://github.com', icon: 'GitBranch' },
-      ],
-    },
-    {
-      title: 'Read',
-      links: [
-        { title: 'Hacker News', url: 'https://news.ycombinator.com', icon: 'Newspaper' },
-        { title: 'MDN', url: 'https://developer.mozilla.org', icon: 'Code' },
-      ],
-    },
-  ],
 }
