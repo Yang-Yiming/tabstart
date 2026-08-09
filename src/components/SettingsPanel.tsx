@@ -1,6 +1,10 @@
-import { Monitor, Moon, Palette, Settings, Sun, X } from 'lucide-react'
+import { LayoutGrid, Monitor, Moon, Palette, Settings, Sun, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../config/theme'
+import { widgetGroups } from '../widgets/registry'
+import { useWidgetSettings } from '../widgets/widgetSettings'
+import type { WidgetGroup } from '../widgets/types'
+import { SettingField } from './SettingField'
 
 interface SettingsPanelProps {
   theme: ThemeMode
@@ -8,7 +12,7 @@ interface SettingsPanelProps {
 }
 
 interface Category {
-  id: string
+  id: 'appearance' | 'widgets'
   name: string
   icon: ReactNode
 }
@@ -24,12 +28,18 @@ const themeOptions: Array<{
   { value: 'system', label: '跟随系统', description: '自动匹配系统设置', icon: <Monitor className="h-4 w-4" /> },
 ]
 
+const categories: Category[] = [
+  { id: 'appearance', name: 'Appearance', icon: <Palette className="h-4 w-4" /> },
+  { id: 'widgets', name: 'Widgets', icon: <LayoutGrid className="h-4 w-4" /> },
+]
+
 export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
+  const [active, setActive] = useState<'appearance' | 'widgets'>('appearance')
+  const [activeWidget, setActiveWidget] = useState<string | null>(null)
 
-  const categories: Category[] = [
-    { id: 'appearance', name: 'Appearance', icon: <Palette className="h-4 w-4" /> },
-  ]
+  const widgetList = widgetGroups.filter((group) => group.settings)
+  const activeGroup = widgetList.find((group) => group.id === activeWidget) ?? null
 
   useEffect(() => {
     if (!open) return
@@ -39,6 +49,14 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open])
+
+  useEffect(() => {
+    if (active === 'widgets' && !activeGroup && widgetList.length > 0) {
+      setActiveWidget(widgetList[0].id)
+    }
+  }, [active, activeGroup, widgetList])
+
+  const headerTitle = active === 'appearance' ? 'Appearance' : (activeGroup?.name ?? 'Widgets')
 
   return (
     <div className="relative">
@@ -63,21 +81,47 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
               <h2 className="mb-4 px-2 text-sm font-semibold text-white">Settings</h2>
               <div className="flex flex-col gap-1">
                 {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm text-white"
-                  >
-                    {category.icon}
-                    {category.name}
-                  </button>
+                  <div key={category.id} className="flex flex-col gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setActive(category.id)}
+                      className={[
+                        'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition',
+                        active === category.id
+                          ? 'bg-white/10 text-white'
+                          : 'text-white/50 hover:bg-white/5 hover:text-white/85',
+                      ].join(' ')}
+                    >
+                      {category.icon}
+                      {category.name}
+                    </button>
+                    {category.id === 'widgets' && active === 'widgets' && widgetList.length > 0 && (
+                      <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-2">
+                        {widgetList.map((group) => (
+                          <button
+                            key={group.id}
+                            type="button"
+                            onClick={() => setActiveWidget(group.id)}
+                            className={[
+                              'rounded-lg px-2 py-1.5 text-left text-xs transition',
+                              activeGroup?.id === group.id
+                                ? 'bg-white/10 text-white'
+                                : 'text-white/45 hover:bg-white/5 hover:text-white/80',
+                            ].join(' ')}
+                          >
+                            {group.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
 
             <div className="flex min-h-[360px] flex-1 flex-col">
               <div className="flex items-center justify-between border-b border-white/10 p-6">
-                <h3 className="text-lg font-medium text-white">Appearance</h3>
+                <h3 className="text-lg font-medium text-white">{headerTitle}</h3>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -89,44 +133,87 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
               </div>
 
               <div className="flex-1 p-6">
-                <div>
-                  <h4 className="text-sm font-medium text-white">主题</h4>
-                  <p className="mt-1 text-xs text-white/50">选择界面的明暗外观。</p>
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2" role="radiogroup" aria-label="主题">
-                  {themeOptions.map((option) => {
-                    const selected = theme === option.value
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        onClick={() => onThemeChange(option.value)}
-                        className={[
-                          'flex min-h-24 flex-col items-start justify-between rounded-2xl border p-3 text-left transition',
-                          selected
-                            ? 'border-white/30 bg-white/15 text-white shadow-lg'
-                            : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
-                        ].join(' ')}
-                      >
-                        {option.icon}
-                        <span>
-                          <span className="block text-sm font-medium">{option.label}</span>
-                          <span className="mt-0.5 block text-[10px] leading-4 text-white/45">
-                            {option.description}
-                          </span>
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+                {active === 'appearance' ? (
+                  <AppearanceSection theme={theme} onThemeChange={onThemeChange} />
+                ) : activeGroup ? (
+                  <WidgetSettingsSection group={activeGroup} />
+                ) : (
+                  <p className="text-sm text-white/50">没有可配置的 widget。</p>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function AppearanceSection({
+  theme,
+  onThemeChange,
+}: {
+  theme: ThemeMode
+  onThemeChange: (theme: ThemeMode) => void
+}) {
+  return (
+    <>
+      <div>
+        <h4 className="text-sm font-medium text-white">主题</h4>
+        <p className="mt-1 text-xs text-white/50">选择界面的明暗外观。</p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2" role="radiogroup" aria-label="主题">
+        {themeOptions.map((option) => {
+          const selected = theme === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onThemeChange(option.value)}
+              className={[
+                'flex min-h-24 flex-col items-start justify-between rounded-2xl border p-3 text-left transition',
+                selected
+                  ? 'border-white/30 bg-white/15 text-white shadow-lg'
+                  : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+              ].join(' ')}
+            >
+              {option.icon}
+              <span>
+                <span className="block text-sm font-medium">{option.label}</span>
+                <span className="mt-0.5 block text-[10px] leading-4 text-white/45">
+                  {option.description}
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+function WidgetSettingsSection({ group }: { group: WidgetGroup }) {
+  const { settings, setSetting } = useWidgetSettings(group.id)
+  const schema = group.settings
+  if (!schema) return null
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h4 className="text-sm font-medium text-white">{schema.title}</h4>
+        {schema.description && <p className="mt-1 text-xs text-white/50">{schema.description}</p>}
+      </div>
+      {schema.fields.map((field) => (
+        <SettingField
+          key={field.key}
+          field={field}
+          value={settings[field.key]}
+          onChange={(value) => setSetting(field.key, value)}
+        />
+      ))}
     </div>
   )
 }

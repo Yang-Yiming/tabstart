@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat2, Target, Trash2 } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
 import { formatDateKey } from './activity'
+import { useWidgetSettings } from './widgetSettings'
 import {
   addDays,
   isCompleted,
@@ -31,6 +32,8 @@ function createId() {
 
 export function TodoWidget() {
   const [store, setStore] = useTodoStore()
+  const { settings } = useWidgetSettings('todo')
+  const carryOverOverdue = Boolean(settings.carryOverOverdue)
   const [view, setView] = useState<View>('daily')
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
@@ -44,11 +47,15 @@ export function TodoWidget() {
       const todayKey = formatDateKey(new Date())
       const selectedKey = formatDateKey(selectedDate)
       return store.items
-        .filter((item) => isScheduledForDate(item, selectedDate) || (selectedKey === todayKey && isOverdue(item)))
+        .filter(
+          (item) =>
+            isScheduledForDate(item, selectedDate) ||
+            (selectedKey === todayKey && carryOverOverdue && isOverdue(item)),
+        )
         .sort((a, b) => Number(isOverdue(b)) - Number(isOverdue(a)))
     }
     return store.items.filter((item) => item.horizon === view)
-  }, [selectedDate, store.items, view])
+  }, [carryOverOverdue, selectedDate, store.items, view])
 
   const addItem = () => {
     const title = draft.trim()

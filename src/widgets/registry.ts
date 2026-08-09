@@ -38,6 +38,19 @@ export const widgetGroups: WidgetGroup[] = [
     id: 'todo',
     name: 'Tasks',
     variants: [{ id: 'default', label: 'Today', component: Todo, defaultW: 2, defaultH: 2, minW: 2, minH: 2 }],
+    settings: {
+      title: 'Tasks',
+      description: 'Manage tasks, goals and how overdue items are handled.',
+      fields: [
+        {
+          type: 'boolean',
+          key: 'carryOverOverdue',
+          label: '逾期任务顺延到当天',
+          description: '未完成的过期任务会自动出现在今天的列表中，直到完成。',
+          default: true,
+        },
+      ],
+    },
   },
   {
     id: 'pomodoro',
