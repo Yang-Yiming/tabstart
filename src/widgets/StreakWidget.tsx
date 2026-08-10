@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Flame } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
-import { calculateStreakStats, useActivityStore } from './activity'
+import { addDays, calculateStreakStats, formatDateKey, useActivityStore } from './activity'
 import { useWidgetSettings } from './widgetSettings'
 
 export function StreakWidget() {
   const [store] = useActivityStore()
   const { settings } = useWidgetSettings('streak')
   const showLosing = Boolean(settings.showLosingStreak)
+  const bigNumberMode = String(settings.bigNumberMode ?? 'auto')
   const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? '论文')
   const topics = store.topics.length > 0 ? store.topics : ['论文']
   const safeTopic = topics.includes(activeTopic) ? activeTopic : topics[0]
@@ -16,6 +17,18 @@ export function StreakWidget() {
     () => calculateStreakStats(store.data[safeTopic] ?? {}, store.goals[safeTopic] ?? 1),
     [store.data, store.goals, safeTopic],
   )
+
+  const showLossInBigNumber = useMemo(() => {
+    if (bigNumberMode === 'loss') return true
+    if (bigNumberMode === 'win') return false
+    const topicData = store.data[safeTopic] ?? {}
+    const effectiveGoal = Math.max(1, store.goals[safeTopic] ?? 1)
+    const todayDate = new Date()
+    todayDate.setHours(0, 0, 0, 0)
+    const yesterdayKey = formatDateKey(addDays(todayDate, -1))
+    const yesterdayDone = (topicData[yesterdayKey] ?? 0) >= effectiveGoal
+    return !yesterdayDone && stats.today < effectiveGoal
+  }, [bigNumberMode, store.data, store.goals, safeTopic, stats.today])
 
   const switchTopic = () => {
     const currentIndex = topics.indexOf(safeTopic)
@@ -41,7 +54,14 @@ export function StreakWidget() {
         </div>
 
         <div className="flex items-end gap-1.5">
-          <div className="font-mono text-4xl font-semibold leading-none text-white">{stats.current}</div>
+          <div
+            className={[
+              'font-mono text-4xl font-semibold leading-none',
+              showLossInBigNumber ? 'text-rose-300' : 'text-white',
+            ].join(' ')}
+          >
+            {showLossInBigNumber ? (stats.losing === Infinity ? '∞' : stats.losing) : stats.current}
+          </div>
           <div className="pb-1 text-xs font-medium text-white/55">days</div>
         </div>
 
@@ -54,7 +74,7 @@ export function StreakWidget() {
             <span className="text-white/35">Today</span>
             <span className="font-mono font-semibold text-amber-200">{stats.today}</span>
           </div>
-          {showLosing && (
+          {showLosing && !showLossInBigNumber && (
             <div className="flex items-baseline gap-1" title="Consecutive days without reaching the goal">
               <span className="text-white/35">连败</span>
               <span className="font-mono font-semibold text-rose-300">
