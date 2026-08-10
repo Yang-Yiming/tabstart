@@ -36,10 +36,25 @@ const categories: Category[] = [
 export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState<'appearance' | 'widgets'>('appearance')
+  const [widgetsOpen, setWidgetsOpen] = useState(false)
   const [activeWidget, setActiveWidget] = useState<string | null>(null)
 
   const widgetList = widgetGroups.filter((group) => group.settings)
   const activeGroup = widgetList.find((group) => group.id === activeWidget) ?? null
+
+  const selectCategory = (id: 'appearance' | 'widgets') => {
+    if (id === 'widgets') {
+      if (active === 'widgets') {
+        setActive('appearance')
+        setWidgetsOpen(false)
+      } else {
+        setActive('widgets')
+        setWidgetsOpen(true)
+      }
+    } else {
+      setActive('appearance')
+    }
+  }
 
   useEffect(() => {
     if (!open) return
@@ -84,7 +99,7 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
                   <div key={category.id} className="flex flex-col gap-1">
                     <button
                       type="button"
-                      onClick={() => setActive(category.id)}
+                      onClick={() => selectCategory(category.id)}
                       className={[
                         'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition',
                         active === category.id
@@ -95,7 +110,7 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
                       {category.icon}
                       {category.name}
                     </button>
-                    {category.id === 'widgets' && active === 'widgets' && widgetList.length > 0 && (
+                    {category.id === 'widgets' && widgetsOpen && widgetList.length > 0 && (
                       <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-2">
                         {widgetList.map((group) => (
                           <button
@@ -104,7 +119,7 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
                             onClick={() => setActiveWidget(group.id)}
                             className={[
                               'rounded-lg px-2 py-1.5 text-left text-xs transition',
-                              activeGroup?.id === group.id
+                              active === 'widgets' && activeGroup?.id === group.id
                                 ? 'bg-white/10 text-white'
                                 : 'text-white/45 hover:bg-white/5 hover:text-white/80',
                             ].join(' ')}
