@@ -2,9 +2,12 @@ import { useMemo, useState } from 'react'
 import { Flame } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
 import { calculateStreakStats, useActivityStore } from './activity'
+import { useWidgetSettings } from './widgetSettings'
 
 export function StreakWidget() {
   const [store] = useActivityStore()
+  const { settings } = useWidgetSettings('streak')
+  const showLosing = Boolean(settings.showLosingStreak)
   const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? '论文')
   const topics = store.topics.length > 0 ? store.topics : ['论文']
   const safeTopic = topics.includes(activeTopic) ? activeTopic : topics[0]
@@ -51,6 +54,14 @@ export function StreakWidget() {
             <span className="text-white/35">Today</span>
             <span className="font-mono font-semibold text-amber-200">{stats.today}</span>
           </div>
+          {showLosing && (
+            <div className="flex items-baseline gap-1" title="Consecutive days without reaching the goal">
+              <span className="text-white/35">连败</span>
+              <span className="font-mono font-semibold text-rose-300">
+                {stats.losing === Infinity ? '∞' : stats.losing}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </WidgetCard>

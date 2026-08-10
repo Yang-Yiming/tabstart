@@ -33,6 +33,19 @@ export const widgetGroups: WidgetGroup[] = [
     id: 'streak',
     name: 'Streak',
     variants: [{ id: 'default', label: 'Streak', component: Streak, defaultW: 1, defaultH: 1, minW: 1, minH: 1 }],
+    settings: {
+      title: 'Streak',
+      description: '连胜与连败统计。',
+      fields: [
+        {
+          type: 'boolean',
+          key: 'showLosingStreak',
+          label: '显示连败统计',
+          description: '同时统计连续未完成目标的天数（连败），督促自己完成任务。从未完成过会显示 ∞。',
+          default: false,
+        },
+      ],
+    },
   },
   {
     id: 'todo',

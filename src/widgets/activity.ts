@@ -14,6 +14,7 @@ export interface StreakStats {
   current: number
   best: number
   today: number
+  losing: number
 }
 
 export const DEFAULT_ACTIVITY_TOPICS = ['论文', '代码']
@@ -85,9 +86,21 @@ export function calculateStreakStats(topicData: TopicData = {}, goal = 1, today 
     previousKey = key
   }
 
+  let losing = 0
+  if (activeKeys.length > 0) {
+    for (let offset = 0; ; offset++) {
+      const key = formatDateKey(addDays(normalizedToday, -offset))
+      if ((topicData[key] ?? 0) >= effectiveGoal) break
+      losing += 1
+    }
+  } else {
+    losing = Infinity
+  }
+
   return {
     current,
     best,
     today: topicData[formatDateKey(normalizedToday)] ?? 0,
+    losing,
   }
 }
