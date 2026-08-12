@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat, SquareKanban, Trash2 } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
+import { getDragData, isTaskDrag, setDragData, transferTodoToKanban } from './taskTransfer'
+import { useTodoStore } from './todo'
 import {
   KANBAN_COLUMNS,
   moveTask,
@@ -28,6 +30,7 @@ function createId() {
 
 export function KanbanFullWidget() {
   const [store, setStore] = useKanbanStore()
+  const [todoStore, setTodoStore] = useTodoStore()
   const [addingColumn, setAddingColumn] = useState<KanbanColumnId | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<{ column: KanbanColumnId; taskId?: string } | null>(null)
@@ -38,9 +41,16 @@ export function KanbanFullWidget() {
     return map
   }, [store.tasks])
 
-  const handleDrop = (column: KanbanColumnId, beforeTaskId?: string) => {
-    if (!draggingId) return
-    setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, column, beforeTaskId) }))
+  const handleDrop = (event: DragEvent, column: KanbanColumnId, beforeTaskId?: string) => {
+    event.preventDefault()
+    const dragged = getDragData(event)
+    if (dragged?.source === 'todo') {
+      const { todo, kanban } = transferTodoToKanban(todoStore, store, dragged.id, column)
+      setTodoStore(todo)
+      setStore(kanban)
+    } else if (draggingId) {
+      setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, column, beforeTaskId) }))
+    }
     setDraggingId(null)
     setDragOver(null)
   }
@@ -89,15 +99,12 @@ export function KanbanFullWidget() {
                 isDropColumn && !dragOver?.taskId ? 'border-white/30 bg-black/25' : '',
               ].join(' ')}
               onDragOver={(event) => {
-                if (!draggingId) return
+                if (!isTaskDrag(event)) return
                 event.preventDefault()
                 event.dataTransfer.dropEffect = 'move'
                 setDragOver({ column })
               }}
-              onDrop={(event) => {
-                event.preventDefault()
-                handleDrop(column)
-              }}
+              onDrop={(event) => handleDrop(event, column)}
             >
               <div className="flex items-center gap-1.5 px-1">
                 <span className={['h-1.5 w-1.5 rounded-full', COLUMN_META[column].dot].join(' ')} />
@@ -117,22 +124,21 @@ export function KanbanFullWidget() {
                         key={task.id}
                         draggable
                         onDragStart={(event) => {
-                          event.dataTransfer.setData('text/plain', task.id)
                           event.dataTransfer.effectAllowed = 'move'
+                          setDragData(event, { source: 'kanban', id: task.id })
                           setDraggingId(task.id)
                           setDragOver(null)
                         }}
                         onDragOver={(event) => {
-                          if (!draggingId) return
+                          if (!isTaskDrag(event)) return
                           event.preventDefault()
                           event.stopPropagation()
                           event.dataTransfer.dropEffect = 'move'
                           setDragOver({ column, taskId: task.id })
                         }}
                         onDrop={(event) => {
-                          event.preventDefault()
                           event.stopPropagation()
-                          handleDrop(column, task.id)
+                          handleDrop(event, column, task.id)
                         }}
                         onDragEnd={() => {
                           setDraggingId(null)
@@ -193,6 +199,7 @@ export function KanbanFullWidget() {
 
 export function KanbanCompactWidget() {
   const [store, setStore] = useKanbanStore()
+  const [todoStore, setTodoStore] = useTodoStore()
   const [column, setColumn] = useState<KanbanColumnId>('todo')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
@@ -300,10 +307,18 @@ export function KanbanCompactWidget() {
     if (selectedId === taskId) setSelectedId(null)
   }
 
-  const handleDrop = (targetColumn: KanbanColumnId, beforeTaskId?: string) => {
-    if (!draggingId) return
-    setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, targetColumn, beforeTaskId) }))
-    if (targetColumn !== column) setColumn(targetColumn)
+  const handleDrop = (event: DragEvent, targetColumn: KanbanColumnId, beforeTaskId?: string) => {
+    event.preventDefault()
+    const dragged = getDragData(event)
+    if (dragged?.source === 'todo') {
+      const { todo, kanban } = transferTodoToKanban(todoStore, store, dragged.id, targetColumn)
+      setTodoStore(todo)
+      setStore(kanban)
+      if (targetColumn !== column) setColumn(targetColumn)
+    } else if (draggingId) {
+      setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, targetColumn, beforeTaskId) }))
+      if (targetColumn !== column) setColumn(targetColumn)
+    }
     setDraggingId(null)
     setDragOver(null)
   }
@@ -324,15 +339,12 @@ export function KanbanCompactWidget() {
                   setAdding(false)
                 }}
                 onDragOver={(event) => {
-                  if (!draggingId) return
+                  if (!isTaskDrag(event)) return
                   event.preventDefault()
                   event.dataTransfer.dropEffect = 'move'
                   setDragOver({ tab: option })
                 }}
-                onDrop={(event) => {
-                  event.preventDefault()
-                  handleDrop(option)
-                }}
+                onDrop={(event) => handleDrop(event, option)}
                 className={[
                   'rounded-full px-3 py-1 text-[11px] font-medium transition',
                   isTarget
@@ -362,15 +374,12 @@ export function KanbanCompactWidget() {
           }
         }}
         onDragOver={(event) => {
-          if (!draggingId) return
+          if (!isTaskDrag(event)) return
           event.preventDefault()
           event.dataTransfer.dropEffect = 'move'
           setDragOver({ list: true })
         }}
-        onDrop={(event) => {
-          event.preventDefault()
-          handleDrop(column)
-        }}
+        onDrop={(event) => handleDrop(event, column)}
         className={[
           'min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           dragOver?.list ? 'rounded-xl ring-1 ring-white/30' : '',
@@ -392,22 +401,21 @@ export function KanbanCompactWidget() {
                 key={task.id}
                 draggable
                 onDragStart={(event) => {
-                  event.dataTransfer.setData('text/plain', task.id)
                   event.dataTransfer.effectAllowed = 'move'
+                  setDragData(event, { source: 'kanban', id: task.id })
                   setDraggingId(task.id)
                   setDragOver(null)
                 }}
                 onDragOver={(event) => {
-                  if (!draggingId) return
+                  if (!isTaskDrag(event)) return
                   event.preventDefault()
                   event.stopPropagation()
                   event.dataTransfer.dropEffect = 'move'
                   setDragOver({ taskId: task.id })
                 }}
                 onDrop={(event) => {
-                  event.preventDefault()
                   event.stopPropagation()
-                  handleDrop(column, task.id)
+                  handleDrop(event, column, task.id)
                 }}
                 onDragEnd={() => {
                   setDraggingId(null)

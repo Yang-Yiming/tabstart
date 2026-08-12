@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type DragEvent } from 'react'
 import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat2, Target, Trash2 } from 'lucide-react'
 import { WidgetCard } from '../components/WidgetCard'
 import { formatDateKey } from './activity'
+import { useKanbanStore } from './kanban'
+import { getDragData, isTaskDrag, setDragData, transferKanbanToTodo } from './taskTransfer'
 import { useWidgetSettings } from './widgetSettings'
 import {
   addDays,
@@ -32,6 +34,7 @@ function createId() {
 
 export function TodoWidget() {
   const [store, setStore] = useTodoStore()
+  const [kanbanStore, setKanbanStore] = useKanbanStore()
   const { settings } = useWidgetSettings('todo')
   const carryOverOverdue = Boolean(settings.carryOverOverdue)
   const [view, setView] = useState<View>('daily')
@@ -40,6 +43,7 @@ export function TodoWidget() {
   const [recurrence, setRecurrence] = useState<TodoRecurrence>('none')
   const [parentId, setParentId] = useState('')
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [dragOver, setDragOver] = useState(false)
 
   const goals = useMemo(() => store.items.filter((item) => item.horizon === 'goal'), [store.items])
   const visibleItems = useMemo(() => {
@@ -105,6 +109,22 @@ export function TodoWidget() {
   const completedCount = visibleItems.filter((item) => isCompleted(item, selectedDate)).length
   const selectedDateLabel = formatDateLabel(selectedDate)
 
+  const handleTaskDrop = (event: DragEvent) => {
+    event.preventDefault()
+    setDragOver(false)
+    const dragged = getDragData(event)
+    if (!dragged || dragged.source !== 'kanban') return
+    const { kanban, todo } = transferKanbanToTodo(
+      kanbanStore,
+      store,
+      dragged.id,
+      view,
+      view === 'daily' ? formatDateKey(selectedDate) : undefined,
+    )
+    setKanbanStore(kanban)
+    setStore(todo)
+  }
+
   return (
     <WidgetCard className="flex h-full flex-col gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -163,7 +183,20 @@ export function TodoWidget() {
         </span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        onDragOver={(event) => {
+          if (!isTaskDrag(event)) return
+          event.preventDefault()
+          event.dataTransfer.dropEffect = 'move'
+          setDragOver(true)
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleTaskDrop}
+        className={[
+          'min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          dragOver ? 'rounded-xl ring-1 ring-white/30' : '',
+        ].join(' ')}
+      >
         {visibleItems.length === 0 ? (
           <button
             type="button"
@@ -270,7 +303,14 @@ function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps) {
   const goal = goals.find((candidate) => candidate.id === item.parentId)
   const overdue = isOverdue(item)
   return (
-    <div className="group/task flex min-h-8 items-center gap-2 rounded-lg px-1.5 transition hover:bg-white/[0.06]">
+    <div
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = 'move'
+        setDragData(event, { source: 'todo', id: item.id })
+      }}
+      className="group/task flex min-h-8 items-center gap-2 rounded-lg px-1.5 transition hover:bg-white/[0.06]"
+    >
       <button type="button" onClick={() => onToggle(item)} className="shrink-0 text-white/45 transition hover:text-emerald-200" aria-label={done ? 'Mark incomplete' : 'Complete task'}>
         {done ? <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-300/80 text-emerald-950"><Check className="h-3 w-3" /></span> : <Circle className="h-4 w-4" />}
       </button>
@@ -312,7 +352,14 @@ function GoalRow({ goal, items, onToggle, onRemove }: GoalRowProps) {
   const next = children.find((item) => !isCompleted(item))
   const done = isCompleted(goal)
   return (
-    <div className="group/task rounded-xl px-2 py-1.5 transition hover:bg-white/[0.06]">
+    <div
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = 'move'
+        setDragData(event, { source: 'todo', id: goal.id })
+      }}
+      className="group/task rounded-xl px-2 py-1.5 transition hover:bg-white/[0.06]"
+    >
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => onToggle(goal)} className="shrink-0 text-white/40 transition hover:text-emerald-200" aria-label={done ? 'Reopen goal' : 'Complete goal'}>
           {done ? <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-300/80 text-emerald-950"><Check className="h-3 w-3" /></span> : <Target className="h-4 w-4" />}
