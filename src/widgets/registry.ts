@@ -12,6 +12,8 @@ const Notes = lazy(() => import('./NotesWidget').then((m) => ({ default: m.Notes
 const Heatmap = lazy(() => import('./HeatmapWidget').then((m) => ({ default: m.HeatmapWidget })))
 const Streak = lazy(() => import('./StreakWidget').then((m) => ({ default: m.StreakWidget })))
 const Todo = lazy(() => import('./TodoWidget').then((m) => ({ default: m.TodoWidget })))
+const KanbanFull = lazy(() => import('./KanbanWidget').then((m) => ({ default: m.KanbanFullWidget })))
+const KanbanCompact = lazy(() => import('./KanbanWidget').then((m) => ({ default: m.KanbanCompactWidget })))
 
 export const widgetGroups: WidgetGroup[] = [
   {
@@ -83,6 +85,14 @@ export const widgetGroups: WidgetGroup[] = [
     variants: [
       { id: 'compact', label: 'Small', component: PomodoroCompact, defaultW: 1, defaultH: 1, minW: 1, minH: 1 },
       { id: 'large', label: 'Large', component: PomodoroLarge, defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
+    ],
+  },
+  {
+    id: 'kanban',
+    name: 'Kanban',
+    variants: [
+      { id: 'full', label: 'Board', component: KanbanFull, defaultW: 4, defaultH: 3, minW: 2, minH: 2 },
+      { id: 'compact', label: 'Compact', component: KanbanCompact, defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
     ],
   },
 ]

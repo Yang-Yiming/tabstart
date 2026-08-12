@@ -24,18 +24,21 @@ const DEFAULT_LAYOUTS: Layouts = {
     { i: 'notes', x: 2, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
     { i: 'heatmap', x: 0, y: 2, w: 4, h: 2, minW: 3, minH: 2 },
     { i: 'streak', x: 0, y: 4, w: 1, h: 1, minW: 1, minH: 1 },
+    { i: 'kanban:compact', x: 1, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
   ],
   md: [
     { i: 'bookmarks', x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'notes', x: 1, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'heatmap', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
     { i: 'streak', x: 0, y: 4, w: 1, h: 1, minW: 1, minH: 1 },
+    { i: 'kanban:compact', x: 0, y: 5, w: 2, h: 2, minW: 2, minH: 2 },
   ],
   sm: [
     { i: 'bookmarks', x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'heatmap', x: 0, y: 4, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'streak', x: 0, y: 6, w: 1, h: 1, minW: 1, minH: 1 },
+    { i: 'kanban:compact', x: 0, y: 7, w: 1, h: 2, minW: 1, minH: 2 },
   ],
 }
 
