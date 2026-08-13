@@ -1,9 +1,9 @@
 import { Folder, LayoutGrid, Monitor, Moon, Palette, Settings, Sun, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../config/theme'
-import { variantKey, widgetGroups } from '../widgets/registry'
-import { useWidgetSettings } from '../widgets/widgetSettings'
-import type { WidgetSettingsSchema } from '../widgets/types'
+import { groupPlugins, plugins, useEnabledPlugins } from '../plugins/registry'
+import { useWidgetSettings } from '../plugins/widgetSettings'
+import type { WidgetSettingsSchema } from '../plugins/types'
 import { SettingField } from './SettingField'
 
 interface SettingsPanelProps {
@@ -51,23 +51,20 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
   const [widgetsOpen, setWidgetsOpen] = useState(false)
   const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
 
+  const { isEnabled } = useEnabledPlugins()
+
   const sidebarGroups = useMemo<SidebarGroup[]>(() => {
-    const groups: SidebarGroup[] = []
-    for (const group of widgetGroups) {
-      const withSettings = group.variants.filter((variant) => variant.settings ?? group.settings)
-      if (withSettings.length === 0) continue
-      groups.push({
+    const withSettings = plugins.filter((plugin) => isEnabled(plugin.id) && plugin.settings)
+    return groupPlugins(withSettings).map((group) => ({
+      groupName: group.name,
+      entries: group.plugins.map((plugin) => ({
+        key: plugin.id,
         groupName: group.name,
-        entries: withSettings.map((variant) => ({
-          key: variantKey(group.id, variant.id),
-          groupName: group.name,
-          label: withSettings.length === 1 ? group.name : variant.label,
-          schema: (variant.settings ?? group.settings)!,
-        })),
-      })
-    }
-    return groups
-  }, [])
+        label: plugin.name,
+        schema: plugin.settings!,
+      })),
+    }))
+  }, [isEnabled])
 
   const activeEntry = useMemo(
     () => sidebarGroups.flatMap((group) => group.entries).find((entry) => entry.key === activeWidgetKey) ?? null,

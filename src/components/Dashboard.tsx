@@ -5,7 +5,8 @@ import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { canonicalKey, resolveVariant, variantKey, widgetGroups } from '../widgets/registry'
+import { canonicalKey, groupPlugins, plugins, resolvePlugin, useEnabledPlugins } from '../plugins/registry'
+import type { WidgetPlugin } from '../plugins/types'
 import { WidgetPreview } from './WidgetPreview'
 
 interface Props {
@@ -24,21 +25,21 @@ const DEFAULT_LAYOUTS: Layouts = {
     { i: 'notes', x: 2, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
     { i: 'heatmap', x: 0, y: 2, w: 4, h: 2, minW: 3, minH: 2 },
     { i: 'streak', x: 0, y: 4, w: 1, h: 1, minW: 1, minH: 1 },
-    { i: 'kanban:compact', x: 1, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+    { i: 'kanban-compact', x: 1, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
   ],
   md: [
     { i: 'bookmarks', x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'notes', x: 1, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'heatmap', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
     { i: 'streak', x: 0, y: 4, w: 1, h: 1, minW: 1, minH: 1 },
-    { i: 'kanban:compact', x: 0, y: 5, w: 2, h: 2, minW: 2, minH: 2 },
+    { i: 'kanban-compact', x: 0, y: 5, w: 2, h: 2, minW: 2, minH: 2 },
   ],
   sm: [
     { i: 'bookmarks', x: 0, y: 0, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'notes', x: 0, y: 2, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'heatmap', x: 0, y: 4, w: 1, h: 2, minW: 1, minH: 2 },
     { i: 'streak', x: 0, y: 6, w: 1, h: 1, minW: 1, minH: 1 },
-    { i: 'kanban:compact', x: 0, y: 7, w: 1, h: 2, minW: 1, minH: 2 },
+    { i: 'kanban-compact', x: 0, y: 7, w: 1, h: 2, minW: 1, minH: 2 },
   ],
 }
 
@@ -48,10 +49,9 @@ function cloneLayouts(layouts: Layouts): Layouts {
   )
 }
 
-function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS): Layout {
-  const variant = resolveVariant(item.i)
+function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS, plugin?: WidgetPlugin): Layout {
   const cols = COLS[breakpoint]
-  const minW = Math.min(variant?.minW ?? 1, cols)
+  const minW = Math.min(plugin?.minW ?? 1, cols)
   const w = Math.min(Math.max(item.w, minW), cols)
 
   return {
@@ -60,36 +60,36 @@ function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS): Layout {
     x: Math.min(item.x, Math.max(0, cols - w)),
     w,
     minW,
-    minH: variant?.minH ?? item.minH ?? 1,
+    minH: plugin?.minH ?? item.minH ?? 1,
   }
-}
-
-function normalizeLayouts(layouts: Layouts): Layouts {
-  return (Object.keys(COLS) as Array<keyof typeof COLS>).reduce<Layouts>((result, breakpoint) => {
-    const source = layouts[breakpoint] ?? DEFAULT_LAYOUTS[breakpoint] ?? []
-    result[breakpoint] = source
-      .filter((item) => resolveVariant(item.i))
-      .map((item) => withWidgetLimits(item, breakpoint))
-    return result
-  }, {})
 }
 
 function nextY(layout: Layout[]) {
   return layout.reduce((max, item) => Math.max(max, item.y + item.h), 0)
 }
 
+/** Canonicalize + clamp a single breakpoint's items (no default fallback). */
+function normalizeBreakpoint(items: Layout[], breakpoint: keyof typeof COLS): Layout[] {
+  return items
+    .map((item) => {
+      const plugin = resolvePlugin(item.i)
+      return plugin ? withWidgetLimits(item, breakpoint, plugin) : null
+    })
+    .filter((item): item is Layout => item !== null)
+}
+
 function createLayoutItem(key: string, breakpoint: keyof typeof COLS, layout: Layout[]): Layout {
-  const variant = resolveVariant(key)!
+  const plugin = resolvePlugin(key)
   const cols = COLS[breakpoint]
-  const w = Math.min(variant.defaultW, cols)
+  const w = Math.min(plugin?.defaultW ?? 1, cols)
   return {
     i: key,
     x: 0,
     y: nextY(layout),
     w,
-    h: variant.defaultH,
-    minW: Math.min(variant.minW, cols),
-    minH: variant.minH,
+    h: plugin?.defaultH ?? 1,
+    minW: Math.min(plugin?.minW ?? 1, cols),
+    minH: plugin?.minH ?? 1,
   }
 }
 
@@ -98,18 +98,51 @@ export function Dashboard({ isEditing }: Props) {
     debounceMs: 350,
   })
   const [addPanelOpen, setAddPanelOpen] = useState(false)
+  const { isEnabled } = useEnabledPlugins()
 
-  const normalizedLayouts = useMemo(() => normalizeLayouts(layouts), [layouts])
+  /**
+   * Canonicalize + clamp every stored layout item. Keeps disabled plugins so
+   * their positions survive a disable/re-enable cycle.
+   */
+  const normalizeLayouts = useCallback(
+    (input: Layouts) =>
+      (Object.keys(COLS) as Array<keyof typeof COLS>).reduce<Layouts>((result, breakpoint) => {
+        const source = input[breakpoint] ?? DEFAULT_LAYOUTS[breakpoint] ?? []
+        result[breakpoint] = normalizeBreakpoint(source, breakpoint)
+        return result
+      }, {}),
+    [],
+  )
+
+  const normalizedLayouts = useMemo(() => normalizeLayouts(layouts), [layouts, normalizeLayouts])
+
+  /** Layouts actually rendered: disabled plugins hidden, their items preserved. */
+  const displayLayouts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(normalizedLayouts).map(([bp, items]) => [bp, items.filter((item) => isEnabled(item.i))]),
+      ) as Layouts,
+    [normalizedLayouts, isEnabled],
+  )
+
   const activeKeys = useMemo(
-    () => new Set((normalizedLayouts.lg ?? []).map((item) => item.i)),
-    [normalizedLayouts],
+    () => new Set((displayLayouts.lg ?? []).map((item) => item.i)),
+    [displayLayouts],
   )
 
   const handleLayoutChange = useCallback(
     (_currentLayout: Layout[], allLayouts: Layouts) => {
-      setLayouts(normalizeLayouts(allLayouts))
+      setLayouts((prev) => {
+        const merged: Layouts = {}
+        for (const bp of Object.keys(COLS) as Array<keyof typeof COLS>) {
+          const incoming = allLayouts[bp] ?? []
+          const preserved = normalizeBreakpoint((normalizeLayouts(prev)[bp] ?? []).filter((item) => !isEnabled(item.i)), bp)
+          merged[bp] = normalizeBreakpoint([...incoming, ...preserved], bp)
+        }
+        return merged
+      })
     },
-    [setLayouts],
+    [isEnabled, normalizeLayouts, setLayouts],
   )
 
   const handleRemove = useCallback(
@@ -122,7 +155,7 @@ export function Dashboard({ isEditing }: Props) {
         return next
       })
     },
-    [setLayouts],
+    [normalizeLayouts, setLayouts],
   )
 
   const handleAdd = useCallback(
@@ -139,7 +172,7 @@ export function Dashboard({ isEditing }: Props) {
       })
       setAddPanelOpen(false)
     },
-    [setLayouts],
+    [normalizeLayouts, setLayouts],
   )
 
   const handleReset = useCallback(() => {
@@ -147,19 +180,16 @@ export function Dashboard({ isEditing }: Props) {
     setAddPanelOpen(false)
   }, [setLayouts])
 
-  const availableGroups = useMemo(
-    () =>
-      widgetGroups.filter((group) =>
-        group.variants.some((v) => !activeKeys.has(variantKey(group.id, v.id))),
-      ),
-    [activeKeys],
-  )
+  const availableGroups = useMemo(() => {
+    const available = plugins.filter((plugin) => isEnabled(plugin.id) && !activeKeys.has(plugin.id))
+    return groupPlugins(available)
+  }, [activeKeys, isEnabled])
 
   const renderedWidgets = useMemo(() => {
-    return (normalizedLayouts.lg ?? []).map((item) => {
-      const variant = resolveVariant(item.i)
-      if (!variant) return null
-      const WidgetComponent = variant.component
+    return (displayLayouts.lg ?? []).map((item) => {
+      const plugin = resolvePlugin(item.i)
+      if (!plugin) return null
+      const WidgetComponent = plugin.component
 
       return (
         <div key={item.i} className="group/widget relative h-full">
@@ -197,12 +227,12 @@ export function Dashboard({ isEditing }: Props) {
         </div>
       )
     })
-  }, [handleRemove, isEditing, normalizedLayouts])
+  }, [displayLayouts, handleRemove, isEditing])
 
   return (
     <div className={['dashboard-grid relative', isEditing ? 'is-editing' : ''].join(' ')}>
       <ResponsiveGridLayout
-        layouts={normalizedLayouts}
+        layouts={displayLayouts}
         breakpoints={BREAKPOINTS}
         cols={COLS}
         rowHeight={GRID_ROW_HEIGHT}
@@ -240,28 +270,18 @@ export function Dashboard({ isEditing }: Props) {
                 <p className="py-6 text-center text-sm text-white/45">All widgets are on the page.</p>
               ) : (
                 <div className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto pr-1">
-                  {availableGroups.map((group) => {
-                    const openVariants = group.variants.filter(
-                      (v) => !activeKeys.has(variantKey(group.id, v.id)),
-                    )
-                    if (openVariants.length === 0) return null
-                    return (
-                      <div key={group.id} className="flex flex-col gap-3">
-                        <span className="text-xs font-medium uppercase tracking-[0.16em] text-white/40">
-                          {group.name}
-                        </span>
-                        <div className="flex flex-wrap items-end gap-5">
-                          {openVariants.map((v) => {
-                            const key = variantKey(group.id, v.id)
-                            const resolved = resolveVariant(key)!
-                            return (
-                              <WidgetPreview key={key} variant={resolved} onClick={() => handleAdd(key)} />
-                            )
-                          })}
-                        </div>
+                  {availableGroups.map((group) => (
+                    <div key={group.name} className="flex flex-col gap-3">
+                      <span className="text-xs font-medium uppercase tracking-[0.16em] text-white/40">
+                        {group.name}
+                      </span>
+                      <div className="flex flex-wrap items-end gap-5">
+                        {group.plugins.map((plugin) => (
+                          <WidgetPreview key={plugin.id} plugin={plugin} onClick={() => handleAdd(plugin.id)} />
+                        ))}
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check, Link as LinkIcon, Pencil, Plus, Trash2, X } from 'lucide-react'
-import { WidgetCard } from '../components/WidgetCard'
+import { WidgetCard } from '../../components/WidgetCard'
 import {
   guessIcon,
   iconMap,

@@ -2,6 +2,8 @@ import { Check, Globe, Image, Link, Pencil, Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { SettingsPanel } from './components/SettingsPanel'
+import { PluginManager } from './plugins/PluginManager'
+import { migratePluginKeys } from './plugins/registry'
 import type { ThemeMode } from './config/theme'
 import { SearchWidget } from './widgets/SearchWidget'
 import { ClockWidget } from './widgets/ClockWidget'
@@ -40,6 +42,11 @@ export default function App() {
   const [urlValue, setUrlValue] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // One-time rewrite of legacy widget keys (e.g. gauge:deepseek-balance) to plugin ids.
+    migratePluginKeys().catch(() => {})
+  }, [])
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -263,6 +270,7 @@ export default function App() {
           </button>
 
           <SettingsPanel theme={theme} onThemeChange={setTheme} />
+          <PluginManager />
         </div>
 
       <input

@@ -1,7 +1,7 @@
 import type { DragEvent } from 'react'
-import type { KanbanColumnId, KanbanStore, KanbanTask } from './kanban'
-import { isCompleted } from './todo'
-import type { TodoHorizon, TodoItem, TodoStore } from './todo'
+import type { KanbanColumnId, KanbanStore, KanbanTask } from '../kanban/kanban'
+import { isCompleted } from '../todo/todo'
+import type { TodoHorizon, TodoItem, TodoStore } from '../todo/todo'
 
 export interface DraggedTask {
   source: 'todo' | 'kanban'

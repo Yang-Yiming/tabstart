@@ -1,10 +1,10 @@
 import { useMemo, useState, type DragEvent } from 'react'
 import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat2, Target, Trash2 } from 'lucide-react'
-import { WidgetCard } from '../components/WidgetCard'
-import { formatDateKey } from './activity'
-import { useKanbanStore } from './kanban'
-import { getDragData, isTaskDrag, setDragData, transferKanbanToTodo } from './taskTransfer'
-import { useWidgetSettings } from './widgetSettings'
+import { WidgetCard } from '../../components/WidgetCard'
+import { formatDateKey } from '../_shared/activity'
+import { useKanbanStore } from '../kanban/kanban'
+import { getDragData, isTaskDrag, setDragData, transferKanbanToTodo } from '../_shared/taskTransfer'
+import { useWidgetSettings } from '../widgetSettings'
 import {
   addDays,
   isCompleted,

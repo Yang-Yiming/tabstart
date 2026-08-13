@@ -1,37 +1,13 @@
-import type { ElementType } from 'react'
-
-export type WidgetId =
-  | 'clock'
-  | 'search'
-  | 'bookmarks'
-  | 'notes'
-  | 'pomodoro'
-  | 'heatmap'
-  | 'streak'
-  | 'todo'
-  | 'kanban'
-  | 'gauge'
+import type { ComponentType } from 'react'
 
 export interface WidgetProps {
   className?: string
-  /** Resolved variant key of this widget instance, e.g. `gauge:deepseek-balance`. */
+  /** Plugin id of this widget instance, e.g. `deepseek`. */
   widgetKey?: string
   /** Render in the Add-Widget preview with placeholder data instead of live fetching. */
   preview?: boolean
   /** Rendered at a minimal grid size (single row) — use a denser layout. */
   compact?: boolean
-}
-
-export interface WidgetVariant {
-  id: string
-  label: string
-  component: ElementType
-  defaultW: number
-  defaultH: number
-  minW?: number
-  minH?: number
-  /** Per-variant settings schema (used by presets that share a group). */
-  settings?: WidgetSettingsSchema
 }
 
 export type WidgetSettingValue = boolean | string | number
@@ -77,23 +53,27 @@ export interface WidgetSettingsSchema {
   fields: WidgetSettingField[]
 }
 
-export interface WidgetGroup {
-  id: WidgetId
+/**
+ * A widget plugin. Every grid widget — built-in or user-authored — is a
+ * plugin registered under `src/plugins/<id>/plugin.tsx`.
+ */
+export interface WidgetPlugin {
+  /** Stable plugin id, e.g. `deepseek` / `kanban-compact`. Also the layout & settings key. */
+  id: string
+  /** Display name shown in the picker, settings and plugin manager. */
   name: string
-  variants: WidgetVariant[]
-  settings?: WidgetSettingsSchema
-}
-
-export interface ResolvedVariant {
-  key: string
-  widgetId: WidgetId
-  variantId: string
-  groupName: string
-  label: string
-  component: ElementType
+  description?: string
+  /** Grouping label in the Add-Widget picker and settings sidebar, e.g. `Kanban`. */
+  group?: string
+  component: ComponentType<WidgetProps>
   defaultW: number
   defaultH: number
-  minW: number
-  minH: number
+  minW?: number
+  minH?: number
+  /** Per-plugin settings schema. */
   settings?: WidgetSettingsSchema
+  /** Mark as a core built-in widget: only disable-able in the plugin manager. */
+  builtin?: boolean
+  /** Display order inside its group (lower first). */
+  order?: number
 }

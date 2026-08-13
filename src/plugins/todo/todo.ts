@@ -1,5 +1,5 @@
-import { useLocalStorage } from '../hooks/useLocalStorage'
-import { formatDateKey } from './activity'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { formatDateKey } from '../_shared/activity'
 
 export type TodoHorizon = 'daily' | 'weekly' | 'goal'
 export type TodoRecurrence = 'none' | 'daily' | 'weekdays' | 'weekly'

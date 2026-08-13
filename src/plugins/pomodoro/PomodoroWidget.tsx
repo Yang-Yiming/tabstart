@@ -1,5 +1,5 @@
 import { Pause, Play, RotateCcw, Timer } from 'lucide-react'
-import { WidgetCard } from '../components/WidgetCard'
+import { WidgetCard } from '../../components/WidgetCard'
 import { POMODORO_MODES, usePomodoro, type PomodoroMode } from './usePomodoro'
 
 export function PomodoroCompactWidget() {

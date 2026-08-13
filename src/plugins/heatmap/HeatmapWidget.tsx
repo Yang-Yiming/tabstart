@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Check, Minus, Plus, Settings, Trash2 } from 'lucide-react'
-import { WidgetCard } from '../components/WidgetCard'
+import { WidgetCard } from '../../components/WidgetCard'
 import {
   DEFAULT_ACTIVITY_TOPICS,
   addDays,
   formatDateKey,
   getTopicValue,
   useActivityStore,
-} from './activity'
+} from '../_shared/activity'
 
 const WEEKS = 53
 

@@ -1,14 +1,6 @@
-import type { WidgetId } from '../widgets/types'
-
 export interface SearchEngine {
   name: string
   url: string
-}
-
-export interface WidgetLayout {
-  id: WidgetId
-  columnSpan?: number
-  rowSpan?: number
 }
 
 export interface BackgroundConfig {
@@ -20,7 +12,6 @@ export interface BackgroundConfig {
 export interface HomepageConfig {
   title: string
   background: BackgroundConfig
-  widgets: WidgetLayout[]
   search: {
     defaultEngine: string
     engines: Record<string, SearchEngine>
@@ -34,11 +25,6 @@ export const homepageConfig: HomepageConfig = {
     overlay: 0.3,
     blur: 0,
   },
-  widgets: [
-    { id: 'bookmarks', columnSpan: 2, rowSpan: 2 },
-    { id: 'notes', columnSpan: 2, rowSpan: 2 },
-    { id: 'heatmap', columnSpan: 4, rowSpan: 2 },
-  ],
   search: {
     defaultEngine: 'google',
     engines: {

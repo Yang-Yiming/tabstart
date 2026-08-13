@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat, SquareKanban, Trash2 } from 'lucide-react'
-import { WidgetCard } from '../components/WidgetCard'
-import { getDragData, isTaskDrag, setDragData, transferTodoToKanban } from './taskTransfer'
-import { useTodoStore } from './todo'
+import { WidgetCard } from '../../components/WidgetCard'
+import { getDragData, isTaskDrag, setDragData, transferTodoToKanban } from '../_shared/taskTransfer'
+import { useTodoStore } from '../todo/todo'
 import {
   KANBAN_COLUMNS,
   moveTask,

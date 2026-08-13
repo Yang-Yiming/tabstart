@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Flame } from 'lucide-react'
-import { WidgetCard } from '../components/WidgetCard'
-import { addDays, calculateStreakStats, formatDateKey, useActivityStore } from './activity'
-import { useWidgetSettings } from './widgetSettings'
+import { WidgetCard } from '../../components/WidgetCard'
+import { addDays, calculateStreakStats, formatDateKey, useActivityStore } from '../_shared/activity'
+import { useWidgetSettings } from '../widgetSettings'
 
 export function StreakWidget() {
   const [store] = useActivityStore()

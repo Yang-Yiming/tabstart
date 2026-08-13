@@ -8,7 +8,7 @@ import {
   Newspaper,
   type LucideIcon,
 } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
 
 export interface BookmarkLink {
   title: string

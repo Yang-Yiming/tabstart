@@ -1,5 +1,5 @@
-import { useLocalStorage } from '../hooks/useLocalStorage'
-import { WidgetCard } from '../components/WidgetCard'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
+import { WidgetCard } from '../../components/WidgetCard'
 
 export function NotesWidget() {
   const [notes, setNotes] = useLocalStorage('homepage-notes', '', { debounceMs: 500 })

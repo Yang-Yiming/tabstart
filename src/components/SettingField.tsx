@@ -1,4 +1,4 @@
-import type { WidgetSettingField } from '../widgets/types'
+import type { WidgetSettingField } from '../plugins/types'
 import { Toggle } from './Toggle'
 
 interface SettingFieldProps {
