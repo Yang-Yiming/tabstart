@@ -36,6 +36,10 @@ export interface QueryConfig {
   refreshMinutes: number
   maxItems: number
   hideOnEmpty: boolean
+  /** JSON array of local-time windows, e.g. [{"from":"09:00","to":"12:00"}]. */
+  peakWindowsJson: string
+  /** Show a "Peak" alert on the card while inside a peak window. */
+  peakReminder: boolean
 }
 
 export function defaultQueryConfig(): QueryConfig {
@@ -59,5 +63,7 @@ export function defaultQueryConfig(): QueryConfig {
     refreshMinutes: 30,
     maxItems: 5,
     hideOnEmpty: false,
+    peakWindowsJson: '[]',
+    peakReminder: true,
   }
 }

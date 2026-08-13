@@ -15,7 +15,7 @@ A personal browser start page & launchpad dashboard for your new tab.
 | Pomodoro | Small / large timer variants |
 | Gauge | Generic "query & display" widget: fetch a JSON API and render fields, with per-preset settings and filter expressions |
 
-> Gauge: presets like **DeepSeek Balance** ship with default config; add your API key in Settings → Widgets → Gauge. Keys are stored only in your local browser storage. The manifest requests `<all_urls>` host permission so custom URLs can be fetched; check the code if you prefer a narrower allow-list.
+> Gauge: presets like **DeepSeek Balance** ship with default config; add your API key in Settings → Widgets → Gauge. Keys are stored only in your local browser storage. The manifest requests `<all_urls>` host permission so custom URLs can be fetched; check the code if you prefer a narrower allow-list. The DeepSeek preset also reminds you with an amber border + "Peak" badge during the daily surcharge windows (09:00–12:00, 14:00–18:00 local time) — toggle it off in settings.
 
 > Tasks and Kanban share drag & drop — drag a task between the two widgets and it moves across (completion state follows).
 

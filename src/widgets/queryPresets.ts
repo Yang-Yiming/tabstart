@@ -195,6 +195,22 @@ export function gaugeSettingsSchema(config: QueryConfig, options: GaugeSchemaOpt
       description: '值不存在时隐藏该行 / 该条目。',
       default: d.hideOnEmpty,
     },
+    {
+      type: 'json',
+      key: 'peakWindowsJson',
+      label: '高峰时段 (JSON)',
+      description:
+        '本地时间窗口列表，如 [{"from":"09:00","to":"12:00"}]。命中时给卡片加描边和 Peak 徽章（适合价格翻倍时段提醒）。',
+      default: d.peakWindowsJson,
+      rows: 3,
+    },
+    {
+      type: 'boolean',
+      key: 'peakReminder',
+      label: '高峰提醒',
+      description: '在配置的高峰时段内，给卡片加琥珀色描边和 Peak 徽章。',
+      default: d.peakReminder,
+    },
   ]
   const schema: WidgetSettingsSchema = {
     title: d.title || 'Gauge',
@@ -205,8 +221,8 @@ export function gaugeSettingsSchema(config: QueryConfig, options: GaugeSchemaOpt
   }
   if (!minimal) return schema
 
-  // Minimal mode: keep only title / apiKey / refreshMinutes visible.
-  const keep = new Set(['title', 'apiKey', 'refreshMinutes'])
+  // Minimal mode: keep only title / apiKey / refreshMinutes / peakReminder visible.
+  const keep = new Set(['title', 'apiKey', 'refreshMinutes', 'peakReminder'])
   return {
     ...schema,
     fields: schema.fields.map((field) =>
@@ -260,6 +276,14 @@ export const gaugePresets: GaugePresetDef[] = [
         2,
       ),
       refreshMinutes: 30,
+      peakWindowsJson: JSON.stringify(
+        [
+          { from: '09:00', to: '12:00' },
+          { from: '14:00', to: '18:00' },
+        ],
+        null,
+        2,
+      ),
     },
     minimalSettings: true,
   },

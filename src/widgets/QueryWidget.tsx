@@ -2,7 +2,7 @@ import { Gauge, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { WidgetCard } from '../components/WidgetCard'
 import { useStoredState } from '../hooks/useLocalStorage'
-import { buildRequest, compileFilter, evaluatePath, formatValue, parseRows, thresholdColor } from './queryEngine'
+import { buildRequest, compileFilter, evaluatePath, formatValue, isInPeakWindows, parsePeakWindows, parseRows, thresholdColor } from './queryEngine'
 import { defaultQueryConfig, type QueryConfig, type QueryRowDef } from './queryTypes'
 import type { WidgetProps } from './types'
 import { useWidgetSettings } from './widgetSettings'
@@ -72,6 +72,8 @@ function buildConfig(settings: Record<string, unknown>): QueryConfig {
     refreshMinutes: toNum(settings.refreshMinutes, base.refreshMinutes),
     maxItems: toNum(settings.maxItems, base.maxItems),
     hideOnEmpty: toBool(settings.hideOnEmpty, base.hideOnEmpty),
+    peakWindowsJson: toStr(settings.peakWindowsJson ?? base.peakWindowsJson),
+    peakReminder: toBool(settings.peakReminder, base.peakReminder),
   }
 }
 
@@ -97,6 +99,20 @@ export function GaugeWidget({ widgetKey, preview, compact }: WidgetProps) {
     [config.mode, config.rowsJson],
   )
   const filterResult = useMemo(() => compileFilter(config.filter), [config.filter])
+
+  // Peak-window reminder: re-evaluate the local time every 30s so the
+  // card flips right at the window boundaries.
+  const peakWindows = useMemo(
+    () => (config.peakReminder ? parsePeakWindows(config.peakWindowsJson) : []),
+    [config.peakReminder, config.peakWindowsJson],
+  )
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (isPreview) return
+    const id = window.setInterval(() => setNow(new Date()), 30_000)
+    return () => window.clearInterval(id)
+  }, [isPreview])
+  const inPeak = useMemo(() => isInPeakWindows(peakWindows, now), [peakWindows, now])
 
   const cacheKey = `gauge-cache:${resolvedKey}`
   const [cache, setCache, cacheHydrated] = useStoredState<CacheData | null>(cacheKey, null)
@@ -202,11 +218,24 @@ export function GaugeWidget({ widgetKey, preview, compact }: WidgetProps) {
     color === 'danger' ? 'text-rose-300' : color === 'success' ? 'text-emerald-300' : 'text-white'
 
   return (
-    <WidgetCard className={`flex h-full flex-col ${compact ? 'gap-2 p-2.5' : 'gap-3 p-4'}`}>
+    <WidgetCard
+      className={[
+        'flex h-full flex-col',
+        compact ? 'gap-2 p-2.5' : 'gap-3 p-4',
+        inPeak
+          ? '!border-amber-300/70 !shadow-[0_0_26px_-8px_rgba(251,191,36,0.55)]'
+          : '',
+      ].join(' ')}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-white/45">
           <Gauge className="h-3 w-3 shrink-0 text-sky-200/70" />
           <span className="truncate">{config.title || 'Gauge'}</span>
+          {inPeak && (
+            <span className="shrink-0 rounded-full bg-amber-400/20 px-1.5 py-px text-[9px] font-bold uppercase leading-4 tracking-wider text-amber-300">
+              Peak
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {!isPreview && !compact && cache && (
