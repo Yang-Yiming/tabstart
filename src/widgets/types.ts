@@ -18,6 +18,8 @@ export interface WidgetProps {
   widgetKey?: string
   /** Render in the Add-Widget preview with placeholder data instead of live fetching. */
   preview?: boolean
+  /** Rendered at a minimal grid size (single row) — use a denser layout. */
+  compact?: boolean
 }
 
 export interface WidgetVariant {

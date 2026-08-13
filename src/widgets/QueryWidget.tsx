@@ -85,7 +85,7 @@ function timeAgo(timestamp: number): string {
   return new Date(timestamp).toLocaleString('zh-CN', { hour12: false })
 }
 
-export function GaugeWidget({ widgetKey, preview }: WidgetProps) {
+export function GaugeWidget({ widgetKey, preview, compact }: WidgetProps) {
   const resolvedKey = widgetKey ?? 'gauge'
   const isPreview = preview === true
   const { settings } = useWidgetSettings(resolvedKey)
@@ -202,14 +202,16 @@ export function GaugeWidget({ widgetKey, preview }: WidgetProps) {
     color === 'danger' ? 'text-rose-300' : color === 'success' ? 'text-emerald-300' : 'text-white'
 
   return (
-    <WidgetCard className="flex h-full flex-col gap-3 p-4">
+    <WidgetCard className={`flex h-full flex-col ${compact ? 'gap-2 p-2.5' : 'gap-3 p-4'}`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.16em] text-white/45">
           <Gauge className="h-3 w-3 shrink-0 text-sky-200/70" />
           <span className="truncate">{config.title || 'Gauge'}</span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {!isPreview && cache && <span className="text-[10px] text-white/35">{timeAgo(cache.fetchedAt)}</span>}
+          {!isPreview && !compact && cache && (
+            <span className="text-[10px] text-white/35">{timeAgo(cache.fetchedAt)}</span>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -250,7 +252,7 @@ export function GaugeWidget({ widgetKey, preview }: WidgetProps) {
         )}
 
         {!error && displayCache && config.mode === 'rows' && rowsResult && (
-          <div className="flex flex-col gap-2">
+          <div className={`flex flex-col ${compact ? 'gap-1' : 'gap-2'}`}>
             {rowsResult.ok ? (
               visibleRows.map((row: QueryRowDef, index: number) => {
                 const raw = evaluatePath(displayCache.json, row.path)
@@ -264,7 +266,9 @@ export function GaugeWidget({ widgetKey, preview }: WidgetProps) {
                 return (
                   <div key={index} className="flex items-baseline justify-between gap-3">
                     <span className="truncate text-xs text-white/55">{row.label}</span>
-                    <span className={`shrink-0 font-mono text-sm ${valueColor(color)}`}>{text}</span>
+                    <span className={`shrink-0 font-mono ${compact ? 'text-xs' : 'text-sm'} ${valueColor(color)}`}>
+                      {text}
+                    </span>
                   </div>
                 )
               })
@@ -278,13 +282,15 @@ export function GaugeWidget({ widgetKey, preview }: WidgetProps) {
         )}
 
         {!error && displayCache && config.mode === 'list' && (
-          <ul className="flex flex-col gap-1.5">
+          <ul className={`flex flex-col ${compact ? 'gap-0.5' : 'gap-1.5'}`}>
             {listItems.map((item) => {
               const color = thresholdColor(item.raw, config.thresholdMode, config.thresholdValue)
               return (
                 <li key={item.key} className="flex items-baseline justify-between gap-3">
                   <span className="truncate text-xs text-white/55">{item.label}</span>
-                  <span className={`shrink-0 font-mono text-sm ${valueColor(color)}`}>{item.text}</span>
+                  <span className={`shrink-0 font-mono ${compact ? 'text-xs' : 'text-sm'} ${valueColor(color)}`}>
+                    {item.text}
+                  </span>
                 </li>
               )
             })}

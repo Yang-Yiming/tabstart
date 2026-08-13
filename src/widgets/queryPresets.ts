@@ -222,8 +222,8 @@ export const gaugePresets: GaugePresetDef[] = [
     description: 'DeepSeek API 余额（GET /user/balance）',
     defaultW: 2,
     defaultH: 2,
-    minW: 2,
-    minH: 2,
+    minW: 1,
+    minH: 1,
     config: {
       ...defaultQueryConfig(),
       title: 'DeepSeek',
