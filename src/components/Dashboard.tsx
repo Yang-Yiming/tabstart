@@ -165,7 +165,7 @@ export function Dashboard({ isEditing }: Props) {
         <div key={item.i} className="group/widget relative h-full">
           <div className="h-full [&>*]:h-full">
             <Suspense fallback={<div className="h-full rounded-2xl bg-black/20 backdrop-blur-xl" />}>
-              <WidgetComponent />
+              <WidgetComponent widgetKey={item.i} />
             </Suspense>
           </div>
 

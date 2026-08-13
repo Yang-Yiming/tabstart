@@ -1,30 +1,41 @@
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { widgetGroups } from './registry'
+import { canonicalKey, variantByKey } from './registry'
+import type { WidgetSettingValue } from './types'
 
 export const WIDGET_SETTINGS_KEY = 'homepage-widget-settings-v1'
 
-export type WidgetSettingValue = boolean | string | number
 export type WidgetSettings = Record<string, WidgetSettingValue>
 export type WidgetSettingsState = Record<string, WidgetSettings>
 
-export function widgetSettingsSchema(widgetId: string) {
-  return widgetGroups.find((group) => group.id === widgetId)?.settings ?? null
+export type { WidgetSettingValue } from './types'
+
+/**
+ * Resolve the settings schema for a widget instance key.
+ * Schema is looked up per variant first, falling back to the group.
+ */
+export function widgetSettingsSchema(widgetKey: string) {
+  return variantByKey[canonicalKey(widgetKey)]?.settings ?? null
 }
 
-export function widgetSettingsDefaults(widgetId: string): WidgetSettings {
-  const schema = widgetSettingsSchema(widgetId)
+export function widgetSettingsDefaults(widgetKey: string): WidgetSettings {
+  const schema = widgetSettingsSchema(widgetKey)
   if (!schema) return {}
   return Object.fromEntries(schema.fields.map((field) => [field.key, field.default]))
 }
 
-export function useWidgetSettings(widgetId: string) {
+/**
+ * Per-instance widget settings, keyed by the resolved variant key
+ * (e.g. `gauge:deepseek-balance`). Single-variant groups keep using the
+ * group id, so existing stored settings remain compatible.
+ */
+export function useWidgetSettings(widgetKey: string) {
   const [state, setState] = useLocalStorage<WidgetSettingsState>(WIDGET_SETTINGS_KEY, {})
-  const settings: WidgetSettings = { ...widgetSettingsDefaults(widgetId), ...(state[widgetId] ?? {}) }
+  const settings: WidgetSettings = { ...widgetSettingsDefaults(widgetKey), ...(state[widgetKey] ?? {}) }
 
   const setSetting = (key: string, value: WidgetSettingValue) => {
     setState((prev) => ({
       ...prev,
-      [widgetId]: { ...(prev[widgetId] ?? {}), [key]: value },
+      [widgetKey]: { ...(prev[widgetKey] ?? {}), [key]: value },
     }))
   }
 

@@ -1,9 +1,9 @@
-import { LayoutGrid, Monitor, Moon, Palette, Settings, Sun, X } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Folder, LayoutGrid, Monitor, Moon, Palette, Settings, Sun, X } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../config/theme'
-import { widgetGroups } from '../widgets/registry'
+import { variantKey, widgetGroups } from '../widgets/registry'
 import { useWidgetSettings } from '../widgets/widgetSettings'
-import type { WidgetGroup } from '../widgets/types'
+import type { WidgetSettingsSchema } from '../widgets/types'
 import { SettingField } from './SettingField'
 
 interface SettingsPanelProps {
@@ -15,6 +15,18 @@ interface Category {
   id: 'appearance' | 'widgets'
   name: string
   icon: ReactNode
+}
+
+interface SettingsEntry {
+  key: string
+  groupName: string
+  label: string
+  schema: WidgetSettingsSchema
+}
+
+interface SidebarGroup {
+  groupName: string
+  entries: SettingsEntry[]
 }
 
 const themeOptions: Array<{
@@ -37,10 +49,30 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState<'appearance' | 'widgets'>('appearance')
   const [widgetsOpen, setWidgetsOpen] = useState(false)
-  const [activeWidget, setActiveWidget] = useState<string | null>(null)
+  const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
 
-  const widgetList = widgetGroups.filter((group) => group.settings)
-  const activeGroup = widgetList.find((group) => group.id === activeWidget) ?? null
+  const sidebarGroups = useMemo<SidebarGroup[]>(() => {
+    const groups: SidebarGroup[] = []
+    for (const group of widgetGroups) {
+      const withSettings = group.variants.filter((variant) => variant.settings ?? group.settings)
+      if (withSettings.length === 0) continue
+      groups.push({
+        groupName: group.name,
+        entries: withSettings.map((variant) => ({
+          key: variantKey(group.id, variant.id),
+          groupName: group.name,
+          label: withSettings.length === 1 ? group.name : variant.label,
+          schema: (variant.settings ?? group.settings)!,
+        })),
+      })
+    }
+    return groups
+  }, [])
+
+  const activeEntry = useMemo(
+    () => sidebarGroups.flatMap((group) => group.entries).find((entry) => entry.key === activeWidgetKey) ?? null,
+    [sidebarGroups, activeWidgetKey],
+  )
 
   const selectCategory = (id: 'appearance' | 'widgets') => {
     if (id === 'widgets') {
@@ -66,12 +98,12 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
   }, [open])
 
   useEffect(() => {
-    if (active === 'widgets' && !activeGroup && widgetList.length > 0) {
-      setActiveWidget(widgetList[0].id)
+    if (active === 'widgets' && !activeEntry && sidebarGroups.length > 0) {
+      setActiveWidgetKey(sidebarGroups[0].entries[0].key)
     }
-  }, [active, activeGroup, widgetList])
+  }, [active, activeEntry, sidebarGroups])
 
-  const headerTitle = active === 'appearance' ? 'Appearance' : (activeGroup?.name ?? 'Widgets')
+  const headerTitle = active === 'appearance' ? 'Appearance' : (activeEntry?.label ?? 'Widgets')
 
   return (
     <div className="relative">
@@ -90,9 +122,9 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
             onClick={(event) => event.stopPropagation()}
-            className="absolute left-1/2 top-1/2 flex w-[720px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-2xl"
+            className="absolute left-1/2 top-1/2 flex max-h-[85vh] w-[720px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-2xl"
           >
-            <div className="w-44 shrink-0 border-r border-white/10 bg-black/30 p-4">
+            <div className="w-44 shrink-0 overflow-y-auto border-r border-white/10 bg-black/30 p-4">
               <h2 className="mb-4 px-2 text-sm font-semibold text-white">Settings</h2>
               <div className="flex flex-col gap-1">
                 {categories.map((category) => (
@@ -110,23 +142,55 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
                       {category.icon}
                       {category.name}
                     </button>
-                    {category.id === 'widgets' && widgetsOpen && widgetList.length > 0 && (
+                    {category.id === 'widgets' && widgetsOpen && sidebarGroups.length > 0 && (
                       <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-2">
-                        {widgetList.map((group) => (
-                          <button
-                            key={group.id}
-                            type="button"
-                            onClick={() => setActiveWidget(group.id)}
-                            className={[
-                              'rounded-lg px-2 py-1.5 text-left text-xs transition',
-                              active === 'widgets' && activeGroup?.id === group.id
-                                ? 'bg-white/10 text-white'
-                                : 'text-white/45 hover:bg-white/5 hover:text-white/80',
-                            ].join(' ')}
-                          >
-                            {group.name}
-                          </button>
-                        ))}
+                        {sidebarGroups.map((group) =>
+                          group.entries.length === 1 ? (
+                            <button
+                              key={group.entries[0].key}
+                              type="button"
+                              onClick={() => setActiveWidgetKey(group.entries[0].key)}
+                              className={[
+                                'rounded-lg px-2 py-1.5 text-left text-xs transition',
+                                active === 'widgets' && activeEntry?.key === group.entries[0].key
+                                  ? 'bg-white/10 text-white'
+                                  : 'text-white/45 hover:bg-white/5 hover:text-white/80',
+                              ].join(' ')}
+                            >
+                              {group.groupName}
+                            </button>
+                          ) : (
+                            <div key={group.groupName} className="flex flex-col gap-0.5">
+                              <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                                <Folder className="h-3 w-3 shrink-0" />
+                                {group.groupName}
+                              </div>
+                              {group.entries.map((entry) => (
+                                <button
+                                  key={entry.key}
+                                  type="button"
+                                  onClick={() => setActiveWidgetKey(entry.key)}
+                                  className={[
+                                    'flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs transition',
+                                    active === 'widgets' && activeEntry?.key === entry.key
+                                      ? 'bg-white/10 text-white'
+                                      : 'text-white/45 hover:bg-white/5 hover:text-white/80',
+                                  ].join(' ')}
+                                >
+                                  <span
+                                    className={[
+                                      'h-1 w-1 shrink-0 rounded-full',
+                                      active === 'widgets' && activeEntry?.key === entry.key
+                                        ? 'bg-sky-300/80'
+                                        : 'bg-white/25',
+                                    ].join(' ')}
+                                  />
+                                  {entry.label}
+                                </button>
+                              ))}
+                            </div>
+                          ),
+                        )}
                       </div>
                     )}
                   </div>
@@ -147,11 +211,11 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
                 </button>
               </div>
 
-              <div className="flex-1 p-6">
+              <div className="min-h-0 flex-1 overflow-y-auto p-6">
                 {active === 'appearance' ? (
                   <AppearanceSection theme={theme} onThemeChange={onThemeChange} />
-                ) : activeGroup ? (
-                  <WidgetSettingsSection group={activeGroup} />
+                ) : activeEntry ? (
+                  <WidgetSettingsSection entry={activeEntry} />
                 ) : (
                   <p className="text-sm text-white/50">没有可配置的 widget。</p>
                 )}
@@ -210,10 +274,10 @@ function AppearanceSection({
   )
 }
 
-function WidgetSettingsSection({ group }: { group: WidgetGroup }) {
-  const { settings, setSetting } = useWidgetSettings(group.id)
-  const schema = group.settings
-  if (!schema) return null
+function WidgetSettingsSection({ entry }: { entry: SettingsEntry }) {
+  const { settings, setSetting } = useWidgetSettings(entry.key)
+  const schema = entry.schema
+  const visibleFields = schema.fields.filter((field) => !field.showWhen || field.showWhen(settings))
 
   return (
     <div className="space-y-5">
@@ -221,7 +285,7 @@ function WidgetSettingsSection({ group }: { group: WidgetGroup }) {
         <h4 className="text-sm font-medium text-white">{schema.title}</h4>
         {schema.description && <p className="mt-1 text-xs text-white/50">{schema.description}</p>}
       </div>
-      {schema.fields.map((field) => (
+      {visibleFields.map((field) => (
         <SettingField
           key={field.key}
           field={field}

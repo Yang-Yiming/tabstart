@@ -42,7 +42,7 @@ export function WidgetPreview({ variant, onClick }: Props) {
         >
           <div className="h-full w-full [&>*]:h-full">
             <Suspense fallback={<div className="h-full w-full rounded-3xl bg-white/5" />}>
-              <variant.component />
+              <variant.component widgetKey={variant.key} preview />
             </Suspense>
           </div>
         </div>

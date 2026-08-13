@@ -50,6 +50,25 @@ export function SettingField({ field, value, onChange }: SettingFieldProps) {
           className={`${controlClass} w-48`}
         />
       )}
+      {field.type === 'password' && (
+        <input
+          type="password"
+          value={String(value ?? field.default)}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${controlClass} w-48`}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      )}
+      {field.type === 'json' && (
+        <textarea
+          value={String(value ?? field.default)}
+          onChange={(event) => onChange(event.target.value)}
+          rows={field.rows ?? 5}
+          spellCheck={false}
+          className={`${controlClass} w-72 resize-y font-mono text-xs leading-5`}
+        />
+      )}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { lazy } from 'react'
+import { gaugePresets, gaugeSettingsSchema } from './queryPresets'
 import type { ResolvedVariant, WidgetGroup, WidgetId } from './types'
 
 const PomodoroCompact = lazy(() =>
@@ -14,6 +15,7 @@ const Streak = lazy(() => import('./StreakWidget').then((m) => ({ default: m.Str
 const Todo = lazy(() => import('./TodoWidget').then((m) => ({ default: m.TodoWidget })))
 const KanbanFull = lazy(() => import('./KanbanWidget').then((m) => ({ default: m.KanbanFullWidget })))
 const KanbanCompact = lazy(() => import('./KanbanWidget').then((m) => ({ default: m.KanbanCompactWidget })))
+const Gauge = lazy(() => import('./QueryWidget').then((m) => ({ default: m.GaugeWidget })))
 
 export const widgetGroups: WidgetGroup[] = [
   {
@@ -95,6 +97,20 @@ export const widgetGroups: WidgetGroup[] = [
       { id: 'compact', label: 'Compact', component: KanbanCompact, defaultW: 2, defaultH: 2, minW: 2, minH: 2 },
     ],
   },
+  {
+    id: 'gauge',
+    name: 'Gauge',
+    variants: gaugePresets.map((preset) => ({
+      id: preset.id,
+      label: preset.label,
+      component: Gauge,
+      defaultW: preset.defaultW,
+      defaultH: preset.defaultH,
+      minW: preset.minW,
+      minH: preset.minH,
+      settings: gaugeSettingsSchema(preset.config, { minimal: preset.minimalSettings }),
+    })),
+  },
 ]
 
 const groupById: Record<string, WidgetGroup> = Object.fromEntries(
@@ -123,6 +139,7 @@ export const variantByKey: Record<string, ResolvedVariant> = (() => {
         defaultH: variant.defaultH,
         minW: variant.minW ?? 1,
         minH: variant.minH ?? 1,
+        settings: variant.settings ?? group.settings,
       }
     }
   }

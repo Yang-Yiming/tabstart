@@ -1,9 +1,23 @@
 import type { ElementType } from 'react'
 
-export type WidgetId = 'clock' | 'search' | 'bookmarks' | 'notes' | 'pomodoro' | 'heatmap' | 'streak' | 'todo' | 'kanban'
+export type WidgetId =
+  | 'clock'
+  | 'search'
+  | 'bookmarks'
+  | 'notes'
+  | 'pomodoro'
+  | 'heatmap'
+  | 'streak'
+  | 'todo'
+  | 'kanban'
+  | 'gauge'
 
 export interface WidgetProps {
   className?: string
+  /** Resolved variant key of this widget instance, e.g. `gauge:deepseek-balance`. */
+  widgetKey?: string
+  /** Render in the Add-Widget preview with placeholder data instead of live fetching. */
+  preview?: boolean
 }
 
 export interface WidgetVariant {
@@ -14,9 +28,13 @@ export interface WidgetVariant {
   defaultH: number
   minW?: number
   minH?: number
+  /** Per-variant settings schema (used by presets that share a group). */
+  settings?: WidgetSettingsSchema
 }
 
-export type WidgetSettingField =
+export type WidgetSettingValue = boolean | string | number
+
+export type WidgetSettingField = (
   | { type: 'boolean'; key: string; label: string; description?: string; default: boolean }
   | {
       type: 'select'
@@ -37,16 +55,31 @@ export type WidgetSettingField =
       default: number
     }
   | { type: 'text'; key: string; label: string; description?: string; default: string }
+  | {
+      type: 'json'
+      key: string
+      label: string
+      description?: string
+      default: string
+      rows?: number
+    }
+  | { type: 'password'; key: string; label: string; description?: string; default: string }
+) & {
+  /** Only show this field while the predicate is true (evaluated against current settings). */
+  showWhen?: (settings: Record<string, WidgetSettingValue>) => boolean
+}
+
+export interface WidgetSettingsSchema {
+  title: string
+  description?: string
+  fields: WidgetSettingField[]
+}
 
 export interface WidgetGroup {
   id: WidgetId
   name: string
   variants: WidgetVariant[]
-  settings?: {
-    title: string
-    description?: string
-    fields: WidgetSettingField[]
-  }
+  settings?: WidgetSettingsSchema
 }
 
 export interface ResolvedVariant {
@@ -60,4 +93,5 @@ export interface ResolvedVariant {
   defaultH: number
   minW: number
   minH: number
+  settings?: WidgetSettingsSchema
 }

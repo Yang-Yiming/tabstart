@@ -7,7 +7,11 @@
     "newtab": "index.html"
   },
   "permissions": ["storage"],
-  "host_permissions": ["https://www.bing.com/*", "https://bing.ee123.net/*"],
+  "host_permissions": [
+    "https://www.bing.com/*",
+    "https://bing.ee123.net/*",
+    "<all_urls>"
+  ],
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
