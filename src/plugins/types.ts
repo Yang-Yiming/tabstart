@@ -72,6 +72,12 @@ export interface WidgetPlugin {
   minH?: number
   /** Per-plugin settings schema. */
   settings?: WidgetSettingsSchema
+  /**
+   * Full custom settings UI, rendered inside Settings → Widgets instead of
+   * the generic schema fields. Use it for settings that need bespoke
+   * controls (lists, steppers, remote state) rather than simple fields.
+   */
+  settingsComponent?: ComponentType
   /** Mark as a core built-in widget: only disable-able in the plugin manager. */
   builtin?: boolean
   /** Display order inside its group (lower first). */

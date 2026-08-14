@@ -1,7 +1,20 @@
-import { Folder, LayoutGrid, Monitor, Moon, Palette, Settings, Sun, X } from 'lucide-react'
+import {
+  Folder,
+  Globe,
+  LayoutGrid,
+  Link,
+  Monitor,
+  Moon,
+  Palette,
+  Settings,
+  Sun,
+  Upload,
+  X,
+} from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../config/theme'
-import { groupPlugins, plugins, useEnabledPlugins } from '../plugins/registry'
+import type { BackgroundControls } from '../hooks/useBackground'
+import { groupPlugins, pluginById, plugins, useEnabledPlugins } from '../plugins/registry'
 import { useWidgetSettings } from '../plugins/widgetSettings'
 import type { WidgetSettingsSchema } from '../plugins/types'
 import { SettingField } from './SettingField'
@@ -9,6 +22,7 @@ import { SettingField } from './SettingField'
 interface SettingsPanelProps {
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
+  background: BackgroundControls
 }
 
 interface Category {
@@ -21,7 +35,7 @@ interface SettingsEntry {
   key: string
   groupName: string
   label: string
-  schema: WidgetSettingsSchema
+  schema: WidgetSettingsSchema | null
 }
 
 interface SidebarGroup {
@@ -45,7 +59,7 @@ const categories: Category[] = [
   { id: 'widgets', name: 'Widgets', icon: <LayoutGrid className="h-4 w-4" /> },
 ]
 
-export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
+export function SettingsPanel({ theme, onThemeChange, background }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState<'appearance' | 'widgets'>('appearance')
   const [widgetsOpen, setWidgetsOpen] = useState(false)
@@ -54,14 +68,16 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
   const { isEnabled } = useEnabledPlugins()
 
   const sidebarGroups = useMemo<SidebarGroup[]>(() => {
-    const withSettings = plugins.filter((plugin) => isEnabled(plugin.id) && plugin.settings)
+    const withSettings = plugins.filter(
+      (plugin) => isEnabled(plugin.id) && (plugin.settings || plugin.settingsComponent),
+    )
     return groupPlugins(withSettings).map((group) => ({
       groupName: group.name,
       entries: group.plugins.map((plugin) => ({
         key: plugin.id,
         groupName: group.name,
         label: plugin.name,
-        schema: plugin.settings!,
+        schema: plugin.settings ?? null,
       })),
     }))
   }, [isEnabled])
@@ -154,7 +170,7 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
                                   : 'text-white/45 hover:bg-white/5 hover:text-white/80',
                               ].join(' ')}
                             >
-                              {group.groupName}
+                              {group.entries[0].label}
                             </button>
                           ) : (
                             <div key={group.groupName} className="flex flex-col gap-0.5">
@@ -210,9 +226,13 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
 
               <div className="min-h-0 flex-1 overflow-y-auto p-6">
                 {active === 'appearance' ? (
-                  <AppearanceSection theme={theme} onThemeChange={onThemeChange} />
+                  <AppearanceSection
+                    theme={theme}
+                    onThemeChange={onThemeChange}
+                    background={background}
+                  />
                 ) : activeEntry ? (
-                  <WidgetSettingsSection entry={activeEntry} />
+                  <WidgetSettingsSection key={activeEntry.key} entry={activeEntry} />
                 ) : (
                   <p className="text-sm text-white/50">没有可配置的 widget。</p>
                 )}
@@ -228,9 +248,11 @@ export function SettingsPanel({ theme, onThemeChange }: SettingsPanelProps) {
 function AppearanceSection({
   theme,
   onThemeChange,
+  background,
 }: {
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
+  background: BackgroundControls
 }) {
   return (
     <>
@@ -267,13 +289,138 @@ function AppearanceSection({
           )
         })}
       </div>
+
+      <WallpaperSection background={background} />
     </>
+  )
+}
+
+function WallpaperSection({ background }: { background: BackgroundControls }) {
+  const { backgroundSrc, fileInputRef, handleFileChange, applyUrl, applyBing } = background
+  const [urlOpen, setUrlOpen] = useState(false)
+  const [urlValue, setUrlValue] = useState('')
+
+  const applyUrlInput = () => {
+    applyUrl(urlValue)
+    setUrlValue('')
+    setUrlOpen(false)
+  }
+
+  return (
+    <div className="mt-8">
+      <div>
+        <h4 className="text-sm font-medium text-white">壁纸</h4>
+        <p className="mt-1 text-xs text-white/50">选择启动页的背景图片。</p>
+      </div>
+
+      <div className="mt-4 h-28 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+        {backgroundSrc ? (
+          <div
+            className="h-full w-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${backgroundSrc})` }}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-white/40">
+            当前没有背景图片
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 text-white/60 transition hover:border-white/20 hover:bg-white/10 hover:text-white/85"
+        >
+          <Upload className="h-4 w-4" />
+          <span className="text-xs font-medium">本地图片</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setUrlOpen((value) => !value)
+            setUrlValue('')
+          }}
+          className={[
+            'flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border transition',
+            urlOpen
+              ? 'border-white/30 bg-white/15 text-white shadow-lg'
+              : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+          ].join(' ')}
+        >
+          <Link className="h-4 w-4" />
+          <span className="text-xs font-medium">在线链接</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => applyBing()}
+          className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 text-white/60 transition hover:border-white/20 hover:bg-white/10 hover:text-white/85"
+        >
+          <Globe className="h-4 w-4" />
+          <span className="text-xs font-medium">Bing 每日图像</span>
+        </button>
+      </div>
+
+      {urlOpen && (
+        <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3">
+          <input
+            type="text"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') applyUrlInput()
+            }}
+            placeholder="输入图片URL..."
+            autoFocus
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setUrlOpen(false)
+                setUrlValue('')
+              }}
+              className="flex-1 rounded-xl px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={applyUrlInput}
+              disabled={!urlValue.trim()}
+              className="flex-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              应用
+            </button>
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </div>
   )
 }
 
 function WidgetSettingsSection({ entry }: { entry: SettingsEntry }) {
   const { settings, setSetting } = useWidgetSettings(entry.key)
+  const plugin = pluginById[entry.key]
+
+  if (plugin?.settingsComponent) {
+    const SettingsComponent = plugin.settingsComponent
+    return <SettingsComponent />
+  }
+
   const schema = entry.schema
+  if (!schema) {
+    return <p className="text-sm text-white/50">没有可配置的选项。</p>
+  }
   const visibleFields = schema.fields.filter((field) => !field.showWhen || field.showWhen(settings))
 
   return (

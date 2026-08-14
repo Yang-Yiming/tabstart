@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { Check, Minus, Plus, Settings, Trash2 } from 'lucide-react'
+import { Check, Minus, Plus } from 'lucide-react'
 import { WidgetCard } from '../../components/WidgetCard'
 import {
   DEFAULT_ACTIVITY_TOPICS,
@@ -16,8 +16,15 @@ export function HeatmapWidget() {
   const [store, setStore] = useActivityStore()
   const [activeTopic, setActiveTopic] = useState(store.topics[0] ?? DEFAULT_ACTIVITY_TOPICS[0])
   const [selected, setSelected] = useState<Date | null>(null)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [justAdded, setJustAdded] = useState(false)
+
+  // Topics can be removed from Settings → Widgets while this widget is
+  // mounted; fall back to a valid topic so the grid never targets a deleted one.
+  useEffect(() => {
+    if (!store.topics.includes(activeTopic)) {
+      setActiveTopic(store.topics[0] ?? DEFAULT_ACTIVITY_TOPICS[0])
+    }
+  }, [store.topics, activeTopic])
 
   const todayKey = useMemo(() => {
     const d = new Date()
@@ -71,28 +78,6 @@ export function HeatmapWidget() {
     })
   }
 
-  const addTopic = () => {
-    const name = window.prompt('New topic name')
-    if (!name || store.topics.includes(name)) return
-    setStore((prev) => ({ ...prev, topics: [...prev.topics, name] }))
-    setActiveTopic(name)
-  }
-
-  const removeTopic = (topic: string) => {
-    if (!window.confirm(`Delete topic "${topic}"?`)) return
-    setStore((prev) => {
-      const topics = prev.topics.filter((t) => t !== topic)
-      const data = { ...prev.data }
-      const goals = { ...prev.goals }
-      delete data[topic]
-      delete goals[topic]
-      return { topics, data, goals }
-    })
-    if (activeTopic === topic) {
-      setActiveTopic(store.topics.find((t) => t !== topic) ?? '')
-    }
-  }
-
   const selectedValue = selected ? getValue(selected) : 0
 
   const goal = store.goals[activeTopic] ?? 0
@@ -109,27 +94,16 @@ export function HeatmapWidget() {
     window.setTimeout(() => setJustAdded(false), 500)
   }
 
-  const setGoal = (value: number) => {
-    setStore((prev) => ({
-      ...prev,
-      goals: { ...prev.goals, [activeTopic]: Math.max(0, value) },
-    }))
-  }
-
   return (
     <WidgetCard className="h-full p-4">
       <div className="flex h-full flex-col gap-3">
-        <div className="relative z-10 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {store.topics.map((topic) => (
               <button
                 key={topic}
                 type="button"
                 onClick={() => setActiveTopic(topic)}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  removeTopic(topic)
-                }}
                 className={[
                   'rounded-full px-3 py-1 text-sm font-medium transition',
                   topic === activeTopic
@@ -166,15 +140,6 @@ export function HeatmapWidget() {
                 {justAdded ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
               </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setSettingsOpen((open) => !open)}
-              className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white"
-              aria-label="Heatmap settings"
-              title="Heatmap settings"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
             {selected && (
               <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1">
                 <span className="font-mono text-xs text-white/50">{formatDateKey(selected)}</span>
@@ -200,71 +165,6 @@ export function HeatmapWidget() {
               </div>
             )}
           </div>
-
-          {settingsOpen && (
-            <div className="absolute right-0 top-9 w-[min(17rem,calc(100vw-3rem))] rounded-lg border border-white/15 bg-neutral-900/90 p-2 text-white shadow-2xl backdrop-blur-2xl animate-in fade-in">
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-1 pb-2">
-                <span className="text-xs text-white/50">Daily goal</span>
-                <div className="flex items-center gap-1 rounded-full bg-white/10 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setGoal(goal - 1)}
-                    className="grid h-6 w-6 place-items-center rounded-full text-white/55 transition hover:bg-white/10 hover:text-white"
-                    aria-label="Decrease goal"
-                    title="Decrease goal"
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <input
-                    type="number"
-                    min={0}
-                    value={goal || ''}
-                    placeholder="--"
-                    onChange={(e) => setGoal(Number(e.target.value) || 0)}
-                    className="w-10 bg-transparent text-center font-mono text-xs text-white outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    aria-label="Daily goal"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setGoal(goal + 1)}
-                    className="grid h-6 w-6 place-items-center rounded-full text-white/55 transition hover:bg-white/10 hover:text-white"
-                    aria-label="Increase goal"
-                    title="Increase goal"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <div className="mb-1 px-1 text-xs text-white/50">Topics</div>
-                <div className="space-y-0.5">
-                  {store.topics.map((topic) => (
-                    <div key={topic} className="flex h-7 items-center justify-between gap-2 rounded-md px-2 hover:bg-white/[0.06]">
-                      <span className="truncate text-sm text-white/80">{topic}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeTopic(topic)}
-                        className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-white/35 transition hover:bg-red-400/10 hover:text-red-200"
-                        aria-label={`Delete ${topic}`}
-                        title={`Delete ${topic}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={addTopic}
-                  className="mt-1 flex h-7 w-full items-center gap-2 rounded-md px-2 text-sm font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add topic
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="min-w-0 flex-1 overflow-x-auto px-0.5 pb-0.5">
