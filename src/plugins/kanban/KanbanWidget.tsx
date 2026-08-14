@@ -203,7 +203,6 @@ export function KanbanCompactWidget() {
   const [column, setColumn] = useState<KanbanColumnId>('todo')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
-  const [draft, setDraft] = useState('')
   const [active, setActive] = useState(false)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<{ tab?: KanbanColumnId; taskId?: string; list?: boolean } | null>(null)
@@ -271,17 +270,16 @@ export function KanbanCompactWidget() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [active, selectedId, selectedIndex, setStore, store.tasks, tasks])
 
-  const addItem = () => {
-    const title = draft.trim()
-    if (!title) return
+  const addItem = (title: string) => {
+    const trimmed = title.trim()
+    if (!trimmed) return
     const task: KanbanTask = {
       id: createId(),
-      title,
+      title: trimmed,
       column,
       createdAt: new Date().toISOString(),
     }
     setStore((prev) => ({ ...prev, tasks: [...prev.tasks, task] }))
-    setDraft('')
     setAdding(false)
   }
 
