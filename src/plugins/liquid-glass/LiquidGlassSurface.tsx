@@ -3,24 +3,28 @@ import { LiquidGlass } from 'simple-liquid-glass'
 
 export function LiquidGlassSurface({ children, className, style, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <LiquidGlass
-      {...props}
-      className={className}
-      style={style}
-      mode="custom"
-      radius={24}
-      border={0.08}
-      lightness={55}
-      alpha={0.45}
-      displace={4}
-      blur={0}
-      dispersion={45}
-      saturation={140}
-      frost={0.15}
-      borderColor="rgba(255, 255, 255, 0.28)"
-      glassColor="rgba(255, 255, 255, 0.32)"
-    >
+    <div {...props} className={className} style={{ isolation: 'isolate', ...style }}>
+      <LiquidGlass
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ position: 'absolute', inset: 0, zIndex: -1 }}
+        mode="custom"
+        scale={18}
+        radius={24}
+        border={0.06}
+        lightness={52}
+        alpha={0.7}
+        displace={1.5}
+        blur={8}
+        dispersion={8}
+        saturation={125}
+        frost={0.32}
+        lens="rim"
+        lensStrength={0.4}
+        borderColor="rgba(255, 255, 255, 0.34)"
+        glassColor="rgba(235, 240, 245, 0.34)"
+      />
       {children}
-    </LiquidGlass>
+    </div>
   )
 }

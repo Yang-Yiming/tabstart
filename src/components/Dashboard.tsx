@@ -8,6 +8,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useWidgets } from '../plugins/hooks'
 import { canonicalKey, groupWidgets, resolveWidget, useEnabledPlugins } from '../plugins/registry'
 import type { WidgetDescriptor } from '../plugins/types'
+import { ThemeSurface } from './ThemeSurface'
 import { WidgetPreview } from './WidgetPreview'
 
 interface Props {
@@ -267,7 +268,10 @@ export function Dashboard({ isEditing }: Props) {
       {isEditing && (
         <div className="mt-5 flex flex-col items-center gap-3">
           {addPanelOpen ? (
-            <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-black/35 p-5 shadow-2xl backdrop-blur-2xl">
+            <ThemeSurface
+              fallbackClassName="border border-white/10 bg-black/35 backdrop-blur-2xl"
+              className="w-full max-w-3xl rounded-3xl p-5 shadow-2xl"
+            >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold text-white/85">Add a Widget</span>
                 <button
@@ -299,7 +303,7 @@ export function Dashboard({ isEditing }: Props) {
                   ))}
                 </div>
               )}
-            </div>
+            </ThemeSurface>
           ) : (
             <button
               type="button"

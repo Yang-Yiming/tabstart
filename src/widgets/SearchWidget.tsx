@@ -15,6 +15,7 @@ import {
   type SearchSettings,
 } from '../config/preferences'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { ThemeSurface } from '../components/ThemeSurface'
 
 const HISTORY_KEY = 'homepage-search-history'
 const MAX_HISTORY = 8
@@ -190,11 +191,16 @@ export function SearchWidget() {
     : history
 
   return (
-    <div ref={containerRef} className="relative w-full">
+      <div ref={containerRef} className="relative w-full">
       <div className="group relative mx-auto w-[85%] max-w-xl transition-all duration-500 ease-in-out hover:w-[95%] focus-within:w-[95%]">
+        <ThemeSurface
+          aria-hidden="true"
+          fallbackClassName="search-shell border"
+          className="pointer-events-none absolute inset-0 rounded-full"
+        />
         <form
           onSubmit={handleSubmit}
-          className="search-shell relative flex w-full items-center rounded-full border px-12 py-2.5 transition-all duration-500 ease-in-out"
+          className="relative flex w-full items-center rounded-full px-12 py-2.5 transition-all duration-500 ease-in-out"
         >
           <button
             type="button"
@@ -234,7 +240,10 @@ export function SearchWidget() {
         </form>
 
         {engineDropdownOpen && (
-          <div className="search-popover absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border p-2 shadow-2xl">
+          <ThemeSurface
+            fallbackClassName="search-popover border"
+            className="absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl p-2 shadow-2xl"
+          >
             <div className="flex flex-col gap-0.5">
               {engines.map((item) => {
                 const shortcuts = searchSettings.shortcuts[item.id] ?? []
@@ -273,11 +282,14 @@ export function SearchWidget() {
                 )
               })}
             </div>
-          </div>
+          </ThemeSurface>
         )}
 
         {historyOpen && !engineDropdownOpen && filteredHistory.length > 0 && (
-          <div className="search-popover absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl border p-3 shadow-2xl">
+          <ThemeSurface
+            fallbackClassName="search-popover border"
+            className="absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl p-3 shadow-2xl"
+          >
             <ul className="flex flex-col gap-1">
               {filteredHistory.map((item) => {
                 const itemEngine = engines.find((engineItem) => engineItem.id === item.engine)
@@ -320,7 +332,7 @@ export function SearchWidget() {
                 清除历史记录
               </button>
             </div>
-          </div>
+          </ThemeSurface>
         )}
       </div>
     </div>
