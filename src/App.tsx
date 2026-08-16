@@ -69,7 +69,7 @@ export default function App() {
             className={[
               'chrome-button rounded-full border p-2.5 shadow-lg transition',
               isEditing
-                ? 'border-white/25 bg-white/20 text-white'
+                ? 'chrome-button-active border-white/25'
                 : 'text-white/80',
             ].join(' ')}
             aria-label={isEditing ? 'Done editing' : 'Edit widgets'}
