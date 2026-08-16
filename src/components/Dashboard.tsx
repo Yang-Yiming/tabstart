@@ -107,12 +107,26 @@ export function Dashboard({ isEditing }: Props) {
    * their positions survive a disable/re-enable cycle.
    */
   const normalizeLayouts = useCallback(
-    (input: Layouts) =>
-      (Object.keys(COLS) as Array<keyof typeof COLS>).reduce<Layouts>((result, breakpoint) => {
-        const source = input[breakpoint] ?? DEFAULT_LAYOUTS[breakpoint] ?? []
-        result[breakpoint] = normalizeBreakpoint(source, breakpoint)
+    (input: Layouts | null | undefined) => {
+      const breakpoints = Object.keys(COLS) as Array<keyof typeof COLS>
+      const sources = breakpoints.map((breakpoint) => {
+        const stored = input?.[breakpoint]
+        const source = Array.isArray(stored) ? stored : (DEFAULT_LAYOUTS[breakpoint] ?? [])
+        return { breakpoint, source }
+      })
+      // Self-heal a layout object corrupted by the previous empty-children mount:
+      // an empty breakpoint next to a non-empty one is never produced by the UI,
+      // so fall back to defaults only for the empty breakpoint.
+      const hasEmpty = sources.some(({ source }) => source.length === 0)
+      const hasNonEmpty = sources.some(({ source }) => source.length > 0)
+      return sources.reduce<Layouts>((result, { breakpoint, source }) => {
+        const effectiveSource = hasEmpty && hasNonEmpty && source.length === 0
+          ? (DEFAULT_LAYOUTS[breakpoint] ?? [])
+          : source
+        result[breakpoint] = normalizeBreakpoint(effectiveSource, breakpoint)
         return result
-      }, {}),
+      }, {})
+    },
     [],
   )
 
@@ -188,7 +202,7 @@ export function Dashboard({ isEditing }: Props) {
 
   const renderedWidgets = useMemo(() => {
     return (displayLayouts.lg ?? []).map((item) => {
-      const plugin = widgets.find((widget) => widget.id === item.i)
+      const plugin = resolveWidget(item.i)
       if (!plugin) return null
       const WidgetComponent = plugin.component
 
@@ -228,7 +242,7 @@ export function Dashboard({ isEditing }: Props) {
         </div>
       )
     })
-  }, [displayLayouts, handleRemove, isEditing, widgets])
+  }, [displayLayouts, handleRemove, isEditing])
 
   return (
     <div className={['dashboard-grid relative', isEditing ? 'is-editing' : ''].join(' ')}>
