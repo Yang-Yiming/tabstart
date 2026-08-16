@@ -7,6 +7,7 @@ import {
   Monitor,
   Moon,
   Palette,
+  Plus,
   Search,
   Settings,
   SlidersHorizontal,
@@ -25,6 +26,7 @@ import {
   DEFAULT_SEARCH_SETTINGS,
   normalizeSearchSettings,
   type ClockSettings,
+  type SearchEngineItem,
   type SearchEngineShortcut,
   type SearchSettings,
 } from '../config/preferences'
@@ -354,55 +356,114 @@ function SearchSection() {
   )
   const [rawSettings, setSettings] = useLocalStorage<SearchSettings>(SEARCH_SETTINGS_KEY, DEFAULT_SEARCH_SETTINGS)
   const settings = useMemo(() => normalizeSearchSettings(rawSettings), [rawSettings])
-  const enabledEngines = settings.enabledEngines
-  const [recordingKey, setRecordingKey] = useState<SearchEngineKey | null>(null)
+  const engines = settings.engines
+  const [recordingKey, setRecordingKey] = useState<string | null>(null)
   const [shortcutError, setShortcutError] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [newEngineName, setNewEngineName] = useState('')
+  const [newEngineUrl, setNewEngineUrl] = useState('')
+  const [addError, setAddError] = useState<string | null>(null)
+  const [presetId, setPresetId] = useState<SearchEngineKey | ''>('')
 
-  const currentEngine: SearchEngineKey = enabledEngines.includes(engineKey as SearchEngineKey)
-    ? (engineKey as SearchEngineKey)
-    : enabledEngines[0]
+  const currentEngine = engines.some((item) => item.id === engineKey)
+    ? engineKey
+    : (engines[0]?.id ?? DEFAULT_SEARCH_ENGINE)
 
-  const toggleEngine = (key: SearchEngineKey, enabled: boolean) => {
-    const current = normalizeSearchSettings(rawSettings).enabledEngines
+  const missingBuiltins = useMemo(
+    () => SEARCH_ENGINE_ORDER.filter((id) => !engines.some((item) => item.id === id)),
+    [engines],
+  )
 
-    if (!enabled && key === currentEngine && current.length > 1) {
-      setEngineKey(current.filter((item) => item !== key)[0])
-    }
-
+  const updateEngines = (next: SearchEngineItem[]) => {
     setSettings((prev) => {
-      const previous = normalizeSearchSettings(prev)
-      if (enabled) {
-        if (previous.enabledEngines.includes(key)) return prev
-        return {
-          ...previous,
-          enabledEngines: SEARCH_ENGINE_ORDER.filter(
-            (item) => item === key || previous.enabledEngines.includes(item),
-          ),
-        }
-      }
-      if (previous.enabledEngines.length <= 1 || !previous.enabledEngines.includes(key)) return prev
-      return {
-        ...previous,
-        enabledEngines: previous.enabledEngines.filter((item) => item !== key),
-      }
+      const normalized = normalizeSearchSettings(prev)
+      return { ...normalized, engines: next }
     })
   }
 
   const updateShortcut = useCallback(
-    (key: SearchEngineKey, shortcut: SearchEngineShortcut | null) => {
+    (id: string, shortcut: SearchEngineShortcut | null) => {
       setSettings((prev) => {
         const normalized = normalizeSearchSettings(prev)
         return {
           ...normalized,
           shortcuts: {
             ...normalized.shortcuts,
-            [key]: shortcut,
+            [id]: shortcut,
           },
         }
       })
     },
     [setSettings],
   )
+
+  const addCustomEngine = () => {
+    const name = newEngineName.trim()
+    const url = newEngineUrl.trim()
+    if (!name || !url) {
+      setAddError('请输入搜索引擎名称和 URL。')
+      return
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      setAddError('URL 需要以 http:// 或 https:// 开头。')
+      return
+    }
+
+    const id = `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+    const item: SearchEngineItem = { id, name, url, builtin: false }
+
+    setSettings((prev) => {
+      const normalized = normalizeSearchSettings(prev)
+      return {
+        ...normalized,
+        engines: [...normalized.engines, item],
+        shortcuts: {
+          ...normalized.shortcuts,
+          [id]: null,
+        },
+      }
+    })
+
+    setNewEngineName('')
+    setNewEngineUrl('')
+    setAddError(null)
+    setAddOpen(false)
+  }
+
+  const addPresetEngine = () => {
+    const id = presetId || missingBuiltins[0]
+    if (!id) return
+
+    setSettings((prev) => {
+      const normalized = normalizeSearchSettings(prev)
+      if (normalized.engines.some((item) => item.id === id)) return prev
+      return {
+        ...normalized,
+        engines: [
+          ...normalized.engines,
+          {
+            id,
+            name: SEARCH_ENGINES[id].name,
+            url: SEARCH_ENGINES[id].url,
+            builtin: true,
+          },
+        ],
+      }
+    })
+
+    setPresetId(missingBuiltins.filter((builtinId) => builtinId !== id)[0] ?? '')
+  }
+
+  const deleteEngine = (id: string) => {
+    if (engines.length <= 1) return
+    const remaining = engines.filter((item) => item.id !== id)
+
+    if (currentEngine === id) {
+      setEngineKey(remaining[0]?.id ?? DEFAULT_SEARCH_ENGINE)
+    }
+
+    updateEngines(remaining)
+  }
 
   useEffect(() => {
     if (!recordingKey) return
@@ -445,9 +506,9 @@ function SearchSection() {
         return
       }
 
-      const duplicate = SEARCH_ENGINE_ORDER.find((key) => {
-        if (key === recordingKey) return false
-        const existing = settings.shortcuts[key]
+      const duplicate = settings.engines.find((item) => {
+        if (item.id === recordingKey) return false
+        const existing = settings.shortcuts[item.id]
         if (!existing) return false
         return (
           existing.key.toLowerCase() === shortcut.key.toLowerCase() &&
@@ -458,7 +519,7 @@ function SearchSection() {
       })
 
       if (duplicate) {
-        setShortcutError(`快捷键已被 ${SEARCH_ENGINES[duplicate].name} 使用。`)
+        setShortcutError(`快捷键已被 ${duplicate.name} 使用。`)
         return
       }
 
@@ -469,7 +530,7 @@ function SearchSection() {
 
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [recordingKey, settings.shortcuts, updateShortcut])
+  }, [recordingKey, settings.engines, settings.shortcuts, updateShortcut])
 
   return (
     <div className="mt-8">
@@ -477,7 +538,7 @@ function SearchSection() {
         <Search className="h-4 w-4 text-white/70" />
         <h4 className="text-sm font-medium text-white">搜索栏</h4>
       </div>
-      <p className="mt-1 text-xs text-white/50">选择默认搜索引擎、显示的引擎，以及每个引擎的快捷键。</p>
+      <p className="mt-1 text-xs text-white/50">管理搜索引擎列表、默认搜索引擎和快捷键。</p>
 
       <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-center justify-between gap-6">
@@ -490,82 +551,148 @@ function SearchSection() {
             onChange={(event) => setEngineKey(event.target.value)}
             className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
           >
-            {enabledEngines.map((key) => (
-              <option key={key} value={key}>
-                {SEARCH_ENGINES[key].name}
+            {engines.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <h5 className="text-sm font-medium text-white">显示的搜索引擎</h5>
-          <p className="mt-0.5 text-xs leading-5 text-white/50">勾选后，该引擎会出现在搜索栏左侧的切换菜单中。</p>
-          <div className="mt-3 flex flex-col gap-1">
-            {SEARCH_ENGINE_ORDER.map((key) => {
-              const checked = enabledEngines.includes(key)
-              return (
-                <div
-                  key={key}
-                  className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-white/5"
-                >
-                  <span className="text-sm text-white/85">{SEARCH_ENGINES[key].name}</span>
-                  <Toggle checked={checked} onChange={(value) => toggleEngine(key, value)} />
-                </div>
-              )
-            })}
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h5 className="text-sm font-medium text-white">搜索引擎列表</h5>
+              <p className="mt-0.5 text-xs leading-5 text-white/50">点击快捷键按钮绑定组合键，删除不需要的引擎。</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (addOpen) {
+                  setAddOpen(false)
+                  setAddError(null)
+                } else {
+                  setAddOpen(true)
+                  setAddError(null)
+                  setPresetId(missingBuiltins[0] ?? '')
+                }
+              }}
+              className="flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-white/80 transition hover:border-white/20 hover:bg-white/10"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {addOpen ? '收起' : '添加'}
+            </button>
           </div>
-        </div>
 
-        <div className="border-t border-white/10 pt-4">
-          <h5 className="text-sm font-medium text-white">搜索引擎快捷键</h5>
-          <p className="mt-0.5 text-xs leading-5 text-white/50">
-            点击快捷键后按下新的组合键；Esc 取消，Backspace 清除。
-          </p>
-          <div className="mt-3 flex flex-col gap-1">
-            {SEARCH_ENGINE_ORDER.map((key) => {
-              const shortcut = settings.shortcuts[key] ?? null
-              const recording = recordingKey === key
+          {addOpen && (
+            <div className="mt-3 rounded-xl border border-dashed border-white/15 bg-black/20 p-3">
+              {missingBuiltins.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={presetId || missingBuiltins[0] || ''}
+                    onChange={(event) => setPresetId(event.target.value as SearchEngineKey | '')}
+                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
+                  >
+                    {missingBuiltins.map((id) => (
+                      <option key={id} value={id}>
+                        {SEARCH_ENGINES[id].name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={addPresetEngine}
+                    className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20"
+                  >
+                    添加内置
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-2 flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={newEngineName}
+                  onChange={(event) => setNewEngineName(event.target.value)}
+                  placeholder="名称，例如 Baidu"
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={newEngineUrl}
+                  onChange={(event) => setNewEngineUrl(event.target.value)}
+                  placeholder="搜索 URL，例如 https://www.baidu.com/s?wd="
+                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomEngine}
+                  disabled={!newEngineName.trim() || !newEngineUrl.trim()}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  添加自定义引擎
+                </button>
+              </div>
+
+              {addError && <p className="mt-2 text-xs text-amber-300/80">{addError}</p>}
+            </div>
+          )}
+
+          <div className="mt-3 flex flex-col gap-2">
+            {engines.map((item) => {
+              const shortcut = settings.shortcuts[item.id] ?? null
+              const recording = recordingKey === item.id
               return (
                 <div
-                  key={key}
-                  className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-white/5"
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5"
                 >
-                  <span className="text-sm text-white/85">{SEARCH_ENGINES[key].name}</span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (recording) {
-                          setRecordingKey(null)
-                          setShortcutError(null)
-                        } else {
-                          setRecordingKey(key)
-                          setShortcutError(null)
-                        }
-                      }}
-                      className={[
-                        'min-w-24 rounded-lg border px-3 py-1.5 text-xs font-medium transition',
-                        recording
-                          ? 'border-sky-300/30 bg-sky-400/10 text-sky-100'
-                          : shortcut
-                            ? 'border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:bg-white/10'
-                            : 'border-dashed border-white/15 bg-transparent text-white/40 hover:border-white/25 hover:text-white/70',
-                      ].join(' ')}
-                    >
-                      {recording ? '按下组合键...' : shortcut ? formatShortcut(shortcut) : '点击录制'}
-                    </button>
-                    {shortcut && !recording && (
-                      <button
-                        type="button"
-                        onClick={() => updateShortcut(key, null)}
-                        className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/80"
-                        aria-label={`清除 ${SEARCH_ENGINES[key].name} 的快捷键`}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white/80">
+                    {item.name.trim().charAt(0).toUpperCase() || '?'}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm text-white/90">{item.name}</span>
+                      {item.builtin && (
+                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/40">
+                          内置
+                        </span>
+                      )}
+                    </div>
+                    <div className="truncate text-xs text-white/45">{item.url}</div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (recording) {
+                        setRecordingKey(null)
+                        setShortcutError(null)
+                      } else {
+                        setRecordingKey(item.id)
+                        setShortcutError(null)
+                      }
+                    }}
+                    className={[
+                      'shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition',
+                      recording
+                        ? 'border-sky-300/30 bg-sky-400/10 text-sky-100'
+                        : shortcut
+                          ? 'border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:bg-white/10'
+                          : 'border-dashed border-white/15 bg-transparent text-white/40 hover:border-white/25 hover:text-white/70',
+                    ].join(' ')}
+                  >
+                    {recording ? '按下组合键...' : shortcut ? formatShortcut(shortcut) : '绑定快捷键'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteEngine(item.id)}
+                    disabled={engines.length <= 1}
+                    className="shrink-0 rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={`删除 ${item.name}`}
+                    title={engines.length <= 1 ? '至少保留一个搜索引擎' : `删除 ${item.name}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               )
             })}

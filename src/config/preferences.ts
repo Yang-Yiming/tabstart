@@ -1,4 +1,4 @@
-import { SEARCH_ENGINE_ORDER, type SearchEngineKey } from './search'
+import { SEARCH_ENGINE_ORDER, SEARCH_ENGINES, type SearchEngineKey } from './search'
 
 export const CLOCK_SETTINGS_KEY = 'homepage-clock-settings-v1'
 export const SEARCH_SETTINGS_KEY = 'homepage-search-settings-v1'
@@ -40,20 +40,34 @@ export interface SearchEngineShortcut {
   shift: boolean
 }
 
-export interface SearchSettings {
-  /**
-   * Engines shown in the search widget, in display order.
-   * Stored as a list of enabled engine keys (canonical order).
-   */
-  enabledEngines: SearchEngineKey[]
-  /**
-   * Per-engine keyboard shortcuts. A null value means the engine has no
-   * shortcut assigned; undefined keys fall back to the default shortcut.
-   */
-  shortcuts: Partial<Record<SearchEngineKey, SearchEngineShortcut | null>>
+export interface SearchEngineItem {
+  id: string
+  name: string
+  url: string
+  builtin: boolean
 }
 
-const DEFAULT_SEARCH_SHORTCUTS: Record<SearchEngineKey, SearchEngineShortcut> = {
+export interface SearchSettings {
+  /**
+   * Engines shown in the search widget, in display order. Built-in engines
+   * are identified by their canonical id; custom engines use a generated id.
+   */
+  engines: SearchEngineItem[]
+  /**
+   * Per-engine keyboard shortcuts. A null value means the engine has no
+   * shortcut assigned; missing entries fall back to the engine default.
+   */
+  shortcuts: Partial<Record<string, SearchEngineShortcut | null>>
+}
+
+const BUILTIN_SEARCH_ENGINES: SearchEngineItem[] = SEARCH_ENGINE_ORDER.map((id) => ({
+  id,
+  name: SEARCH_ENGINES[id].name,
+  url: SEARCH_ENGINES[id].url,
+  builtin: true,
+}))
+
+const DEFAULT_SEARCH_SHORTCUTS: Record<string, SearchEngineShortcut> = {
   google: { key: '1', mod: true, alt: false, shift: false },
   bing: { key: '2', mod: true, alt: false, shift: false },
   duckduckgo: { key: '3', mod: true, alt: false, shift: false },
@@ -62,7 +76,7 @@ const DEFAULT_SEARCH_SHORTCUTS: Record<SearchEngineKey, SearchEngineShortcut> = 
 }
 
 export const DEFAULT_SEARCH_SETTINGS: SearchSettings = {
-  enabledEngines: [...SEARCH_ENGINE_ORDER],
+  engines: BUILTIN_SEARCH_ENGINES.map((engine) => ({ ...engine })),
   shortcuts: { ...DEFAULT_SEARCH_SHORTCUTS },
 }
 
@@ -79,27 +93,75 @@ function normalizeShortcut(value: unknown): SearchEngineShortcut | null {
   return { key, mod, alt, shift }
 }
 
-/** Normalize persisted search settings and always return at least one enabled engine. */
-export function normalizeSearchSettings(settings: SearchSettings | null | undefined): SearchSettings {
-  const raw = settings?.enabledEngines
-  const enabledEngines = Array.isArray(raw)
-    ? SEARCH_ENGINE_ORDER.filter((key) => raw.includes(key))
-    : []
+function normalizeEngineItem(value: unknown): SearchEngineItem | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const record = value as Record<string, unknown>
+  const id = typeof record.id === 'string' ? record.id.trim() : ''
+  const name = typeof record.name === 'string' ? record.name.trim() : ''
+  const url = typeof record.url === 'string' ? record.url.trim() : ''
+  if (!id || !name || !url) return null
+  return {
+    id,
+    name,
+    url,
+    builtin: SEARCH_ENGINE_ORDER.includes(id as SearchEngineKey),
+  }
+}
 
-  const shortcuts: SearchSettings['shortcuts'] = {}
-  for (const key of SEARCH_ENGINE_ORDER) {
-    const stored = settings?.shortcuts?.[key]
-    if (stored === null) {
-      shortcuts[key] = null
-    } else {
-      shortcuts[key] = normalizeShortcut(stored) ?? DEFAULT_SEARCH_SHORTCUTS[key]
+/**
+ * Normalize persisted search settings and always return at least one engine.
+ * Also migrates the previous `enabledEngines`-based format on read.
+ */
+export function normalizeSearchSettings(settings: SearchSettings | null | undefined): SearchSettings {
+  const legacy = settings as
+    | {
+        engines?: unknown
+        enabledEngines?: unknown
+        shortcuts?: Record<string, unknown> | null
+      }
+    | null
+    | undefined
+
+  let engines: SearchEngineItem[] = []
+  if (Array.isArray(legacy?.engines)) {
+    const seen = new Set<string>()
+    for (const item of legacy.engines) {
+      const parsed = normalizeEngineItem(item)
+      if (parsed && !seen.has(parsed.id)) {
+        seen.add(parsed.id)
+        engines.push(parsed)
+      }
     }
   }
 
-  return {
-    enabledEngines: enabledEngines.length === 0 ? [...DEFAULT_SEARCH_SETTINGS.enabledEngines] : enabledEngines,
-    shortcuts,
+  // Migrate the old `enabledEngines` list if the new `engines` list is missing.
+  if (engines.length === 0 && Array.isArray(legacy?.enabledEngines)) {
+    const oldList = legacy.enabledEngines as unknown[]
+    engines = SEARCH_ENGINE_ORDER
+      .filter((id) => oldList.includes(id))
+      .map((id) => ({
+        id,
+        name: SEARCH_ENGINES[id].name,
+        url: SEARCH_ENGINES[id].url,
+        builtin: true,
+      }))
   }
+
+  if (engines.length === 0) {
+    engines = DEFAULT_SEARCH_SETTINGS.engines.map((engine) => ({ ...engine }))
+  }
+
+  const shortcuts: SearchSettings['shortcuts'] = {}
+  for (const engine of engines) {
+    const stored = legacy?.shortcuts?.[engine.id] as unknown
+    if (stored === null) {
+      shortcuts[engine.id] = null
+    } else {
+      shortcuts[engine.id] = normalizeShortcut(stored) ?? DEFAULT_SEARCH_SHORTCUTS[engine.id] ?? null
+    }
+  }
+
+  return { engines, shortcuts }
 }
 
 const KEY_LABELS: Record<string, string> = {
@@ -140,6 +202,15 @@ export function shortcutMatches(event: KeyboardEvent, shortcut: SearchEngineShor
   const eventKey = event.key.length === 1 ? event.key.toLowerCase() : event.key
   const shortcutKey = shortcut.key.length === 1 ? shortcut.key.toLowerCase() : shortcut.key
   return eventKey === shortcutKey
+}
+
+/** Build a search URL, supporting both prefix-style and OpenSearch `%s` URLs. */
+export function buildSearchUrl(url: string, query: string): string {
+  const encoded = encodeURIComponent(query)
+  if (url.includes('%s')) {
+    return url.replace(/%s/g, encoded)
+  }
+  return url + encoded
 }
 
 /** Normalize persisted clock settings so partial stored objects still work. */

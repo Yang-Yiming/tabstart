@@ -2,17 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { ArrowRight, Search, Trash2 } from 'lucide-react'
 import {
   DEFAULT_SEARCH_ENGINE,
-  SEARCH_ENGINE_ORDER,
-  SEARCH_ENGINES,
   SEARCH_ENGINE_STORAGE_KEY,
-  type SearchEngineKey,
 } from '../config/search'
 import {
+  buildSearchUrl,
   DEFAULT_SEARCH_SETTINGS,
   formatShortcut,
   normalizeSearchSettings,
   SEARCH_SETTINGS_KEY,
   shortcutMatches,
+  type SearchEngineItem,
   type SearchSettings,
 } from '../config/preferences'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -20,7 +19,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 const HISTORY_KEY = 'homepage-search-history'
 const MAX_HISTORY = 8
 
-type HistoryItem = { query: string; engine: SearchEngineKey }
+type HistoryItem = { query: string; engine: string }
 
 const GithubIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -28,7 +27,7 @@ const GithubIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   </svg>
 )
 
-const engineIcons: Record<SearchEngineKey, { icon: ReactNode; smallIcon: ReactNode }> = {
+const engineIcons: Record<string, { icon: ReactNode; smallIcon: ReactNode }> = {
   google: {
     icon: <span className="font-semibold">G</span>,
     smallIcon: <span className="font-semibold text-xs">G</span>,
@@ -55,15 +54,20 @@ const normalizeHistoryItem = (item: unknown): HistoryItem => {
   if (item && typeof item === 'object' && !Array.isArray(item)) {
     const record = item as Record<string, unknown>
     const query = typeof record.query === 'string' ? record.query : String(record.query ?? '')
-    const engine = SEARCH_ENGINE_ORDER.includes(record.engine as SearchEngineKey)
-      ? (record.engine as SearchEngineKey)
-      : DEFAULT_SEARCH_ENGINE
+    const engine = typeof record.engine === 'string' ? record.engine : DEFAULT_SEARCH_ENGINE
     return { query, engine }
   }
   if (typeof item === 'string') {
     return { query: item, engine: DEFAULT_SEARCH_ENGINE }
   }
   return { query: String(item ?? ''), engine: DEFAULT_SEARCH_ENGINE }
+}
+
+function engineIcon(engine: SearchEngineItem | undefined, small: boolean): ReactNode {
+  const builtinIcon = engine ? engineIcons[engine.id] : undefined
+  if (builtinIcon) return small ? builtinIcon.smallIcon : builtinIcon.icon
+  const fallback = engine?.name.trim().charAt(0).toUpperCase() || '?'
+  return <span className={small ? 'text-xs font-semibold' : 'font-semibold'}>{fallback}</span>
 }
 
 export function SearchWidget() {
@@ -85,11 +89,11 @@ export function SearchWidget() {
     () => normalizeSearchSettings(rawSearchSettings),
     [rawSearchSettings],
   )
-  const enabledEngines = searchSettings.enabledEngines
+  const engines = searchSettings.engines
 
-  const engineKey: SearchEngineKey = enabledEngines.includes(storedEngine as SearchEngineKey)
-    ? (storedEngine as SearchEngineKey)
-    : enabledEngines[0]
+  const engineKey = engines.some((item) => item.id === storedEngine)
+    ? storedEngine
+    : (engines[0]?.id ?? DEFAULT_SEARCH_ENGINE)
 
   const [historyOpen, setHistoryOpen] = useState(false)
   const [engineDropdownOpen, setEngineDropdownOpen] = useState(false)
@@ -97,10 +101,10 @@ export function SearchWidget() {
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const engine = SEARCH_ENGINES[engineKey]
-  const meta = engineIcons[engineKey]
+  const engine = engines.find((item) => item.id === engineKey) ?? engines[0]
+  const meta = engineIcon(engine, false)
 
-  const addHistory = (term: string, engineKey: SearchEngineKey) => {
+  const addHistory = (term: string, engineKey: string) => {
     const trimmed = term.trim()
     if (!trimmed) return
     setHistory((prev) => {
@@ -122,7 +126,7 @@ export function SearchWidget() {
   const clearHistory = () => setHistory([])
 
   const selectEngine = useCallback(
-    (key: SearchEngineKey) => {
+    (key: string) => {
       setEngineKey(key)
       setEngineDropdownOpen(false)
       inputRef.current?.focus()
@@ -133,11 +137,11 @@ export function SearchWidget() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = query.trim()
-    if (!trimmed) return
+    if (!trimmed || !engine) return
     addHistory(trimmed, engineKey)
     setHistoryOpen(false)
     setEngineDropdownOpen(false)
-    window.location.href = engine.url + encodeURIComponent(trimmed)
+    window.location.href = buildSearchUrl(engine.url, trimmed)
   }
 
   useEffect(() => {
@@ -157,17 +161,17 @@ export function SearchWidget() {
         setHistoryOpen(false)
         inputRef.current?.blur()
       }
-      for (const key of enabledEngines) {
-        if (shortcutMatches(e, searchSettings.shortcuts[key])) {
+      for (const item of engines) {
+        if (shortcutMatches(e, searchSettings.shortcuts[item.id])) {
           e.preventDefault()
-          selectEngine(key)
+          selectEngine(item.id)
           return
         }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [enabledEngines, engineDropdownOpen, searchSettings.shortcuts, selectEngine])
+  }, [engines, engineDropdownOpen, searchSettings.shortcuts, selectEngine])
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -201,7 +205,7 @@ export function SearchWidget() {
             aria-label="选择搜索引擎"
           >
             <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-focus-within:opacity-100">
-              {meta.icon}
+              {meta}
             </span>
             <Search className="pointer-events-none h-4 w-4 opacity-100 transition-opacity duration-300 group-focus-within:opacity-0" />
           </button>
@@ -231,16 +235,14 @@ export function SearchWidget() {
         {engineDropdownOpen && (
           <div className="search-popover absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border p-2 shadow-2xl">
             <div className="flex flex-col gap-0.5">
-              {enabledEngines.map((key) => {
-                const m = engineIcons[key]
-                const definition = SEARCH_ENGINES[key]
-                const shortcutLabel = formatShortcut(searchSettings.shortcuts[key])
-                const isSelected = key === engineKey
+              {engines.map((item) => {
+                const shortcutLabel = formatShortcut(searchSettings.shortcuts[item.id])
+                const isSelected = item.id === engineKey
                 return (
                   <button
-                    key={key}
+                    key={item.id}
                     type="button"
-                    onClick={() => selectEngine(key)}
+                    onClick={() => selectEngine(item.id)}
                     className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-sm transition ${
                       isSelected
                         ? 'bg-white/20 text-white'
@@ -249,9 +251,9 @@ export function SearchWidget() {
                   >
                     <span className="flex items-center gap-2.5">
                       <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/10 text-sm">
-                        {m.icon}
+                        {engineIcon(item, false)}
                       </span>
-                      <span>{definition.name}</span>
+                      <span>{item.name}</span>
                     </span>
                     {shortcutLabel && (
                       <span className="flex items-center gap-0.5 text-xs text-white/50">
@@ -271,21 +273,21 @@ export function SearchWidget() {
           <div className="search-popover absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl border p-3 shadow-2xl">
             <ul className="flex flex-col gap-1">
               {filteredHistory.map((item) => {
-                const itemMeta = engineIcons[item.engine]
+                const itemEngine = engines.find((engineItem) => engineItem.id === item.engine)
                 return (
                   <li key={item.query} className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         setQuery(item.query)
-                        if (enabledEngines.includes(item.engine)) {
+                        if (itemEngine) {
                           selectEngine(item.engine)
                         }
                       }}
                       className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10"
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/10 text-xs">
-                        {itemMeta.smallIcon}
+                        {engineIcon(itemEngine, true)}
                       </span>
                       <span className="truncate">{item.query}</span>
                     </button>
