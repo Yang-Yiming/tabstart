@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { SettingsPanel } from './components/SettingsPanel'
 import { PluginManager } from './plugins/PluginManager'
+import { Slot } from './plugins/Slot'
+import { ThemeApplier } from './plugins/ThemeApplier'
 import { migratePluginKeys } from './plugins/registry'
 import type { ThemeMode } from './config/theme'
-import { SearchWidget } from './widgets/SearchWidget'
-import { ClockWidget } from './widgets/ClockWidget'
 import { useBackground } from './hooks/useBackground'
 import { useStoredState } from './hooks/useLocalStorage'
 
@@ -60,16 +60,17 @@ export default function App() {
         }}
       />
 
+      <ThemeApplier />
       <div className="relative">
         <div className="absolute right-5 top-5 z-50 flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsEditing((value) => !value)}
             className={[
-              'rounded-full border p-2.5 shadow-lg backdrop-blur-xl transition',
+              'chrome-button rounded-full border p-2.5 shadow-lg transition',
               isEditing
                 ? 'border-white/25 bg-white/20 text-white'
-                : 'border-white/15 bg-black/20 text-white/80 hover:bg-white/10 hover:text-white',
+                : 'text-white/80',
             ].join(' ')}
             aria-label={isEditing ? 'Done editing' : 'Edit widgets'}
             title={isEditing ? 'Done' : 'Edit widgets'}
@@ -84,10 +85,10 @@ export default function App() {
         <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24">
           <div className="w-full max-w-5xl">
             <div className="mx-auto mb-4 max-w-3xl">
-              <ClockWidget />
+              <Slot name="hero.clock" />
             </div>
             <div className="mx-auto mb-10 max-w-2xl">
-              <SearchWidget />
+              <Slot name="hero.search" />
             </div>
             <Dashboard isEditing={isEditing} />
           </div>

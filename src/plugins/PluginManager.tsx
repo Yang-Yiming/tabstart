@@ -39,7 +39,7 @@ export function PluginManager() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
+        className="chrome-button rounded-full border p-2.5 shadow-lg transition"
         aria-label="Plugins"
         title="Plugins"
       >
@@ -51,7 +51,7 @@ export function PluginManager() {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
             onClick={(event) => event.stopPropagation()}
-            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-2xl"
+            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border chrome-panel shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-white/10 p-6">
               <div>

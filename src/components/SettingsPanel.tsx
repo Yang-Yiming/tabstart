@@ -14,7 +14,7 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../config/theme'
 import type { BackgroundControls } from '../hooks/useBackground'
-import { useWidgets } from '../plugins/hooks'
+import { useActiveTheme, useWidgets } from '../plugins/hooks'
 import { groupWidgets, useEnabledPlugins } from '../plugins/registry'
 import { useWidgetSettings } from '../plugins/widgetSettings'
 import type { WidgetSettingsSchema } from '../plugins/types'
@@ -125,7 +125,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="rounded-full border border-white/15 bg-black/20 p-2.5 text-white/80 shadow-lg backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
+        className="chrome-button rounded-full border p-2.5 shadow-lg transition"
         aria-label="Settings"
         title="Settings"
       >
@@ -137,7 +137,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
             onClick={(event) => event.stopPropagation()}
-            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-2xl"
+            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border chrome-panel shadow-2xl"
           >
             <div className="w-44 shrink-0 overflow-y-auto border-r border-white/10 bg-black/30 p-4">
               <h2 className="mb-4 px-2 text-sm font-semibold text-white">Settings</h2>
@@ -256,6 +256,8 @@ function AppearanceSection({
   onThemeChange: (theme: ThemeMode) => void
   background: BackgroundControls
 }) {
+  const { themes, activeThemeId, setActiveThemeId } = useActiveTheme()
+
   return (
     <>
       <div>
@@ -290,6 +292,55 @@ function AppearanceSection({
             </button>
           )
         })}
+      </div>
+
+      <div className="mt-8">
+        <div>
+          <h4 className="text-sm font-medium text-white">插件主题</h4>
+          <p className="mt-1 text-xs text-white/50">选择由插件注册的整页视觉主题。</p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="插件主题">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={activeThemeId === 'default'}
+            onClick={() => setActiveThemeId('default')}
+            className={[
+              'flex min-h-16 flex-col justify-between rounded-2xl border p-3 text-left transition',
+              activeThemeId === 'default'
+                ? 'border-white/30 bg-white/15 text-white shadow-lg'
+                : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+            ].join(' ')}
+          >
+            <span className="text-sm font-medium">Default</span>
+            <span className="mt-0.5 block text-[10px] leading-4 text-white/45">项目默认玻璃风格</span>
+          </button>
+
+          {themes.map((item) => {
+            const selected = activeThemeId === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setActiveThemeId(item.id)}
+                className={[
+                  'flex min-h-16 flex-col justify-between rounded-2xl border p-3 text-left transition',
+                  selected
+                    ? 'border-white/30 bg-white/15 text-white shadow-lg'
+                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+                ].join(' ')}
+              >
+                <span className="text-sm font-medium">{item.name}</span>
+                {item.description && (
+                  <span className="mt-0.5 block text-[10px] leading-4 text-white/45">{item.description}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <WallpaperSection background={background} />

@@ -36,6 +36,65 @@ button {
   outline-color: rgba(255, 255, 255, 0.6);
 }
 
+:root {
+  --glass-widget-bg: rgba(255, 255, 255, 0.08);
+  --glass-widget-border: rgba(255, 255, 255, 0.15);
+  --glass-widget-hover-bg: rgba(255, 255, 255, 0.12);
+  --glass-widget-hover-border: rgba(255, 255, 255, 0.25);
+  --glass-widget-blur: 24px;
+  --glass-widget-saturate: 150%;
+  --glass-widget-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.35);
+  --chrome-button-bg: rgba(0, 0, 0, 0.2);
+  --chrome-button-border: rgba(255, 255, 255, 0.15);
+  --chrome-button-text: rgba(255, 255, 255, 0.8);
+  --chrome-button-hover-bg: rgba(255, 255, 255, 0.1);
+  --chrome-button-hover-text: rgba(255, 255, 255, 1);
+  --chrome-panel-bg: rgba(0, 0, 0, 0.6);
+  --chrome-panel-border: rgba(255, 255, 255, 0.1);
+  --chrome-panel-blur: 36px;
+}
+
+.dark {
+  --glass-widget-bg: rgba(0, 0, 0, 0.15);
+  --glass-widget-border: rgba(255, 255, 255, 0.1);
+  --glass-widget-hover-bg: rgba(0, 0, 0, 0.2);
+  --glass-widget-hover-border: rgba(255, 255, 255, 0.2);
+  --chrome-button-bg: rgba(0, 0, 0, 0.2);
+  --chrome-button-border: rgba(255, 255, 255, 0.15);
+  --chrome-panel-bg: rgba(0, 0, 0, 0.6);
+  --chrome-panel-border: rgba(255, 255, 255, 0.1);
+}
+
+.widget-card {
+  background: var(--glass-widget-bg);
+  border-color: var(--glass-widget-border);
+  backdrop-filter: blur(var(--glass-widget-blur)) saturate(var(--glass-widget-saturate));
+}
+
+.widget-card:hover {
+  background: var(--glass-widget-hover-bg);
+  border-color: var(--glass-widget-hover-border);
+  box-shadow: var(--glass-widget-shadow);
+}
+
+.chrome-button {
+  background: var(--chrome-button-bg);
+  border-color: var(--chrome-button-border);
+  color: var(--chrome-button-text);
+  backdrop-filter: blur(calc(var(--chrome-panel-blur) / 2));
+}
+
+.chrome-button:hover {
+  background: var(--chrome-button-hover-bg);
+  color: var(--chrome-button-hover-text);
+}
+
+.chrome-panel {
+  background: var(--chrome-panel-bg);
+  border-color: var(--chrome-panel-border);
+  backdrop-filter: blur(var(--chrome-panel-blur));
+}
+
 .dashboard-grid .react-grid-placeholder {
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 1.5rem;
