@@ -49,6 +49,19 @@ export const plugins = [
             [data-theme='liquid-glass'] .chrome-panel {
               box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
             }
+            [data-theme='liquid-glass'] .settings-sidebar {
+              background: rgba(28, 36, 52, 0.42) !important;
+              border-color: rgba(255, 255, 255, 0.12) !important;
+            }
+            [data-theme='liquid-glass'] .settings-panel .text-slate-900 {
+              color: rgba(255, 255, 255, 0.92) !important;
+            }
+            [data-theme='liquid-glass'] .settings-panel .text-slate-600 {
+              color: rgba(255, 255, 255, 0.62) !important;
+            }
+            [data-theme='liquid-glass'] .settings-panel .text-slate-800 {
+              color: rgba(255, 255, 255, 0.84) !important;
+            }
             [data-theme='liquid-glass'] .react-grid-placeholder {
               border-color: rgba(255, 255, 255, 0.35) !important;
               background: rgba(255, 255, 255, 0.18) !important;

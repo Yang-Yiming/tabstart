@@ -3,7 +3,17 @@ import { LiquidGlass } from 'simple-liquid-glass'
 
 export function LiquidGlassSurface({ children, className, style, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div {...props} className={className} style={{ isolation: 'isolate', ...style }}>
+    <div
+      {...props}
+      className={className}
+      style={{
+        isolation: 'isolate',
+        background: 'transparent',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        ...style,
+      }}
+    >
       <LiquidGlass
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
@@ -22,7 +32,7 @@ export function LiquidGlassSurface({ children, className, style, ...props }: HTM
         lens="rim"
         lensStrength={0.4}
         borderColor="rgba(255, 255, 255, 0.34)"
-        glassColor="rgba(235, 240, 245, 0.34)"
+        glassColor="rgba(40, 48, 64, 0.42)"
       />
       {children}
     </div>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { homepageConfig } from '../config/homepage'
 import {
   fetchBingDailyImage,
+  BING_DAILY_FALLBACK_URL,
   isBingImageUrl,
   localDateKey,
   type BingDailyImage,
@@ -29,9 +30,9 @@ export interface BackgroundControls {
 
 export function useBackground(): BackgroundControls {
   const [bg, setBg, bgHydrated] = useStoredState<BackgroundState>('homepage-background', {
-    src: homepageConfig.background.src,
+    src: BING_DAILY_FALLBACK_URL,
     overlay: homepageConfig.background.overlay,
-    mode: 'url',
+    mode: 'bing',
   })
   const [bingCache, setBingCache, bingCacheHydrated] = useStoredState<BingDailyImage | null>(
     'homepage-bing-cache',
@@ -41,6 +42,20 @@ export function useBackground(): BackgroundControls {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const resetFileBgRef = useRef(false)
   const autoCheckedBingDateRef = useRef<string | null>(null)
+  const migratedDefaultBackgroundRef = useRef(false)
+
+  // Existing installs with the old empty default should adopt Bing once.
+  useEffect(() => {
+    if (
+      !bgHydrated ||
+      migratedDefaultBackgroundRef.current ||
+      bg.mode !== 'url' ||
+      bg.src !== homepageConfig.background.src
+    ) return
+
+    migratedDefaultBackgroundRef.current = true
+    setBg((current) => ({ ...current, mode: 'bing', src: BING_DAILY_FALLBACK_URL }))
+  }, [bg.mode, bg.src, bgHydrated, setBg])
 
   // A blob URL persisted from a previous session is no longer valid, so fall back
   // to the default background if the stored mode is 'file'.

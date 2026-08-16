@@ -172,7 +172,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
             fallbackClassName="chrome-panel settings-panel"
             className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border chrome-panel settings-panel shadow-2xl"
           >
-            <div className="w-44 shrink-0 overflow-y-auto border-r border-slate-900/10 dark:border-white/10 bg-slate-100/70 dark:bg-black/30 p-4">
+            <div className="settings-sidebar w-44 shrink-0 overflow-y-auto border-r border-slate-900/10 dark:border-white/10 bg-slate-100/70 dark:bg-black/30 p-4">
               <h2 className="mb-4 px-2 text-sm font-semibold text-slate-900 dark:text-white">Settings</h2>
               <div className="flex flex-col gap-1">
                 {categories.map((category) => (
