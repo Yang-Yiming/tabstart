@@ -5,6 +5,12 @@ const liquidGlassSurface = lazy(() =>
   import('./LiquidGlassSurface').then((module) => ({ default: module.LiquidGlassSurface })),
 )
 
+// Warm the lazy chunk at plugin load time: the surface is used by every themed
+// panel, so deferring the fetch until the first panel mounts makes that mount
+// suspend — and without it, opening Settings for the first time would flash
+// the plain panel while the liquid-glass effect warms up.
+void import('./LiquidGlassSurface')
+
 export const plugins = [
   {
     id: 'liquid-glass',

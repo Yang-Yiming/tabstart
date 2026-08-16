@@ -1,5 +1,6 @@
 import { Blocks, Layers, Plus, Puzzle, X } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useState, type ReactNode } from 'react'
+import { RevealOnMount } from '../components/RevealOnMount'
 import { Toggle } from '../components/Toggle'
 import { ThemeSurface } from '../components/ThemeSurface'
 import { pluginDescriptors, useEnabledPlugins } from './registry'
@@ -48,13 +49,18 @@ export function PluginManager() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50" onClick={() => setOpen(false)}>
+        <RevealOnMount className="fixed inset-0 z-50" onClose={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <ThemeSurface
-            onClick={(event) => event.stopPropagation()}
-            fallbackClassName="chrome-panel"
-            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border chrome-panel shadow-2xl"
+          <Suspense
+            fallback={
+              <div className="chrome-panel absolute left-1/2 top-1/2 h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border shadow-2xl" />
+            }
           >
+            <ThemeSurface
+              onClick={(event) => event.stopPropagation()}
+              fallbackClassName="chrome-panel"
+              className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-3xl border chrome-panel shadow-2xl"
+            >
             <div className="flex items-center justify-between border-b border-white/10 p-6">
               <div>
                 <h3 className="text-lg font-medium text-white">插件管理器</h3>
@@ -125,7 +131,8 @@ export function PluginManager() {
               )}
             </div>
           </ThemeSurface>
-        </div>
+          </Suspense>
+        </RevealOnMount>
       )}
     </div>
   )

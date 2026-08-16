@@ -15,7 +15,8 @@ import {
   Upload,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { RevealOnMount } from './RevealOnMount'
 import { ThemeSurface } from './ThemeSurface'
 import {
   CLOCK_LOCALE_OPTIONS,
@@ -165,13 +166,18 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50" onClick={() => setOpen(false)}>
+        <RevealOnMount className="fixed inset-0 z-50" onClose={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <ThemeSurface
-            onClick={(event) => event.stopPropagation()}
-            fallbackClassName="chrome-panel settings-panel"
-            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border chrome-panel settings-panel shadow-2xl"
+          <Suspense
+            fallback={
+              <div className="chrome-panel settings-panel absolute left-1/2 top-1/2 h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border shadow-2xl" />
+            }
           >
+            <ThemeSurface
+              onClick={(event) => event.stopPropagation()}
+              fallbackClassName="chrome-panel settings-panel"
+              className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border chrome-panel settings-panel shadow-2xl"
+            >
             <div className="settings-sidebar w-44 shrink-0 overflow-y-auto border-r border-slate-900/10 dark:border-white/10 bg-slate-100/70 dark:bg-black/30 p-4">
               <h2 className="mb-4 px-2 text-sm font-semibold text-slate-900 dark:text-white">Settings</h2>
               <div className="flex flex-col gap-1">
@@ -276,7 +282,8 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
               </div>
             </div>
           </ThemeSurface>
-        </div>
+          </Suspense>
+        </RevealOnMount>
       )}
     </div>
   )
