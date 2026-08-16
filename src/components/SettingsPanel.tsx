@@ -88,7 +88,7 @@ const categories: Category[] = [
 
 export function SettingsPanel({ theme, onThemeChange, background }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
-  const [active, setActive] = useState<'general' | 'appearance' | 'widgets'>('appearance')
+  const [active, setActive] = useState<'general' | 'appearance' | 'widgets'>('general')
   const [widgetsOpen, setWidgetsOpen] = useState(false)
   const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
 
