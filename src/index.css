@@ -52,6 +52,17 @@ button {
   --chrome-panel-bg: rgba(0, 0, 0, 0.6);
   --chrome-panel-border: rgba(255, 255, 255, 0.1);
   --chrome-panel-blur: 36px;
+  --search-shell-bg: linear-gradient(90deg, rgba(253, 186, 116, 0.4), rgba(147, 197, 253, 0.4));
+  --search-shell-border: rgba(255, 255, 255, 0.25);
+  --search-shell-blur: 24px;
+  --search-shell-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
+  --search-shell-hover-border: rgba(255, 255, 255, 0.4);
+  --search-shell-hover-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.35);
+  --search-popover-bg: rgba(0, 0, 0, 0.3);
+  --search-popover-border: rgba(255, 255, 255, 0.1);
+  --search-popover-blur: 24px;
+  --clock-time-text: #ffffff;
+  --clock-date-text: rgba(255, 255, 255, 0.8);
 }
 
 .dark {
@@ -100,6 +111,33 @@ button {
   background: var(--chrome-panel-bg);
   border-color: var(--chrome-panel-border);
   backdrop-filter: blur(var(--chrome-panel-blur));
+}
+
+.search-shell {
+  background: var(--search-shell-bg);
+  border-color: var(--search-shell-border);
+  backdrop-filter: blur(var(--search-shell-blur));
+  box-shadow: var(--search-shell-shadow);
+}
+
+.search-shell:hover,
+.search-shell:focus-within {
+  border-color: var(--search-shell-hover-border);
+  box-shadow: var(--search-shell-hover-shadow);
+}
+
+.search-popover {
+  background: var(--search-popover-bg);
+  border-color: var(--search-popover-border);
+  backdrop-filter: blur(var(--search-popover-blur));
+}
+
+.clock-time {
+  color: var(--clock-time-text);
+}
+
+.clock-date {
+  color: var(--clock-date-text);
 }
 
 .dashboard-grid .react-grid-placeholder {

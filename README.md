@@ -32,6 +32,29 @@ discovered at build time and mounted at runtime; MV3-safe, no remote code loadin
 - `deepseek` and `example` are preset plugins; `example` is a copyable template.
 - Keys (API keys, etc.) are stored only in your local browser storage.
 
+### Mini-Cordis runtime
+
+`src/plugins/runtime.ts` is a small Cordis-style core. It does **not** load remote code; discovery stays
+build-time and MV3-safe.
+
+- **`HomepageContext`** — `effect()`, `on() / emit()`, `plugin()`, `get() / provide()` plus built-in registries.
+- **`WidgetRegistry` / `SlotRegistry` / `ThemeRegistry`** — the three built-in extension surfaces.
+- **`PluginFiber`** — one mounted plugin instance; `dispose()` rolls back every effect registered during `apply()`.
+- **`defineWidgetPlugin(widget)`** — the fast path for the common “one plugin = one grid widget” case.
+
+Runtime flow:
+
+```text
+registry.ts (import.meta.glob, build-time)
+  → PluginHost mounts enabled plugins
+    → apply(ctx) registers widgets / slots / themes
+      → Dashboard / Slot / ThemeApplier consume registries
+```
+
+Built-in slot names: `hero.clock` and `hero.search` (provided by `src/plugins/core/plugin.tsx`).
+The active plugin theme is persisted in `homepage-active-theme`; `src/plugins/liquid-glass/` is a
+theme-plugin example and can be selected in Settings → Appearance.
+
 ### Writing your own plugin
 
 1. Copy `src/plugins/example/` and rename the folder (e.g. `src/plugins/myplugin/`).

@@ -30,6 +30,17 @@ export const plugins = [
             '--chrome-panel-bg': 'rgba(24, 30, 48, 0.55)',
             '--chrome-panel-border': 'rgba(255, 255, 255, 0.16)',
             '--chrome-panel-blur': '36px',
+            '--search-shell-bg': 'linear-gradient(90deg, rgba(255, 255, 255, 0.18), rgba(180, 220, 255, 0.18))',
+            '--search-shell-border': 'rgba(255, 255, 255, 0.35)',
+            '--search-shell-blur': '32px',
+            '--search-shell-shadow': '0 12px 44px -12px rgba(0, 0, 0, 0.38)',
+            '--search-shell-hover-border': 'rgba(255, 255, 255, 0.5)',
+            '--search-shell-hover-shadow': '0 24px 60px -14px rgba(0, 0, 0, 0.45)',
+            '--search-popover-bg': 'rgba(24, 30, 48, 0.5)',
+            '--search-popover-border': 'rgba(255, 255, 255, 0.18)',
+            '--search-popover-blur': '32px',
+            '--clock-time-text': 'rgba(255, 255, 255, 0.96)',
+            '--clock-date-text': 'rgba(255, 255, 255, 0.78)',
           },
           css: `
             [data-theme='liquid-glass'] body {

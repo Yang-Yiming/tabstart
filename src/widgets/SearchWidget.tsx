@@ -182,7 +182,7 @@ export function SearchWidget() {
       <div className="group relative mx-auto w-[85%] max-w-xl transition-all duration-500 ease-in-out hover:w-[95%] focus-within:w-[95%]">
         <form
           onSubmit={handleSubmit}
-          className="relative flex w-full items-center rounded-full border border-white/25 bg-gradient-to-r from-orange-300/40 to-blue-300/40 px-12 py-2.5 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] backdrop-blur-2xl transition-all duration-500 ease-in-out hover:border-white/40 hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)] focus-within:border-white/40 focus-within:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.35)]"
+          className="search-shell relative flex w-full items-center rounded-full border px-12 py-2.5 transition-all duration-500 ease-in-out"
         >
           <button
             type="button"
@@ -222,7 +222,7 @@ export function SearchWidget() {
         </form>
 
         {engineDropdownOpen && (
-          <div className="absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border border-white/10 bg-black/30 p-2 shadow-2xl backdrop-blur-2xl">
+          <div className="search-popover absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border p-2 shadow-2xl">
             <div className="flex flex-col gap-0.5">
               {ENGINE_ORDER.map((key) => {
                 const m = engineMeta[key]
@@ -258,7 +258,7 @@ export function SearchWidget() {
         )}
 
         {historyOpen && !engineDropdownOpen && filteredHistory.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl border border-white/10 bg-black/30 p-3 shadow-2xl backdrop-blur-2xl">
+          <div className="search-popover absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl border p-3 shadow-2xl">
             <ul className="flex flex-col gap-1">
               {filteredHistory.map((item) => {
                 const itemMeta = engineMeta[item.engine]

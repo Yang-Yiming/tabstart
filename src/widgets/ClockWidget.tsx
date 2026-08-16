@@ -22,10 +22,10 @@ export function ClockWidget() {
 
   return (
     <div className="flex flex-col items-center justify-center text-center">
-      <div className="text-6xl font-light tracking-tight text-white drop-shadow-lg sm:text-7xl md:text-8xl">
+      <div className="clock-time text-6xl font-light tracking-tight drop-shadow-lg sm:text-7xl md:text-8xl">
         {time}
       </div>
-      <div className="mt-1 text-lg font-light tracking-wide text-white/80 drop-shadow-md">
+      <div className="clock-date mt-1 text-lg font-light tracking-wide drop-shadow-md">
         {date}
       </div>
     </div>
