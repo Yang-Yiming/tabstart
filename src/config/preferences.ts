@@ -54,10 +54,10 @@ export interface SearchSettings {
    */
   engines: SearchEngineItem[]
   /**
-   * Per-engine keyboard shortcuts. A null value means the engine has no
+   * Per-engine keyboard shortcuts. An empty array means the engine has no
    * shortcut assigned; missing entries fall back to the engine default.
    */
-  shortcuts: Partial<Record<string, SearchEngineShortcut | null>>
+  shortcuts: Partial<Record<string, SearchEngineShortcut[]>>
 }
 
 const BUILTIN_SEARCH_ENGINES: SearchEngineItem[] = SEARCH_ENGINE_ORDER.map((id) => ({
@@ -67,17 +67,19 @@ const BUILTIN_SEARCH_ENGINES: SearchEngineItem[] = SEARCH_ENGINE_ORDER.map((id) 
   builtin: true,
 }))
 
-const DEFAULT_SEARCH_SHORTCUTS: Record<string, SearchEngineShortcut> = {
-  google: { key: '1', mod: true, alt: false, shift: false },
-  bing: { key: '2', mod: true, alt: false, shift: false },
-  duckduckgo: { key: '3', mod: true, alt: false, shift: false },
-  github: { key: '4', mod: true, alt: false, shift: false },
-  alphaxiv: { key: '5', mod: true, alt: false, shift: false },
+const DEFAULT_SEARCH_SHORTCUTS: Record<string, SearchEngineShortcut[]> = {
+  google: [{ key: '1', mod: true, alt: false, shift: false }],
+  bing: [{ key: '2', mod: true, alt: false, shift: false }],
+  duckduckgo: [{ key: '3', mod: true, alt: false, shift: false }],
+  github: [{ key: '4', mod: true, alt: false, shift: false }],
+  alphaxiv: [{ key: '5', mod: true, alt: false, shift: false }],
 }
 
 export const DEFAULT_SEARCH_SETTINGS: SearchSettings = {
   engines: BUILTIN_SEARCH_ENGINES.map((engine) => ({ ...engine })),
-  shortcuts: { ...DEFAULT_SEARCH_SHORTCUTS },
+  shortcuts: Object.fromEntries(
+    Object.entries(DEFAULT_SEARCH_SHORTCUTS).map(([id, shortcuts]) => [id, [...shortcuts]]),
+  ),
 }
 
 function normalizeShortcut(value: unknown): SearchEngineShortcut | null {
@@ -91,6 +93,34 @@ function normalizeShortcut(value: unknown): SearchEngineShortcut | null {
   // A shortcut without any modifier would fire while typing; require one.
   if (!mod && !alt && !shift) return null
   return { key, mod, alt, shift }
+}
+
+export function shortcutEquals(a: SearchEngineShortcut, b: SearchEngineShortcut): boolean {
+  return (
+    a.key.toLowerCase() === b.key.toLowerCase() &&
+    a.mod === b.mod &&
+    a.alt === b.alt &&
+    a.shift === b.shift
+  )
+}
+
+function normalizeShortcutArray(value: unknown): SearchEngineShortcut[] | undefined {
+  if (value === null || value === undefined) return undefined
+
+  if (Array.isArray(value)) {
+    const shortcuts: SearchEngineShortcut[] = []
+    for (const item of value) {
+      const parsed = normalizeShortcut(item)
+      if (parsed && !shortcuts.some((existing) => shortcutEquals(existing, parsed))) {
+        shortcuts.push(parsed)
+      }
+    }
+    return shortcuts
+  }
+
+  // Migrate the previous single-shortcut object format.
+  const parsed = normalizeShortcut(value)
+  return parsed ? [parsed] : undefined
 }
 
 function normalizeEngineItem(value: unknown): SearchEngineItem | null {
@@ -154,10 +184,13 @@ export function normalizeSearchSettings(settings: SearchSettings | null | undefi
   const shortcuts: SearchSettings['shortcuts'] = {}
   for (const engine of engines) {
     const stored = legacy?.shortcuts?.[engine.id] as unknown
-    if (stored === null) {
-      shortcuts[engine.id] = null
+    const normalized = normalizeShortcutArray(stored)
+    if (normalized !== undefined) {
+      shortcuts[engine.id] = normalized
     } else {
-      shortcuts[engine.id] = normalizeShortcut(stored) ?? DEFAULT_SEARCH_SHORTCUTS[engine.id] ?? null
+      shortcuts[engine.id] = engine.builtin
+        ? [...(DEFAULT_SEARCH_SHORTCUTS[engine.id] ?? [])]
+        : []
     }
   }
 

@@ -25,6 +25,7 @@ import {
   SEARCH_SETTINGS_KEY,
   DEFAULT_SEARCH_SETTINGS,
   normalizeSearchSettings,
+  shortcutEquals,
   type ClockSettings,
   type SearchEngineItem,
   type SearchEngineShortcut,
@@ -381,15 +382,35 @@ function SearchSection() {
     })
   }
 
-  const updateShortcut = useCallback(
-    (id: string, shortcut: SearchEngineShortcut | null) => {
+  const addShortcut = useCallback(
+    (id: string, shortcut: SearchEngineShortcut) => {
+      setSettings((prev) => {
+        const normalized = normalizeSearchSettings(prev)
+        const existing = normalized.shortcuts[id] ?? []
+        if (existing.some((item) => shortcutEquals(item, shortcut))) return prev
+        return {
+          ...normalized,
+          shortcuts: {
+            ...normalized.shortcuts,
+            [id]: [...existing, shortcut],
+          },
+        }
+      })
+    },
+    [setSettings],
+  )
+
+  const removeShortcut = useCallback(
+    (id: string, shortcut: SearchEngineShortcut) => {
       setSettings((prev) => {
         const normalized = normalizeSearchSettings(prev)
         return {
           ...normalized,
           shortcuts: {
             ...normalized.shortcuts,
-            [id]: shortcut,
+            [id]: (normalized.shortcuts[id] ?? []).filter(
+              (item) => !shortcutEquals(item, shortcut),
+            ),
           },
         }
       })
@@ -419,7 +440,7 @@ function SearchSection() {
         engines: [...normalized.engines, item],
         shortcuts: {
           ...normalized.shortcuts,
-          [id]: null,
+          [id]: [],
         },
       }
     })
@@ -472,14 +493,7 @@ function SearchSection() {
       e.preventDefault()
       e.stopPropagation()
 
-      if (e.key === 'Escape') {
-        setRecordingKey(null)
-        setShortcutError(null)
-        return
-      }
-
-      if (e.key === 'Backspace' || e.key === 'Delete') {
-        updateShortcut(recordingKey, null)
+      if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'Delete') {
         setRecordingKey(null)
         setShortcutError(null)
         return
@@ -507,30 +521,27 @@ function SearchSection() {
       }
 
       const duplicate = settings.engines.find((item) => {
-        if (item.id === recordingKey) return false
-        const existing = settings.shortcuts[item.id]
-        if (!existing) return false
-        return (
-          existing.key.toLowerCase() === shortcut.key.toLowerCase() &&
-          existing.mod === shortcut.mod &&
-          existing.alt === shortcut.alt &&
-          existing.shift === shortcut.shift
-        )
+        const existing = settings.shortcuts[item.id] ?? []
+        return existing.some((bound) => shortcutEquals(bound, shortcut))
       })
 
       if (duplicate) {
-        setShortcutError(`快捷键已被 ${duplicate.name} 使用。`)
+        setShortcutError(
+          duplicate.id === recordingKey
+            ? '该引擎已绑定此快捷键。'
+            : `快捷键已被 ${duplicate.name} 使用。`,
+        )
         return
       }
 
-      updateShortcut(recordingKey, shortcut)
+      addShortcut(recordingKey, shortcut)
       setRecordingKey(null)
       setShortcutError(null)
     }
 
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [recordingKey, settings.engines, settings.shortcuts, updateShortcut])
+  }, [addShortcut, recordingKey, settings.engines, settings.shortcuts])
 
   return (
     <div className="mt-8">
@@ -640,59 +651,78 @@ function SearchSection() {
 
           <div className="mt-3 flex flex-col gap-2">
             {engines.map((item) => {
-              const shortcut = settings.shortcuts[item.id] ?? null
+              const shortcuts = settings.shortcuts[item.id] ?? []
               const recording = recordingKey === item.id
               return (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5"
+                  className="rounded-xl border border-white/10 bg-black/20 px-3 py-3"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white/80">
-                    {item.name.trim().charAt(0).toUpperCase() || '?'}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate text-sm text-white/90">{item.name}</span>
-                      {item.builtin && (
-                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/40">
-                          内置
-                        </span>
-                      )}
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white/80">
+                      {item.name.trim().charAt(0).toUpperCase() || '?'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm text-white/90">{item.name}</span>
+                        {item.builtin && (
+                          <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/40">
+                            内置
+                          </span>
+                        )}
+                      </div>
+                      <div className="truncate text-xs text-white/45">{item.url}</div>
                     </div>
-                    <div className="truncate text-xs text-white/45">{item.url}</div>
+                    <button
+                      type="button"
+                      onClick={() => deleteEngine(item.id)}
+                      disabled={engines.length <= 1}
+                      className="shrink-0 rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label={`删除 ${item.name}`}
+                      title={engines.length <= 1 ? '至少保留一个搜索引擎' : `删除 ${item.name}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (recording) {
-                        setRecordingKey(null)
-                        setShortcutError(null)
-                      } else {
-                        setRecordingKey(item.id)
-                        setShortcutError(null)
-                      }
-                    }}
-                    className={[
-                      'shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition',
-                      recording
-                        ? 'border-sky-300/30 bg-sky-400/10 text-sky-100'
-                        : shortcut
-                          ? 'border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:bg-white/10'
-                          : 'border-dashed border-white/15 bg-transparent text-white/40 hover:border-white/25 hover:text-white/70',
-                    ].join(' ')}
-                  >
-                    {recording ? '按下组合键...' : shortcut ? formatShortcut(shortcut) : '绑定快捷键'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteEngine(item.id)}
-                    disabled={engines.length <= 1}
-                    className="shrink-0 rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-30"
-                    aria-label={`删除 ${item.name}`}
-                    title={engines.length <= 1 ? '至少保留一个搜索引擎' : `删除 ${item.name}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {shortcuts.map((shortcut) => (
+                      <span
+                        key={`${shortcut.key}-${shortcut.mod}-${shortcut.alt}-${shortcut.shift}`}
+                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs text-white/80"
+                      >
+                        {formatShortcut(shortcut)}
+                        <button
+                          type="button"
+                          onClick={() => removeShortcut(item.id, shortcut)}
+                          className="rounded p-0.5 text-white/40 transition hover:bg-white/10 hover:text-white/80"
+                          aria-label={`移除 ${item.name} 的快捷键 ${formatShortcut(shortcut)}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (recording) {
+                          setRecordingKey(null)
+                          setShortcutError(null)
+                        } else {
+                          setRecordingKey(item.id)
+                          setShortcutError(null)
+                        }
+                      }}
+                      className={[
+                        'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition',
+                        recording
+                          ? 'border-sky-300/30 bg-sky-400/10 text-sky-100'
+                          : 'border-dashed border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white/80',
+                      ].join(' ')}
+                    >
+                      {recording ? '按下组合键...' : shortcuts.length === 0 ? '绑定快捷键' : '添加快捷键'}
+                    </button>
+                  </div>
                 </div>
               )
             })}

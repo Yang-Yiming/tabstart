@@ -162,7 +162,8 @@ export function SearchWidget() {
         inputRef.current?.blur()
       }
       for (const item of engines) {
-        if (shortcutMatches(e, searchSettings.shortcuts[item.id])) {
+        const shortcuts = searchSettings.shortcuts[item.id] ?? []
+        if (shortcuts.some((shortcut) => shortcutMatches(e, shortcut))) {
           e.preventDefault()
           selectEngine(item.id)
           return
@@ -236,7 +237,8 @@ export function SearchWidget() {
           <div className="search-popover absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border p-2 shadow-2xl">
             <div className="flex flex-col gap-0.5">
               {engines.map((item) => {
-                const shortcutLabel = formatShortcut(searchSettings.shortcuts[item.id])
+                const shortcuts = searchSettings.shortcuts[item.id] ?? []
+                const visibleShortcuts = shortcuts.slice(0, 2)
                 const isSelected = item.id === engineKey
                 return (
                   <button
@@ -255,11 +257,16 @@ export function SearchWidget() {
                       </span>
                       <span className="truncate">{item.name}</span>
                     </span>
-                    {shortcutLabel && (
+                    {visibleShortcuts.length > 0 && (
                       <span className="flex shrink-0 items-center gap-0.5 text-xs text-white/50">
-                        <kbd className="rounded bg-white/10 px-1 py-0.5">
-                          {shortcutLabel}
-                        </kbd>
+                        {visibleShortcuts.map((shortcut) => (
+                          <kbd key={formatShortcut(shortcut)} className="rounded bg-white/10 px-1 py-0.5">
+                            {formatShortcut(shortcut)}
+                          </kbd>
+                        ))}
+                        {shortcuts.length > 2 && (
+                          <kbd className="rounded bg-white/10 px-1 py-0.5">+{shortcuts.length - 2}</kbd>
+                        )}
                       </span>
                     )}
                   </button>
