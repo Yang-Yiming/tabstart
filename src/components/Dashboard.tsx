@@ -5,8 +5,9 @@ import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { canonicalKey, groupPlugins, plugins, resolvePlugin, useEnabledPlugins } from '../plugins/registry'
-import type { WidgetPlugin } from '../plugins/types'
+import { useWidgets } from '../plugins/hooks'
+import { canonicalKey, groupWidgets, resolveWidget, useEnabledPlugins } from '../plugins/registry'
+import type { WidgetDescriptor } from '../plugins/types'
 import { WidgetPreview } from './WidgetPreview'
 
 interface Props {
@@ -49,7 +50,7 @@ function cloneLayouts(layouts: Layouts): Layouts {
   )
 }
 
-function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS, plugin?: WidgetPlugin): Layout {
+function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS, plugin?: WidgetDescriptor): Layout {
   const cols = COLS[breakpoint]
   const minW = Math.min(plugin?.minW ?? 1, cols)
   const w = Math.min(Math.max(item.w, minW), cols)
@@ -72,14 +73,14 @@ function nextY(layout: Layout[]) {
 function normalizeBreakpoint(items: Layout[], breakpoint: keyof typeof COLS): Layout[] {
   return items
     .map((item) => {
-      const plugin = resolvePlugin(item.i)
+      const plugin = resolveWidget(item.i)
       return plugin ? withWidgetLimits(item, breakpoint, plugin) : null
     })
     .filter((item): item is Layout => item !== null)
 }
 
 function createLayoutItem(key: string, breakpoint: keyof typeof COLS, layout: Layout[]): Layout {
-  const plugin = resolvePlugin(key)
+  const plugin = resolveWidget(key)
   const cols = COLS[breakpoint]
   const w = Math.min(plugin?.defaultW ?? 1, cols)
   return {
@@ -99,6 +100,7 @@ export function Dashboard({ isEditing }: Props) {
   })
   const [addPanelOpen, setAddPanelOpen] = useState(false)
   const { isEnabled } = useEnabledPlugins()
+  const widgets = useWidgets()
 
   /**
    * Canonicalize + clamp every stored layout item. Keeps disabled plugins so
@@ -181,13 +183,13 @@ export function Dashboard({ isEditing }: Props) {
   }, [setLayouts])
 
   const availableGroups = useMemo(() => {
-    const available = plugins.filter((plugin) => isEnabled(plugin.id) && !activeKeys.has(plugin.id))
-    return groupPlugins(available)
-  }, [activeKeys, isEnabled])
+    const available = widgets.filter((widget) => isEnabled(widget.id) && !activeKeys.has(widget.id))
+    return groupWidgets(available)
+  }, [activeKeys, isEnabled, widgets])
 
   const renderedWidgets = useMemo(() => {
     return (displayLayouts.lg ?? []).map((item) => {
-      const plugin = resolvePlugin(item.i)
+      const plugin = widgets.find((widget) => widget.id === item.i)
       if (!plugin) return null
       const WidgetComponent = plugin.component
 
@@ -227,7 +229,7 @@ export function Dashboard({ isEditing }: Props) {
         </div>
       )
     })
-  }, [displayLayouts, handleRemove, isEditing])
+  }, [displayLayouts, handleRemove, isEditing, widgets])
 
   return (
     <div className={['dashboard-grid relative', isEditing ? 'is-editing' : ''].join(' ')}>

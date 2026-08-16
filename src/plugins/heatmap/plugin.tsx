@@ -1,8 +1,9 @@
 import { lazy } from 'react'
-import type { WidgetPlugin } from '../types'
+import { defineWidgetPlugin } from '../runtime'
+import type { WidgetDescriptor } from '../types'
 import { HeatmapSettings } from './HeatmapSettings'
 
-const plugin: WidgetPlugin = {
+const widget: WidgetDescriptor = {
   id: 'heatmap',
   name: 'Heatmap',
   group: 'Heatmap',
@@ -16,4 +17,4 @@ const plugin: WidgetPlugin = {
   order: 30,
 }
 
-export default plugin
+export const plugins = [defineWidgetPlugin(widget)]

@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import type { WidgetPlugin } from '../plugins/types'
+import type { WidgetDescriptor } from '../plugins/types'
 
 const CELL = 128
 const GAP = 16
@@ -7,7 +7,7 @@ const MAX_W = 240
 const MAX_H = 240
 
 interface Props {
-  plugin: WidgetPlugin
+  plugin: WidgetDescriptor
   onClick: () => void
 }
 

@@ -1,23 +1,33 @@
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { storageArea } from '../lib/storage'
-import type { WidgetPlugin } from './types'
+import type { HomepagePlugin } from './runtime'
+import type { WidgetDescriptor } from './types'
 
 /* ------------------------------------------------------------------ */
 /* Discovery: every folder under src/plugins with a plugin.tsx becomes  */
-/* a plugin. Add a plugin = add a folder + rebuild.                    */
+/* one or more build-time plugins. Add a plugin = add a folder + rebuild. */
 /* ------------------------------------------------------------------ */
 
-const modules = import.meta.glob<{ default?: WidgetPlugin | WidgetPlugin[] }>('./*/plugin.tsx', {
+const modules = import.meta.glob<{ plugins?: HomepagePlugin[] }>('./*/plugin.tsx', {
   eager: true,
 })
 
-/** All registered plugins, in display order. A folder may export one or several plugins. */
-export const plugins: WidgetPlugin[] = Object.values(modules)
-  .flatMap((module) => (Array.isArray(module.default) ? module.default : module.default ? [module.default] : []))
+/** All build-time plugin descriptors, in display order. */
+export const pluginDescriptors: HomepagePlugin[] = Object.values(modules)
+  .flatMap((module) => module.plugins ?? [])
   .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
-export const pluginById: Record<string, WidgetPlugin> = Object.fromEntries(
-  plugins.map((plugin) => [plugin.id, plugin]),
+export const pluginById: Record<string, HomepagePlugin> = Object.fromEntries(
+  pluginDescriptors.map((plugin) => [plugin.id, plugin]),
+)
+
+/** All widget manifests contributed by build-time plugins (enabled or not). */
+export const allWidgets: WidgetDescriptor[] = pluginDescriptors
+  .flatMap((plugin) => plugin.widgets ?? [])
+  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+export const widgetById: Record<string, WidgetDescriptor> = Object.fromEntries(
+  allWidgets.map((widget) => [widget.id, widget]),
 )
 
 /* ------------------------------------------------------------------ */
@@ -49,8 +59,8 @@ export function canonicalKey(key: string): string {
   return mapped && pluginById[mapped] ? mapped : key
 }
 
-export function resolvePlugin(key: string): WidgetPlugin | undefined {
-  return pluginById[canonicalKey(key)]
+export function resolveWidget(key: string): WidgetDescriptor | undefined {
+  return widgetById[canonicalKey(key)]
 }
 
 /** Legacy stored keys that migrate into the given plugin id. */
@@ -60,18 +70,18 @@ export function legacyKeysFor(id: string): string[] {
     .map(([key]) => key)
 }
 
-/** Group a plugin list by their `group` label for the picker / settings sidebar. */
-export interface PluginGroup {
+/** Group widgets by their `group` label for the picker / settings sidebar. */
+export interface WidgetGroup {
   name: string
-  plugins: WidgetPlugin[]
+  plugins: WidgetDescriptor[]
 }
 
-export function groupPlugins(list: WidgetPlugin[]): PluginGroup[] {
-  const map = new Map<string, WidgetPlugin[]>()
-  for (const plugin of list) {
-    const name = plugin.group ?? 'Plugins'
+export function groupWidgets(list: WidgetDescriptor[]): WidgetGroup[] {
+  const map = new Map<string, WidgetDescriptor[]>()
+  for (const widget of list) {
+    const name = widget.group ?? 'Plugins'
     const arr = map.get(name) ?? []
-    arr.push(plugin)
+    arr.push(widget)
     map.set(name, arr)
   }
   return [...map.entries()].map(([name, plugins]) => ({ name, plugins }))
@@ -163,3 +173,4 @@ export async function migratePluginKeys(): Promise<void> {
     }
   }
 }
+

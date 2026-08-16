@@ -1,8 +1,9 @@
 /* oxlint-disable react/only-export-components */
 import { lazy } from 'react'
-import type { WidgetPlugin } from '../types'
+import { defineWidgetPlugin } from '../runtime'
+import type { WidgetDescriptor } from '../types'
 
-const pomodoroCompact: WidgetPlugin = {
+const pomodoroCompact: WidgetDescriptor = {
   id: 'pomodoro-compact',
   name: 'Pomodoro (Small)',
   group: 'Pomodoro',
@@ -15,7 +16,7 @@ const pomodoroCompact: WidgetPlugin = {
   order: 70,
 }
 
-const pomodoroLarge: WidgetPlugin = {
+const pomodoroLarge: WidgetDescriptor = {
   id: 'pomodoro-large',
   name: 'Pomodoro (Large)',
   group: 'Pomodoro',
@@ -28,4 +29,4 @@ const pomodoroLarge: WidgetPlugin = {
   order: 71,
 }
 
-export default [pomodoroCompact, pomodoroLarge]
+export const plugins = [defineWidgetPlugin(pomodoroCompact), defineWidgetPlugin(pomodoroLarge)]

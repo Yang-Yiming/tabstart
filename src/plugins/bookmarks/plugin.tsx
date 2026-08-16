@@ -1,7 +1,8 @@
 import { lazy } from 'react'
-import type { WidgetPlugin } from '../types'
+import { defineWidgetPlugin } from '../runtime'
+import type { WidgetDescriptor } from '../types'
 
-const plugin: WidgetPlugin = {
+const widget: WidgetDescriptor = {
   id: 'bookmarks',
   name: 'Bookmarks',
   group: 'Bookmarks',
@@ -14,4 +15,4 @@ const plugin: WidgetPlugin = {
   order: 10,
 }
 
-export default plugin
+export const plugins = [defineWidgetPlugin(widget)]

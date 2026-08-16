@@ -20,8 +20,12 @@ A personal browser start page & launchpad dashboard for your new tab.
 ## Plugins
 
 Every grid widget is a **plugin**. Built-in widgets ship under `src/plugins/<id>/`; each folder contains a
-`plugin.tsx` (metadata + settings schema) and the component file(s). The registry auto-discovers every
+`plugin.tsx` (metadata + `apply` hook) and the component file(s). The registry auto-discovers every
 folder with a `plugin.tsx` via `import.meta.glob` — no manual registration.
+
+The plugin runtime is a small Cordis-style core: each plugin exports an `apply(ctx)` function and can
+contribute widgets, UI slots, or themes through `ctx.widgets` / `ctx.slots` / `ctx.themes`. Plugins are
+discovered at build time and mounted at runtime; MV3-safe, no remote code loading.
 
 - The **plugin manager** (top-right) lists all plugins with enable/disable toggles. Disabling hides a
   plugin from the grid and the Add-Widget picker, but its layout position is preserved.
@@ -31,8 +35,9 @@ folder with a `plugin.tsx` via `import.meta.glob` — no manual registration.
 ### Writing your own plugin
 
 1. Copy `src/plugins/example/` and rename the folder (e.g. `src/plugins/myplugin/`).
-2. Edit `plugin.tsx`: change `id`, `name`, grid size (`defaultW/H`, `minW/H`), `order` and the
-   `settings` schema (fields render automatically in Settings → Widgets).
+2. Edit `plugin.tsx`: change the widget `id`, `name`, grid size (`defaultW/H`, `minW/H`), `order` and the
+   `settings` schema (fields render automatically in Settings → Widgets). Export it with
+   `export const plugins = [defineWidgetPlugin(widget)]`.
 3. Rewrite the component. Available APIs: `WidgetCard`, `useWidgetSettings(widgetKey)` (persisted to
    local storage), and props `{ widgetKey, preview, compact }`.
 4. If the plugin fetches a remote API, add the host to `host_permissions` in `public/manifest.json`

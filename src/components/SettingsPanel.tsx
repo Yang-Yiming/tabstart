@@ -14,7 +14,8 @@ import {
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ThemeMode } from '../config/theme'
 import type { BackgroundControls } from '../hooks/useBackground'
-import { groupPlugins, pluginById, plugins, useEnabledPlugins } from '../plugins/registry'
+import { useWidgets } from '../plugins/hooks'
+import { groupWidgets, useEnabledPlugins } from '../plugins/registry'
 import { useWidgetSettings } from '../plugins/widgetSettings'
 import type { WidgetSettingsSchema } from '../plugins/types'
 import { SettingField } from './SettingField'
@@ -66,21 +67,22 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
   const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
 
   const { isEnabled } = useEnabledPlugins()
+  const widgets = useWidgets()
 
   const sidebarGroups = useMemo<SidebarGroup[]>(() => {
-    const withSettings = plugins.filter(
-      (plugin) => isEnabled(plugin.id) && (plugin.settings || plugin.settingsComponent),
+    const withSettings = widgets.filter(
+      (widget) => isEnabled(widget.id) && (widget.settings || widget.settingsComponent),
     )
-    return groupPlugins(withSettings).map((group) => ({
+    return groupWidgets(withSettings).map((group) => ({
       groupName: group.name,
-      entries: group.plugins.map((plugin) => ({
-        key: plugin.id,
+      entries: group.plugins.map((widget) => ({
+        key: widget.id,
         groupName: group.name,
-        label: plugin.name,
-        schema: plugin.settings ?? null,
+        label: widget.name,
+        schema: widget.settings ?? null,
       })),
     }))
-  }, [isEnabled])
+  }, [isEnabled, widgets])
 
   const activeEntry = useMemo(
     () => sidebarGroups.flatMap((group) => group.entries).find((entry) => entry.key === activeWidgetKey) ?? null,
@@ -410,10 +412,11 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
 
 function WidgetSettingsSection({ entry }: { entry: SettingsEntry }) {
   const { settings, setSetting } = useWidgetSettings(entry.key)
-  const plugin = pluginById[entry.key]
+  const widgets = useWidgets()
+  const widget = widgets.find((item) => item.id === entry.key)
 
-  if (plugin?.settingsComponent) {
-    const SettingsComponent = plugin.settingsComponent
+  if (widget?.settingsComponent) {
+    const SettingsComponent = widget.settingsComponent
     return <SettingsComponent />
   }
 

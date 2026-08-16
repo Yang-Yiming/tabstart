@@ -1,8 +1,8 @@
 import { Blocks, Layers, Plus, Puzzle, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Toggle } from '../components/Toggle'
-import { plugins, useEnabledPlugins } from './registry'
-import type { WidgetPlugin } from './types'
+import { pluginDescriptors, useEnabledPlugins } from './registry'
+import type { HomepagePlugin } from './runtime'
 
 type TabId = 'builtin' | 'external'
 
@@ -26,8 +26,8 @@ export function PluginManager() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [open])
 
-  const builtins = plugins.filter((plugin) => plugin.builtin)
-  const external = plugins.filter((plugin) => !plugin.builtin)
+  const builtins = pluginDescriptors.filter((plugin) => plugin.builtin)
+  const external = pluginDescriptors.filter((plugin) => !plugin.builtin)
 
   const tabs: Array<{ id: TabId; label: string; icon: ReactNode; count: number }> = [
     { id: 'builtin', label: '内置插件', icon: <Layers className="h-4 w-4" />, count: builtins.length },
@@ -130,7 +130,7 @@ export function PluginManager() {
 }
 
 interface PluginListProps {
-  plugins: WidgetPlugin[]
+  plugins: HomepagePlugin[]
   isEnabled: (id: string) => boolean
   onToggle: (id: string, enabled: boolean) => void
 }
@@ -182,7 +182,8 @@ function HowToAdd() {
           <code className="rounded bg-white/10 px-1">src/plugins/myplugin/</code>）。
         </li>
         <li>
-          编辑 <code className="rounded bg-white/10 px-1">plugin.tsx</code>：改 id / name / 尺寸 / settings。
+          编辑 <code className="rounded bg-white/10 px-1">plugin.tsx</code>：改 widget 的 id / name /
+            尺寸 / settings，并用 <code className="rounded bg-white/10 px-1">defineWidgetPlugin</code> 导出。
         </li>
         <li>
           重写组件文件。可用 API：<code className="rounded bg-white/10 px-1">WidgetCard</code>、

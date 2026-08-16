@@ -1,19 +1,29 @@
 export {
-  plugins,
+  pluginDescriptors,
   pluginById,
+  allWidgets,
+  widgetById,
   canonicalKey,
-  resolvePlugin,
-  groupPlugins,
+  resolveWidget,
+  groupWidgets,
   legacyKeysFor,
   useEnabledPlugins,
   migratePluginKeys,
-  type PluginGroup,
+  type WidgetGroup,
 } from '../plugins/registry'
+export { useWidgetSettings, WIDGET_SETTINGS_KEY } from '../plugins/widgetSettings'
 export {
-  useWidgetSettings,
-  widgetSettingsSchema,
-  widgetSettingsDefaults,
-  WIDGET_SETTINGS_KEY,
-} from '../plugins/widgetSettings'
-export type { WidgetPlugin, WidgetProps, WidgetSettingsSchema, WidgetSettingField } from '../plugins/types'
+  defineWidgetPlugin,
+  type HomepageContext,
+  type HomepagePlugin,
+  type PluginFiber,
+} from '../plugins/runtime'
+export type {
+  SlotDescriptor,
+  ThemeDescriptor,
+  WidgetDescriptor,
+  WidgetProps,
+  WidgetSettingsSchema,
+  WidgetSettingField,
+} from '../plugins/types'
 export type { WidgetSettings, WidgetSettingsState, WidgetSettingValue } from '../plugins/widgetSettings'

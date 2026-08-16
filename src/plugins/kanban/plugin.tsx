@@ -1,8 +1,9 @@
 /* oxlint-disable react/only-export-components */
 import { lazy } from 'react'
-import type { WidgetPlugin } from '../types'
+import { defineWidgetPlugin } from '../runtime'
+import type { WidgetDescriptor } from '../types'
 
-const kanbanFull: WidgetPlugin = {
+const kanbanFull: WidgetDescriptor = {
   id: 'kanban-full',
   name: 'Kanban Board',
   group: 'Kanban',
@@ -15,7 +16,7 @@ const kanbanFull: WidgetPlugin = {
   order: 60,
 }
 
-const kanbanCompact: WidgetPlugin = {
+const kanbanCompact: WidgetDescriptor = {
   id: 'kanban-compact',
   name: 'Kanban Compact',
   group: 'Kanban',
@@ -28,4 +29,4 @@ const kanbanCompact: WidgetPlugin = {
   order: 61,
 }
 
-export default [kanbanFull, kanbanCompact]
+export const plugins = [defineWidgetPlugin(kanbanFull), defineWidgetPlugin(kanbanCompact)]

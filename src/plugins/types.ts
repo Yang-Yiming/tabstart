@@ -54,11 +54,12 @@ export interface WidgetSettingsSchema {
 }
 
 /**
- * A widget plugin. Every grid widget — built-in or user-authored — is a
- * plugin registered under `src/plugins/<id>/plugin.tsx`.
+ * A grid widget contributed by a plugin. Static metadata (id, sizes, schema)
+ * is also used by the dashboard to canonicalize stored layouts even while a
+ * plugin is disabled.
  */
-export interface WidgetPlugin {
-  /** Stable plugin id, e.g. `deepseek` / `kanban-compact`. Also the layout & settings key. */
+export interface WidgetDescriptor {
+  /** Stable widget id, e.g. `deepseek` / `kanban-compact`. Also the layout & settings key. */
   id: string
   /** Display name shown in the picker, settings and plugin manager. */
   name: string
@@ -82,4 +83,26 @@ export interface WidgetPlugin {
   builtin?: boolean
   /** Display order inside its group (lower first). */
   order?: number
+}
+
+/** A UI slot contributed by a plugin (topbar action, settings section, shell overlay...). */
+export interface SlotDescriptor {
+  id: string
+  slot: string
+  component: ComponentType
+  label?: string | (() => string)
+  order?: number
+}
+
+/** A theme contributed by a plugin. Exactly one theme is active at a time. */
+export interface ThemeDescriptor {
+  id: string
+  name: string
+  description?: string
+  /** Class applied to the document root while the theme is active. */
+  rootClass?: string
+  /** CSS custom properties applied to the document root while active. */
+  tokens?: Record<string, string>
+  /** Optional stylesheet text injected while the theme is active. */
+  css?: string
 }

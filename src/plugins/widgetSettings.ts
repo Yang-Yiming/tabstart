@@ -1,6 +1,8 @@
+import { useSyncExternalStore } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { canonicalKey, legacyKeysFor, pluginById } from './registry'
-import type { WidgetSettingValue } from './types'
+import { usePluginHost } from './hooks'
+import { canonicalKey, legacyKeysFor } from './registry'
+import type { WidgetSettingValue, WidgetSettingsSchema } from './types'
 
 export const WIDGET_SETTINGS_KEY = 'homepage-widget-settings-v1'
 
@@ -9,15 +11,7 @@ export type WidgetSettingsState = Record<string, WidgetSettings>
 
 export type { WidgetSettingValue } from './types'
 
-/**
- * Resolve the settings schema for a widget instance key (a plugin id).
- */
-export function widgetSettingsSchema(widgetKey: string) {
-  return pluginById[canonicalKey(widgetKey)]?.settings ?? null
-}
-
-export function widgetSettingsDefaults(widgetKey: string): WidgetSettings {
-  const schema = widgetSettingsSchema(widgetKey)
+function widgetSettingsDefaults(schema: WidgetSettingsSchema | null): WidgetSettings {
   if (!schema) return {}
   return Object.fromEntries(schema.fields.map((field) => [field.key, field.default]))
 }
@@ -38,12 +32,19 @@ function storedSettings(state: WidgetSettingsState, widgetKey: string): WidgetSe
 
 /**
  * Per-plugin settings, keyed by the plugin id (e.g. `deepseek`).
+ *
+ * The settings schema is resolved from the mounted widget registry, so it is
+ * only available while the widget plugin is enabled/mounted.
  */
 export function useWidgetSettings(widgetKey: string) {
+  const ctx = usePluginHost()
+  useSyncExternalStore(ctx.widgets.subscribe, ctx.widgets.getVersion)
   const [state, setState] = useLocalStorage<WidgetSettingsState>(WIDGET_SETTINGS_KEY, {})
   const canonical = canonicalKey(widgetKey)
+  const schema = ctx.widgets.get(canonical)?.settings ?? null
+
   const settings: WidgetSettings = {
-    ...widgetSettingsDefaults(canonical),
+    ...widgetSettingsDefaults(schema),
     ...storedSettings(state, widgetKey),
   }
 
@@ -54,5 +55,5 @@ export function useWidgetSettings(widgetKey: string) {
     }))
   }
 
-  return { settings, setSetting }
+  return { settings, setSetting, schema }
 }
