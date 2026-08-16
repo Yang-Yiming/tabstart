@@ -1,0 +1,15 @@
+{
+  "plugins": [
+    "core",
+    "bookmarks",
+    "deepseek",
+    "example",
+    "heatmap",
+    "kanban",
+    "liquid-glass",
+    "notes",
+    "pomodoro",
+    "streak",
+    "todo"
+  ]
+}

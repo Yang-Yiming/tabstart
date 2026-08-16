@@ -1,0 +1,245 @@
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = dirname(dirname(fileURLToPath(import.meta.url)))
+const pluginsDir = join(root, 'src', 'plugins')
+const configPath = join(pluginsDir, 'plugin.config.json')
+const generatedPath = join(pluginsDir, 'registry.generated.ts')
+const tsconfigAppPath = join(root, 'tsconfig.app.json')
+
+interface PluginConfig {
+  plugins?: string[]
+}
+
+interface PluginPackage {
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  optionalDependencies?: Record<string, string>
+}
+
+function listAvailablePlugins(): string[] {
+  return readdirSync(pluginsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(join(pluginsDir, entry.name, 'plugin.tsx')))
+    .map((entry) => entry.name)
+    .sort()
+}
+
+function readConfig(): string[] {
+  if (existsSync(configPath) === false) {
+    const fallback = listAvailablePlugins()
+    console.warn(`[plugin-sync] ${configPath} not found; enabling all plugins: ${fallback.join(', ')}`)
+    return fallback
+  }
+
+  const raw = JSON.parse(readFileSync(configPath, 'utf8')) as PluginConfig
+  if (Array.isArray(raw.plugins) === false) {
+    throw new Error(`[plugin-sync] ${configPath} must contain a "plugins" array`)
+  }
+
+  const available = new Set(listAvailablePlugins())
+  const unknown = raw.plugins.filter((id) => available.has(id) === false)
+  if (unknown.length > 0) {
+    console.warn(`[plugin-sync] unknown plugin ids in config: ${unknown.join(', ')}`)
+  }
+
+  return raw.plugins.filter((id) => available.has(id))
+}
+
+function camelName(dir: string): string {
+  const words = dir.split('-')
+  return words
+    .map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+    .join('')
+}
+
+function hashText(text: string): string {
+  return createHash('sha256').update(text).digest('hex')
+}
+
+function stripJsonComments(text: string): string {
+  let result = ''
+  let inString = false
+  let inBlockComment = false
+  let inLineComment = false
+  let quote = ''
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i]
+    const next = text[i + 1]
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false
+        result += char
+      }
+      continue
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && next === '/') {
+        inBlockComment = false
+        i += 1
+      }
+      continue
+    }
+
+    if (inString) {
+      result += char
+      if (char === '\\') {
+        result += next ?? ''
+        i += 1
+      } else if (char === quote) {
+        inString = false
+        quote = ''
+      }
+      continue
+    }
+
+    if (char === '"' || char === "'") {
+      inString = true
+      quote = char
+      result += char
+      continue
+    }
+
+    if (char === '/' && next === '/') {
+      inLineComment = true
+      i += 1
+      continue
+    }
+
+    if (char === '/' && next === '*') {
+      inBlockComment = true
+      i += 1
+      continue
+    }
+
+    result += char
+  }
+
+  return result
+}
+
+function syncPluginDependencies(enabledDirs: string[]): void {
+  for (const dir of enabledDirs) {
+    const pluginDir = join(pluginsDir, dir)
+    const pkgPath = join(pluginDir, 'package.json')
+    if (existsSync(pkgPath) === false) continue
+
+    const pkgText = readFileSync(pkgPath, 'utf8')
+    const pkg = JSON.parse(pkgText) as PluginPackage
+    const depCount =
+      Object.values(pkg.dependencies ?? {}).length +
+      Object.values(pkg.devDependencies ?? {}).length +
+      Object.values(pkg.peerDependencies ?? {}).length +
+      Object.values(pkg.optionalDependencies ?? {}).length
+    if (depCount === 0) continue
+
+    const nodeModules = join(pluginDir, 'node_modules')
+    const marker = join(nodeModules, '.plugin-sync-hash')
+    const hash = hashText(pkgText)
+    if (existsSync(marker) && existsSync(nodeModules) && readFileSync(marker, 'utf8') === hash) {
+      console.log(`[plugin-sync] ${dir}: dependencies up to date`)
+      continue
+    }
+
+    console.log(`[plugin-sync] ${dir}: installing dependencies...`)
+    const installArgs = ['install', '--cwd', pluginDir, '--no-save']
+    if (process.env.BUN_CACHE_DIR) {
+      installArgs.push('--cache-dir', process.env.BUN_CACHE_DIR)
+    }
+    const result = spawnSync('bun', installArgs, {
+      stdio: 'inherit',
+      env: { ...process.env, BUN_TMPDIR: process.env.BUN_TMPDIR ?? process.env.TMPDIR ?? '' },
+    })
+    if (result.status !== 0) {
+      throw new Error(`[plugin-sync] bun install failed for ${dir}`)
+    }
+
+    mkdirSync(nodeModules, { recursive: true })
+    writeFileSync(marker, hash)
+  }
+}
+
+function generateRegistry(enabledDirs: string[]): void {
+  const lines: string[] = [
+    '// Auto-generated by scripts/plugin-sync.ts. DO NOT EDIT.',
+    "import type { HomepagePlugin } from './runtime'",
+    '',
+  ]
+  const vars: Array<{ dir: string; variable: string }> = []
+
+  for (const dir of enabledDirs) {
+    const variable = `${camelName(dir)}Plugins`
+    vars.push({ dir, variable })
+    lines.push(`import { plugins as ${variable} } from './${dir}/plugin'`)
+  }
+
+  lines.push('')
+  lines.push('export interface EnabledPluginModule {')
+  lines.push('  dir: string')
+  lines.push('  plugins: HomepagePlugin[]')
+  lines.push('}')
+  lines.push('')
+  lines.push('export const enabledPluginModules: EnabledPluginModule[] = [')
+  for (const { dir, variable } of vars) {
+    lines.push(`  { dir: '${dir}', plugins: ${variable} },`)
+  }
+  lines.push(']')
+  lines.push('')
+
+  const generated = lines.join('\n')
+  if (existsSync(generatedPath) === false || readFileSync(generatedPath, 'utf8') !== generated) {
+    writeFileSync(generatedPath, generated)
+    console.log(`[plugin-sync] wrote ${generatedPath}`)
+  }
+}
+
+function updateTsconfigExcludes(enabledDirs: string[]): void {
+  const available = listAvailablePlugins()
+  const disabled = available.filter((dir) => enabledDirs.includes(dir) === false)
+
+  if (existsSync(tsconfigAppPath) === false) return
+
+  const raw = readFileSync(tsconfigAppPath, 'utf8')
+  let tsconfig: { exclude?: string[] } & Record<string, unknown>
+  try {
+    tsconfig = JSON.parse(stripJsonComments(raw)) as typeof tsconfig
+  } catch (error) {
+    console.warn(`[plugin-sync] could not update ${tsconfigAppPath}: ${String(error)}`)
+    return
+  }
+
+  const nextExclude = disabled.map((dir) => `src/plugins/${dir}`).sort()
+  const before = JSON.stringify(tsconfig.exclude ?? [])
+  const after = JSON.stringify(nextExclude)
+
+  if (before === after) return
+
+  if (nextExclude.length > 0) tsconfig.exclude = nextExclude
+  else delete tsconfig.exclude
+
+  writeFileSync(tsconfigAppPath, JSON.stringify(tsconfig, null, 2) + '\n')
+  console.log(`[plugin-sync] updated ${tsconfigAppPath} exclude: ${nextExclude.join(', ') || '(none)'}`)
+}
+
+function main(): void {
+  const available = listAvailablePlugins()
+  const configured = readConfig()
+
+  // Core slots (clock/search) are mandatory for the homepage shell.
+  const enabled = [...new Set(['core', ...configured].filter((dir) => available.includes(dir)))]
+
+  console.log(`[plugin-sync] enabled: ${enabled.join(', ')}`)
+  console.log(`[plugin-sync] disabled: ${available.filter((dir) => enabled.includes(dir) === false).join(', ') || '(none)'}`)
+
+  syncPluginDependencies(enabled)
+  generateRegistry(enabled)
+  updateTsconfigExcludes(enabled)
+}
+
+main()
