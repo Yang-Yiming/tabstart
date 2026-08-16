@@ -172,7 +172,6 @@ export function Dashboard({ isEditing }: Props) {
         }
         return next
       })
-      setAddPanelOpen(false)
     },
     [normalizeLayouts, setLayouts],
   )
