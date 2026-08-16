@@ -52,6 +52,8 @@ registry.ts (import.meta.glob, build-time)
 ```
 
 Built-in slot names: `hero.clock` and `hero.search` (provided by `src/plugins/core/plugin.tsx`).
+Clock and search bar personalization (12/24-hour time, seconds, date, locale, default search
+engine, and which engines are shown) lives in **Settings → General**.
 The active plugin theme is persisted in `homepage-active-theme`; `src/plugins/liquid-glass/` is a
 theme-plugin example and can be selected in Settings → Appearance.
 

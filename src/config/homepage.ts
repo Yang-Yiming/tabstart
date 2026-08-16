@@ -1,3 +1,5 @@
+import { DEFAULT_SEARCH_ENGINE, SEARCH_ENGINE_ORDER, SEARCH_ENGINES } from './search'
+
 export interface SearchEngine {
   name: string
   url: string
@@ -26,13 +28,9 @@ export const homepageConfig: HomepageConfig = {
     blur: 0,
   },
   search: {
-    defaultEngine: 'google',
-    engines: {
-      google: { name: 'Google', url: 'https://www.google.com/search?q=' },
-      bing: { name: 'Bing', url: 'https://www.bing.com/search?q=' },
-      duckduckgo: { name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=' },
-      github: { name: 'GitHub', url: 'https://github.com/search?q=' },
-      alphaxiv: { name: 'AlphaXiv', url: 'https://www.alphaxiv.org/?query=' },
-    },
+    defaultEngine: DEFAULT_SEARCH_ENGINE,
+    engines: Object.fromEntries(
+      SEARCH_ENGINE_ORDER.map((key) => [key, { name: SEARCH_ENGINES[key].name, url: SEARCH_ENGINES[key].url }]),
+    ) as Record<string, SearchEngine>,
   },
 }

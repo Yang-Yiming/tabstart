@@ -1,17 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ArrowRight, Search, Trash2 } from 'lucide-react'
+import {
+  DEFAULT_SEARCH_ENGINE,
+  SEARCH_ENGINE_ORDER,
+  SEARCH_ENGINES,
+  SEARCH_ENGINE_STORAGE_KEY,
+  type SearchEngineKey,
+} from '../config/search'
+import {
+  DEFAULT_SEARCH_SETTINGS,
+  normalizeSearchSettings,
+  SEARCH_SETTINGS_KEY,
+  type SearchSettings,
+} from '../config/preferences'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { homepageConfig } from '../config/homepage'
 
 const HISTORY_KEY = 'homepage-search-history'
-const ENGINE_KEY = 'homepage-search-engine'
 const MAX_HISTORY = 8
 
-const ENGINE_ORDER = ['google', 'bing', 'duckduckgo', 'github', 'alphaxiv'] as const
-
-type EngineKey = (typeof ENGINE_ORDER)[number]
-
-type HistoryItem = { query: string; engine: EngineKey }
+type HistoryItem = { query: string; engine: SearchEngineKey }
 
 const GithubIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -19,54 +26,42 @@ const GithubIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   </svg>
 )
 
-const engineMeta: Record<EngineKey, { name: string; icon: ReactNode; smallIcon: ReactNode; shortcut: string }> = {
+const engineIcons: Record<SearchEngineKey, { icon: ReactNode; smallIcon: ReactNode }> = {
   google: {
-    name: 'Google',
     icon: <span className="font-semibold">G</span>,
     smallIcon: <span className="font-semibold text-xs">G</span>,
-    shortcut: '1',
   },
   bing: {
-    name: 'Bing',
     icon: <span className="font-semibold">B</span>,
     smallIcon: <span className="font-semibold text-xs">B</span>,
-    shortcut: '2',
   },
   duckduckgo: {
-    name: 'DuckDuckGo',
     icon: <span className="font-semibold">D</span>,
     smallIcon: <span className="font-semibold text-xs">D</span>,
-    shortcut: '3',
   },
   github: {
-    name: 'GitHub',
     icon: <GithubIcon />,
     smallIcon: <GithubIcon className="h-3 w-3" />,
-    shortcut: '4',
   },
   alphaxiv: {
-    name: 'AlphaXiv',
     icon: <span className="font-serif text-lg">α</span>,
     smallIcon: <span className="font-serif text-sm">α</span>,
-    shortcut: '5',
   },
 }
-
-const defaultEngine = homepageConfig.search.defaultEngine as EngineKey
 
 const normalizeHistoryItem = (item: unknown): HistoryItem => {
   if (item && typeof item === 'object' && !Array.isArray(item)) {
     const record = item as Record<string, unknown>
     const query = typeof record.query === 'string' ? record.query : String(record.query ?? '')
-    const engine = ENGINE_ORDER.includes(record.engine as EngineKey)
-      ? (record.engine as EngineKey)
-      : defaultEngine
+    const engine = SEARCH_ENGINE_ORDER.includes(record.engine as SearchEngineKey)
+      ? (record.engine as SearchEngineKey)
+      : DEFAULT_SEARCH_ENGINE
     return { query, engine }
   }
   if (typeof item === 'string') {
-    return { query: item, engine: defaultEngine }
+    return { query: item, engine: DEFAULT_SEARCH_ENGINE }
   }
-  return { query: String(item ?? ''), engine: defaultEngine }
+  return { query: String(item ?? ''), engine: DEFAULT_SEARCH_ENGINE }
 }
 
 export function SearchWidget() {
@@ -80,22 +75,29 @@ export function SearchWidget() {
     [rawHistory],
   )
   const [storedEngine, setEngineKey] = useLocalStorage<string>(
-    ENGINE_KEY,
-    homepageConfig.search.defaultEngine
+    SEARCH_ENGINE_STORAGE_KEY,
+    DEFAULT_SEARCH_ENGINE,
   )
-  const engineKey = ENGINE_ORDER.includes(storedEngine as EngineKey)
-    ? (storedEngine as EngineKey)
-    : (homepageConfig.search.defaultEngine as EngineKey)
+  const [rawSearchSettings] = useLocalStorage<SearchSettings>(SEARCH_SETTINGS_KEY, DEFAULT_SEARCH_SETTINGS)
+  const enabledEngines = useMemo(
+    () => normalizeSearchSettings(rawSearchSettings).enabledEngines,
+    [rawSearchSettings],
+  )
+
+  const engineKey: SearchEngineKey = enabledEngines.includes(storedEngine as SearchEngineKey)
+    ? (storedEngine as SearchEngineKey)
+    : enabledEngines[0]
+
   const [historyOpen, setHistoryOpen] = useState(false)
   const [engineDropdownOpen, setEngineDropdownOpen] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const engine = homepageConfig.search.engines[engineKey]
-  const meta = engineMeta[engineKey]
+  const engine = SEARCH_ENGINES[engineKey]
+  const meta = engineIcons[engineKey]
 
-  const addHistory = (term: string, engineKey: EngineKey) => {
+  const addHistory = (term: string, engineKey: SearchEngineKey) => {
     const trimmed = term.trim()
     if (!trimmed) return
     setHistory((prev) => {
@@ -117,18 +119,18 @@ export function SearchWidget() {
   const clearHistory = () => setHistory([])
 
   const selectEngine = useCallback(
-    (key: EngineKey) => {
+    (key: SearchEngineKey) => {
       setEngineKey(key)
       setEngineDropdownOpen(false)
       inputRef.current?.focus()
     },
-    [setEngineKey]
+    [setEngineKey],
   )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = query.trim()
-    if (!trimmed || !engine) return
+    if (!trimmed) return
     addHistory(trimmed, engineKey)
     setHistoryOpen(false)
     setEngineDropdownOpen(false)
@@ -152,15 +154,18 @@ export function SearchWidget() {
         setHistoryOpen(false)
         inputRef.current?.blur()
       }
-      if ((e.metaKey || e.ctrlKey) && /^[1-5]$/.test(e.key)) {
-        e.preventDefault()
+      if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
         const index = parseInt(e.key, 10) - 1
-        selectEngine(ENGINE_ORDER[index])
+        const target = enabledEngines[index]
+        if (target) {
+          e.preventDefault()
+          selectEngine(target)
+        }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [engineDropdownOpen, selectEngine])
+  }, [enabledEngines, engineDropdownOpen, selectEngine])
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -224,8 +229,9 @@ export function SearchWidget() {
         {engineDropdownOpen && (
           <div className="search-popover absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border p-2 shadow-2xl">
             <div className="flex flex-col gap-0.5">
-              {ENGINE_ORDER.map((key) => {
-                const m = engineMeta[key]
+              {enabledEngines.map((key, index) => {
+                const m = engineIcons[key]
+                const definition = SEARCH_ENGINES[key]
                 const isSelected = key === engineKey
                 return (
                   <button
@@ -242,12 +248,12 @@ export function SearchWidget() {
                       <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/10 text-sm">
                         {m.icon}
                       </span>
-                      <span>{m.name}</span>
+                      <span>{definition.name}</span>
                     </span>
                     <span className="flex items-center gap-0.5 text-xs text-white/50">
                       <kbd className="rounded bg-white/10 px-1 py-0.5">⌘</kbd>
                       <kbd className="rounded bg-white/10 px-1 py-0.5">
-                        {m.shortcut}
+                        {index + 1}
                       </kbd>
                     </span>
                   </button>
@@ -261,14 +267,16 @@ export function SearchWidget() {
           <div className="search-popover absolute left-0 right-0 top-full z-40 mt-3 w-full overflow-hidden rounded-3xl border p-3 shadow-2xl">
             <ul className="flex flex-col gap-1">
               {filteredHistory.map((item) => {
-                const itemMeta = engineMeta[item.engine]
+                const itemMeta = engineIcons[item.engine]
                 return (
                   <li key={item.query} className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         setQuery(item.query)
-                        selectEngine(item.engine)
+                        if (enabledEngines.includes(item.engine)) {
+                          selectEngine(item.engine)
+                        }
                       }}
                       className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10"
                     >

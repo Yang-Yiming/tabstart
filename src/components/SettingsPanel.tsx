@@ -1,4 +1,5 @@
 import {
+  Clock3,
   Folder,
   Globe,
   LayoutGrid,
@@ -6,19 +7,41 @@ import {
   Monitor,
   Moon,
   Palette,
+  Search,
   Settings,
+  SlidersHorizontal,
   Sun,
   Upload,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  CLOCK_LOCALE_OPTIONS,
+  CLOCK_SETTINGS_KEY,
+  DEFAULT_CLOCK_SETTINGS,
+  normalizeClockSettings,
+  SEARCH_SETTINGS_KEY,
+  DEFAULT_SEARCH_SETTINGS,
+  normalizeSearchSettings,
+  type ClockSettings,
+  type SearchSettings,
+} from '../config/preferences'
+import {
+  DEFAULT_SEARCH_ENGINE,
+  SEARCH_ENGINE_ORDER,
+  SEARCH_ENGINES,
+  SEARCH_ENGINE_STORAGE_KEY,
+  type SearchEngineKey,
+} from '../config/search'
 import type { ThemeMode } from '../config/theme'
 import type { BackgroundControls } from '../hooks/useBackground'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useActiveTheme, useWidgets } from '../plugins/hooks'
 import { groupWidgets, useEnabledPlugins } from '../plugins/registry'
 import { useWidgetSettings } from '../plugins/widgetSettings'
 import type { WidgetSettingsSchema } from '../plugins/types'
 import { SettingField } from './SettingField'
+import { Toggle } from './Toggle'
 
 interface SettingsPanelProps {
   theme: ThemeMode
@@ -27,7 +50,7 @@ interface SettingsPanelProps {
 }
 
 interface Category {
-  id: 'appearance' | 'widgets'
+  id: 'general' | 'appearance' | 'widgets'
   name: string
   icon: ReactNode
 }
@@ -56,13 +79,14 @@ const themeOptions: Array<{
 ]
 
 const categories: Category[] = [
+  { id: 'general', name: 'General', icon: <SlidersHorizontal className="h-4 w-4" /> },
   { id: 'appearance', name: 'Appearance', icon: <Palette className="h-4 w-4" /> },
   { id: 'widgets', name: 'Widgets', icon: <LayoutGrid className="h-4 w-4" /> },
 ]
 
 export function SettingsPanel({ theme, onThemeChange, background }: SettingsPanelProps) {
   const [open, setOpen] = useState(false)
-  const [active, setActive] = useState<'appearance' | 'widgets'>('appearance')
+  const [active, setActive] = useState<'general' | 'appearance' | 'widgets'>('appearance')
   const [widgetsOpen, setWidgetsOpen] = useState(false)
   const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
 
@@ -89,7 +113,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
     [sidebarGroups, activeWidgetKey],
   )
 
-  const selectCategory = (id: 'appearance' | 'widgets') => {
+  const selectCategory = (id: 'general' | 'appearance' | 'widgets') => {
     if (id === 'widgets') {
       if (active === 'widgets') {
         setActive('appearance')
@@ -99,7 +123,8 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
         setWidgetsOpen(true)
       }
     } else {
-      setActive('appearance')
+      setActive(id)
+      setWidgetsOpen(false)
     }
   }
 
@@ -118,7 +143,8 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
     }
   }, [active, activeEntry, sidebarGroups])
 
-  const headerTitle = active === 'appearance' ? 'Appearance' : (activeEntry?.label ?? 'Widgets')
+  const headerTitle =
+    active === 'general' ? 'General' : active === 'appearance' ? 'Appearance' : (activeEntry?.label ?? 'Widgets')
 
   return (
     <div className="relative">
@@ -227,7 +253,9 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto p-6">
-                {active === 'appearance' ? (
+                {active === 'general' ? (
+                  <GeneralSection />
+                ) : active === 'appearance' ? (
                   <AppearanceSection
                     theme={theme}
                     onThemeChange={onThemeChange}
@@ -243,6 +271,181 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function GeneralSection() {
+  return (
+    <>
+      <ClockSection />
+      <SearchSection />
+    </>
+  )
+}
+
+function ClockSection() {
+  const [rawSettings, setSettings] = useLocalStorage<ClockSettings>(CLOCK_SETTINGS_KEY, DEFAULT_CLOCK_SETTINGS)
+  const settings = normalizeClockSettings(rawSettings)
+
+  const update = (patch: Partial<ClockSettings>) => {
+    setSettings((prev) => ({
+      ...DEFAULT_CLOCK_SETTINGS,
+      ...normalizeClockSettings(prev),
+      ...patch,
+    }))
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <Clock3 className="h-4 w-4 text-white/70" />
+        <h4 className="text-sm font-medium text-white">时钟</h4>
+      </div>
+      <p className="mt-1 text-xs text-white/50">个性化主页顶部的时间显示。</p>
+
+      <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <ToggleRow
+          label="12 小时制"
+          description="关闭时使用 24 小时制显示时间。"
+          checked={settings.hour12}
+          onChange={(value) => update({ hour12: value })}
+        />
+        <ToggleRow
+          label="显示秒数"
+          description="在时间中显示秒。"
+          checked={settings.showSeconds}
+          onChange={(value) => update({ showSeconds: value })}
+        />
+        <ToggleRow
+          label="显示日期"
+          description="在时间下方显示日期与星期。"
+          checked={settings.showDate}
+          onChange={(value) => update({ showDate: value })}
+        />
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <h5 className="text-sm font-medium text-white">语言 / 地区</h5>
+            <p className="mt-0.5 text-xs leading-5 text-white/50">控制日期和时间的格式化方式。</p>
+          </div>
+          <select
+            value={settings.locale}
+            onChange={(event) => update({ locale: event.target.value })}
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
+          >
+            {CLOCK_LOCALE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SearchSection() {
+  const [engineKey, setEngineKey] = useLocalStorage<string>(
+    SEARCH_ENGINE_STORAGE_KEY,
+    DEFAULT_SEARCH_ENGINE,
+  )
+  const [rawSettings, setSettings] = useLocalStorage<SearchSettings>(SEARCH_SETTINGS_KEY, DEFAULT_SEARCH_SETTINGS)
+  const settings = normalizeSearchSettings(rawSettings)
+  const enabledEngines = settings.enabledEngines
+
+  const currentEngine: SearchEngineKey = enabledEngines.includes(engineKey as SearchEngineKey)
+    ? (engineKey as SearchEngineKey)
+    : enabledEngines[0]
+
+  const toggleEngine = (key: SearchEngineKey, enabled: boolean) => {
+    const current = normalizeSearchSettings(rawSettings).enabledEngines
+
+    if (!enabled && key === currentEngine && current.length > 1) {
+      setEngineKey(current.filter((item) => item !== key)[0])
+    }
+
+    setSettings((prev) => {
+      const previous = normalizeSearchSettings(prev).enabledEngines
+      if (enabled) {
+        if (previous.includes(key)) return prev
+        return {
+          enabledEngines: SEARCH_ENGINE_ORDER.filter((item) => item === key || previous.includes(item)),
+        }
+      }
+      if (previous.length <= 1 || !previous.includes(key)) return prev
+      return { enabledEngines: previous.filter((item) => item !== key) }
+    })
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-2">
+        <Search className="h-4 w-4 text-white/70" />
+        <h4 className="text-sm font-medium text-white">搜索栏</h4>
+      </div>
+      <p className="mt-1 text-xs text-white/50">选择默认搜索引擎，以及搜索栏中显示的引擎。</p>
+
+      <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <h5 className="text-sm font-medium text-white">默认搜索引擎</h5>
+            <p className="mt-0.5 text-xs leading-5 text-white/50">按回车键或 ⌘K 后使用的搜索引擎。</p>
+          </div>
+          <select
+            value={currentEngine}
+            onChange={(event) => setEngineKey(event.target.value)}
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
+          >
+            {enabledEngines.map((key) => (
+              <option key={key} value={key}>
+                {SEARCH_ENGINES[key].name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <h5 className="text-sm font-medium text-white">显示的搜索引擎</h5>
+          <p className="mt-0.5 text-xs leading-5 text-white/50">勾选后，该引擎会出现在搜索栏左侧的切换菜单中。</p>
+          <div className="mt-3 flex flex-col gap-1">
+            {SEARCH_ENGINE_ORDER.map((key) => {
+              const checked = enabledEngines.includes(key)
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-white/5"
+                >
+                  <span className="text-sm text-white/85">{SEARCH_ENGINES[key].name}</span>
+                  <Toggle checked={checked} onChange={(value) => toggleEngine(key, value)} />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string
+  description: string
+  checked: boolean
+  onChange: (value: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-6">
+      <div>
+        <h5 className="text-sm font-medium text-white">{label}</h5>
+        <p className="mt-0.5 text-xs leading-5 text-white/50">{description}</p>
+      </div>
+      <Toggle checked={checked} onChange={onChange} />
     </div>
   )
 }
