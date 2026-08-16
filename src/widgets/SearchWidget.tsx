@@ -249,14 +249,14 @@ export function SearchWidget() {
                         : 'text-white/80 hover:bg-white/10'
                     }`}
                   >
-                    <span className="flex items-center gap-2.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/10 text-sm">
+                    <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/10 text-sm">
                         {engineIcon(item, false)}
                       </span>
-                      <span>{item.name}</span>
+                      <span className="truncate">{item.name}</span>
                     </span>
                     {shortcutLabel && (
-                      <span className="flex items-center gap-0.5 text-xs text-white/50">
+                      <span className="flex shrink-0 items-center gap-0.5 text-xs text-white/50">
                         <kbd className="rounded bg-white/10 px-1 py-0.5">
                           {shortcutLabel}
                         </kbd>
