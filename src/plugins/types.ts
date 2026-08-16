@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { ComponentType, HTMLAttributes } from 'react'
 
 export interface WidgetProps {
   className?: string
@@ -105,4 +105,10 @@ export interface ThemeDescriptor {
   tokens?: Record<string, string>
   /** Optional stylesheet text injected while the theme is active. */
   css?: string
+  /**
+   * Optional React component used to render glass surfaces while this theme
+   * is active. It receives normal HTMLDivElement props (className, style,
+   * event handlers, children).
+   */
+  surface?: ComponentType<HTMLAttributes<HTMLDivElement>>
 }

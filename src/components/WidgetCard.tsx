@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ThemeSurface } from './ThemeSurface'
 
 interface WidgetCardProps {
   children: ReactNode
@@ -7,14 +8,15 @@ interface WidgetCardProps {
 
 export function WidgetCard({ children, className = '' }: WidgetCardProps) {
   return (
-    <div
+    <ThemeSurface
+      fallbackClassName="widget-card border"
       className={[
-        'widget-card group relative overflow-hidden rounded-3xl border p-5 shadow-2xl',
+        'group relative overflow-hidden rounded-3xl p-5 shadow-2xl',
         'transition-all duration-500 ease-out hover:-translate-y-1',
         className,
       ].join(' ')}
     >
       {children}
-    </div>
+    </ThemeSurface>
   )
 }

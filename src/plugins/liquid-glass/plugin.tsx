@@ -1,10 +1,15 @@
+import { lazy } from 'react'
 import type { HomepageContext } from '../runtime'
+
+const liquidGlassSurface = lazy(() =>
+  import('./LiquidGlassSurface').then((module) => ({ default: module.LiquidGlassSurface })),
+)
 
 export const plugins = [
   {
     id: 'liquid-glass',
     name: 'Liquid Glass',
-    description: '将主视觉切换为更通透的 liquid glass 玻璃拟态。',
+    description: '使用 simple-liquid-glass 为 widget 表面提供真实折射与毛玻璃质感。',
     builtin: false,
     order: 200,
     apply(ctx: HomepageContext) {
@@ -12,16 +17,10 @@ export const plugins = [
         ctx.themes.register({
           id: 'liquid-glass',
           name: 'Liquid Glass',
-          description: '更通透的玻璃拟态主题。',
+          description: '使用 simple-liquid-glass 的液态玻璃主题。',
           rootClass: 'theme-liquid-glass',
+          surface: liquidGlassSurface,
           tokens: {
-            '--glass-widget-bg': 'rgba(255, 255, 255, 0.14)',
-            '--glass-widget-border': 'rgba(255, 255, 255, 0.30)',
-            '--glass-widget-hover-bg': 'rgba(255, 255, 255, 0.20)',
-            '--glass-widget-hover-border': 'rgba(255, 255, 255, 0.40)',
-            '--glass-widget-blur': '32px',
-            '--glass-widget-saturate': '180%',
-            '--glass-widget-shadow': '0 28px 80px -16px rgba(0, 0, 0, 0.45)',
             '--chrome-button-bg': 'rgba(255, 255, 255, 0.12)',
             '--chrome-button-border': 'rgba(255, 255, 255, 0.28)',
             '--chrome-button-text': 'rgba(255, 255, 255, 0.92)',
