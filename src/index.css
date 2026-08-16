@@ -89,6 +89,13 @@ button {
   color: var(--chrome-button-hover-text);
 }
 
+.chrome-button-active,
+.chrome-button-active:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
 .chrome-panel {
   background: var(--chrome-panel-bg);
   border-color: var(--chrome-panel-border);
