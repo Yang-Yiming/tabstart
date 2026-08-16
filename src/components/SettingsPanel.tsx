@@ -135,7 +135,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
             onClick={(event) => event.stopPropagation()}
-            className="absolute left-1/2 top-1/2 flex max-h-[85vh] w-[720px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-2xl"
+            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl backdrop-blur-2xl"
           >
             <div className="w-44 shrink-0 overflow-y-auto border-r border-white/10 bg-black/30 p-4">
               <h2 className="mb-4 px-2 text-sm font-semibold text-white">Settings</h2>
