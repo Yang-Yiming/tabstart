@@ -184,13 +184,14 @@ export function normalizeSearchSettings(settings: SearchSettings | null | undefi
   const shortcuts: SearchSettings['shortcuts'] = {}
   for (const engine of engines) {
     const stored = legacy?.shortcuts?.[engine.id] as unknown
-    const normalized = normalizeShortcutArray(stored)
-    if (normalized !== undefined) {
-      shortcuts[engine.id] = normalized
+    if (stored === null) {
+      // The previous format used null to mean "no shortcut".
+      shortcuts[engine.id] = []
     } else {
-      shortcuts[engine.id] = engine.builtin
+      const normalized = normalizeShortcutArray(stored)
+      shortcuts[engine.id] = normalized ?? (engine.builtin
         ? [...(DEFAULT_SEARCH_SHORTCUTS[engine.id] ?? [])]
-        : []
+        : [])
     }
   }
 
