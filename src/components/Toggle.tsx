@@ -12,7 +12,7 @@ export function Toggle({ checked, onChange }: ToggleProps) {
       onClick={() => onChange(!checked)}
       className={[
         'relative h-5 w-9 shrink-0 rounded-full transition-colors',
-        checked ? 'bg-emerald-300/80' : 'bg-white/15',
+        checked ? 'bg-[var(--toggle-on)]' : 'bg-[var(--toggle-off)]',
       ].join(' ')}
     >
       <span

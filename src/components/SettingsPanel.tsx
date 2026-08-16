@@ -168,10 +168,10 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
             onClick={(event) => event.stopPropagation()}
-            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border chrome-panel shadow-2xl"
+            className="absolute left-1/2 top-1/2 flex h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border chrome-panel settings-panel shadow-2xl"
           >
-            <div className="w-44 shrink-0 overflow-y-auto border-r border-white/10 bg-black/30 p-4">
-              <h2 className="mb-4 px-2 text-sm font-semibold text-white">Settings</h2>
+            <div className="w-44 shrink-0 overflow-y-auto border-r border-slate-900/10 dark:border-white/10 bg-slate-100/70 dark:bg-black/30 p-4">
+              <h2 className="mb-4 px-2 text-sm font-semibold text-slate-900 dark:text-white">Settings</h2>
               <div className="flex flex-col gap-1">
                 {categories.map((category) => (
                   <div key={category.id} className="flex flex-col gap-1">
@@ -181,15 +181,15 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
                       className={[
                         'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition',
                         active === category.id
-                          ? 'bg-white/10 text-white'
-                          : 'text-white/50 hover:bg-white/5 hover:text-white/85',
+                          ? 'bg-slate-900/10 dark:bg-white/10 text-slate-900 dark:text-white'
+                          : 'text-slate-600 dark:text-white/50 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white/85',
                       ].join(' ')}
                     >
                       {category.icon}
                       {category.name}
                     </button>
                     {category.id === 'widgets' && widgetsOpen && sidebarGroups.length > 0 && (
-                      <div className="ml-4 flex flex-col gap-0.5 border-l border-white/10 pl-2">
+                      <div className="ml-4 flex flex-col gap-0.5 border-l border-slate-900/10 dark:border-white/10 pl-2">
                         {sidebarGroups.map((group) =>
                           group.entries.length === 1 ? (
                             <button
@@ -199,15 +199,15 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
                               className={[
                                 'rounded-lg px-2 py-1.5 text-left text-xs transition',
                                 active === 'widgets' && activeEntry?.key === group.entries[0].key
-                                  ? 'bg-white/10 text-white'
-                                  : 'text-white/45 hover:bg-white/5 hover:text-white/80',
+                                  ? 'bg-slate-900/10 dark:bg-white/10 text-slate-900 dark:text-white'
+                                  : 'text-slate-600 dark:text-white/45 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white/80',
                               ].join(' ')}
                             >
                               {group.entries[0].label}
                             </button>
                           ) : (
                             <div key={group.groupName} className="flex flex-col gap-0.5">
-                              <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                              <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-white/40">
                                 <Folder className="h-3 w-3 shrink-0" />
                                 {group.groupName}
                               </div>
@@ -219,16 +219,16 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
                                   className={[
                                     'flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs transition',
                                     active === 'widgets' && activeEntry?.key === entry.key
-                                      ? 'bg-white/10 text-white'
-                                      : 'text-white/45 hover:bg-white/5 hover:text-white/80',
+                                      ? 'bg-slate-900/10 dark:bg-white/10 text-slate-900 dark:text-white'
+                                      : 'text-slate-600 dark:text-white/45 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white/80',
                                   ].join(' ')}
                                 >
                                   <span
                                     className={[
                                       'h-1 w-1 shrink-0 rounded-full',
                                       active === 'widgets' && activeEntry?.key === entry.key
-                                        ? 'bg-sky-300/80'
-                                        : 'bg-white/25',
+                                        ? 'bg-sky-500/80 dark:bg-sky-300/80'
+                                        : 'bg-slate-900/25 dark:bg-white/25',
                                     ].join(' ')}
                                   />
                                   {entry.label}
@@ -245,12 +245,12 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
             </div>
 
             <div className="flex min-h-[360px] flex-1 flex-col">
-              <div className="flex items-center justify-between border-b border-white/10 p-6">
-                <h3 className="text-lg font-medium text-white">{headerTitle}</h3>
+              <div className="flex items-center justify-between border-b border-slate-900/10 dark:border-white/10 p-6">
+                <h3 className="text-lg font-medium text-slate-900 dark:text-white">{headerTitle}</h3>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-full p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
+                  className="rounded-full p-2 text-slate-600 dark:text-white/60 transition hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                   aria-label="Close"
                 >
                   <X className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
                 ) : activeEntry ? (
                   <WidgetSettingsSection key={activeEntry.key} entry={activeEntry} />
                 ) : (
-                  <p className="text-sm text-white/50">没有可配置的 widget。</p>
+                  <p className="text-sm text-slate-600 dark:text-white/50">没有可配置的 widget。</p>
                 )}
               </div>
             </div>
@@ -304,12 +304,12 @@ function ClockSection() {
   return (
     <div>
       <div className="flex items-center gap-2">
-        <Clock3 className="h-4 w-4 text-white/70" />
-        <h4 className="text-sm font-medium text-white">时钟</h4>
+        <Clock3 className="h-4 w-4 text-slate-600 dark:text-white/70" />
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">时钟</h4>
       </div>
-      <p className="mt-1 text-xs text-white/50">个性化主页顶部的时间显示。</p>
+      <p className="mt-1 text-xs text-slate-600 dark:text-white/50">个性化主页顶部的时间显示。</p>
 
-      <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="mt-4 space-y-4 rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 p-4">
         <ToggleRow
           label="12 小时制"
           description="关闭时使用 24 小时制显示时间。"
@@ -330,13 +330,13 @@ function ClockSection() {
         />
         <div className="flex items-center justify-between gap-6">
           <div>
-            <h5 className="text-sm font-medium text-white">语言 / 地区</h5>
-            <p className="mt-0.5 text-xs leading-5 text-white/50">控制日期和时间的格式化方式。</p>
+            <h5 className="text-sm font-medium text-slate-900 dark:text-white">语言 / 地区</h5>
+            <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-white/50">控制日期和时间的格式化方式。</p>
           </div>
           <select
             value={settings.locale}
             onChange={(event) => update({ locale: event.target.value })}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
+            className="rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-1.5 text-sm text-slate-900 dark:text-white outline-none transition focus:border-slate-900/25 dark:focus:border-white/25"
           >
             {CLOCK_LOCALE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -546,21 +546,21 @@ function SearchSection() {
   return (
     <div className="mt-8">
       <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-white/70" />
-        <h4 className="text-sm font-medium text-white">搜索栏</h4>
+        <Search className="h-4 w-4 text-slate-600 dark:text-white/70" />
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">搜索栏</h4>
       </div>
-      <p className="mt-1 text-xs text-white/50">管理搜索引擎列表、默认搜索引擎和快捷键。</p>
+      <p className="mt-1 text-xs text-slate-600 dark:text-white/50">管理搜索引擎列表、默认搜索引擎和快捷键。</p>
 
-      <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="mt-4 space-y-4 rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 p-4">
         <div className="flex items-center justify-between gap-6">
           <div>
-            <h5 className="text-sm font-medium text-white">默认搜索引擎</h5>
-            <p className="mt-0.5 text-xs leading-5 text-white/50">按回车键或 ⌘K 后使用的搜索引擎。</p>
+            <h5 className="text-sm font-medium text-slate-900 dark:text-white">默认搜索引擎</h5>
+            <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-white/50">按回车键或 ⌘K 后使用的搜索引擎。</p>
           </div>
           <select
             value={currentEngine}
             onChange={(event) => setEngineKey(event.target.value)}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
+            className="rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-1.5 text-sm text-slate-900 dark:text-white outline-none transition focus:border-slate-900/25 dark:focus:border-white/25"
           >
             {engines.map((item) => (
               <option key={item.id} value={item.id}>
@@ -573,8 +573,8 @@ function SearchSection() {
         <div>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h5 className="text-sm font-medium text-white">搜索引擎列表</h5>
-              <p className="mt-0.5 text-xs leading-5 text-white/50">点击快捷键按钮绑定组合键，删除不需要的引擎。</p>
+              <h5 className="text-sm font-medium text-slate-900 dark:text-white">搜索引擎列表</h5>
+              <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-white/50">点击快捷键按钮绑定组合键，删除不需要的引擎。</p>
             </div>
             <button
               type="button"
@@ -588,7 +588,7 @@ function SearchSection() {
                   setPresetId(missingBuiltins[0] ?? '')
                 }
               }}
-              className="flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-white/80 transition hover:border-white/20 hover:bg-white/10"
+              className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-800 dark:text-white/80 transition hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10"
             >
               <Plus className="h-3.5 w-3.5" />
               {addOpen ? '收起' : '添加'}
@@ -596,13 +596,13 @@ function SearchSection() {
           </div>
 
           {addOpen && (
-            <div className="mt-3 rounded-xl border border-dashed border-white/15 bg-black/20 p-3">
+            <div className="mt-3 rounded-xl border border-dashed border-slate-900/15 dark:border-white/15 bg-slate-900/5 dark:bg-black/20 p-3">
               {missingBuiltins.length > 0 && (
                 <div className="flex items-center gap-2">
                   <select
                     value={presetId || missingBuiltins[0] || ''}
                     onChange={(event) => setPresetId(event.target.value as SearchEngineKey | '')}
-                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25"
+                    className="min-w-0 flex-1 rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-1.5 text-sm text-slate-900 dark:text-white outline-none transition focus:border-slate-900/25 dark:focus:border-white/25"
                   >
                     {missingBuiltins.map((id) => (
                       <option key={id} value={id}>
@@ -613,7 +613,7 @@ function SearchSection() {
                   <button
                     type="button"
                     onClick={addPresetEngine}
-                    className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20"
+                    className="shrink-0 rounded-lg bg-slate-900/10 dark:bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white transition hover:bg-slate-900/20 dark:hover:bg-white/20"
                   >
                     添加内置
                   </button>
@@ -626,26 +626,26 @@ function SearchSection() {
                   value={newEngineName}
                   onChange={(event) => setNewEngineName(event.target.value)}
                   placeholder="名称，例如 Baidu"
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+                  className="rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-1.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-600 dark:placeholder:text-white/40 focus:border-slate-900/25 dark:focus:border-white/25 focus:outline-none"
                 />
                 <input
                   type="text"
                   value={newEngineUrl}
                   onChange={(event) => setNewEngineUrl(event.target.value)}
                   placeholder="搜索 URL，例如 https://www.baidu.com/s?wd="
-                  className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+                  className="rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-1.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-600 dark:placeholder:text-white/40 focus:border-slate-900/25 dark:focus:border-white/25 focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={addCustomEngine}
                   disabled={!newEngineName.trim() || !newEngineUrl.trim()}
-                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg bg-slate-900/10 dark:bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white transition hover:bg-slate-900/20 dark:hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   添加自定义引擎
                 </button>
               </div>
 
-              {addError && <p className="mt-2 text-xs text-amber-300/80">{addError}</p>}
+              {addError && <p className="mt-2 text-xs text-amber-600 dark:text-amber-300/80">{addError}</p>}
             </div>
           )}
 
@@ -656,28 +656,28 @@ function SearchSection() {
               return (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-white/10 bg-black/20 px-3 py-3"
+                  className="rounded-xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-black/20 px-3 py-3"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white/80">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900/10 dark:bg-white/10 text-sm font-semibold text-slate-800 dark:text-white/80">
                       {item.name.trim().charAt(0).toUpperCase() || '?'}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="truncate text-sm text-white/90">{item.name}</span>
+                        <span className="truncate text-sm text-slate-900 dark:text-white/90">{item.name}</span>
                         {item.builtin && (
-                          <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] text-white/40">
+                          <span className="shrink-0 rounded bg-slate-900/10 dark:bg-white/10 px-1.5 py-0.5 text-[10px] text-slate-600 dark:text-white/40">
                             内置
                           </span>
                         )}
                       </div>
-                      <div className="truncate text-xs text-white/45">{item.url}</div>
+                      <div className="truncate text-xs text-slate-600 dark:text-white/45">{item.url}</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => deleteEngine(item.id)}
                       disabled={engines.length <= 1}
-                      className="shrink-0 rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-30"
+                      className="shrink-0 rounded-lg p-2 text-slate-600 dark:text-white/40 transition hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/80 disabled:cursor-not-allowed disabled:opacity-30"
                       aria-label={`删除 ${item.name}`}
                       title={engines.length <= 1 ? '至少保留一个搜索引擎' : `删除 ${item.name}`}
                     >
@@ -689,13 +689,13 @@ function SearchSection() {
                     {shortcuts.map((shortcut) => (
                       <span
                         key={`${shortcut.key}-${shortcut.mod}-${shortcut.alt}-${shortcut.shift}`}
-                        className="flex items-center gap-1 rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs text-white/80"
+                        className="flex items-center gap-1 rounded-md border border-slate-900/10 dark:border-white/10 bg-slate-900/10 dark:bg-white/10 px-2 py-1 text-xs text-slate-800 dark:text-white/80"
                       >
                         {formatShortcut(shortcut)}
                         <button
                           type="button"
                           onClick={() => removeShortcut(item.id, shortcut)}
-                          className="rounded p-0.5 text-white/40 transition hover:bg-white/10 hover:text-white/80"
+                          className="rounded p-0.5 text-slate-600 dark:text-white/40 transition hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/80"
                           aria-label={`移除 ${item.name} 的快捷键 ${formatShortcut(shortcut)}`}
                         >
                           <X className="h-3 w-3" />
@@ -716,8 +716,8 @@ function SearchSection() {
                       className={[
                         'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition',
                         recording
-                          ? 'border-sky-300/30 bg-sky-400/10 text-sky-100'
-                          : 'border-dashed border-white/15 bg-transparent text-white/50 hover:border-white/25 hover:text-white/80',
+                          ? 'border-sky-600/30 dark:border-sky-300/30 bg-sky-500/10 dark:bg-sky-400/10 text-sky-700 dark:text-sky-100'
+                          : 'border-dashed border-slate-900/15 dark:border-white/15 bg-transparent text-slate-600 dark:text-white/50 hover:border-slate-900/25 dark:hover:border-white/25 hover:text-slate-800 dark:hover:text-white/80',
                       ].join(' ')}
                     >
                       {recording ? '按下组合键...' : shortcuts.length === 0 ? '绑定快捷键' : '添加快捷键'}
@@ -727,7 +727,7 @@ function SearchSection() {
               )
             })}
           </div>
-          {shortcutError && <p className="mt-2 text-xs text-amber-300/80">{shortcutError}</p>}
+          {shortcutError && <p className="mt-2 text-xs text-amber-600 dark:text-amber-300/80">{shortcutError}</p>}
         </div>
       </div>
     </div>
@@ -748,8 +748,8 @@ function ToggleRow({
   return (
     <div className="flex items-center justify-between gap-6">
       <div>
-        <h5 className="text-sm font-medium text-white">{label}</h5>
-        <p className="mt-0.5 text-xs leading-5 text-white/50">{description}</p>
+        <h5 className="text-sm font-medium text-slate-900 dark:text-white">{label}</h5>
+        <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-white/50">{description}</p>
       </div>
       <Toggle checked={checked} onChange={onChange} />
     </div>
@@ -770,8 +770,8 @@ function AppearanceSection({
   return (
     <>
       <div>
-        <h4 className="text-sm font-medium text-white">主题</h4>
-        <p className="mt-1 text-xs text-white/50">选择界面的明暗外观。</p>
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">主题</h4>
+        <p className="mt-1 text-xs text-slate-600 dark:text-white/50">选择界面的明暗外观。</p>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2" role="radiogroup" aria-label="主题">
@@ -787,14 +787,14 @@ function AppearanceSection({
               className={[
                 'flex min-h-24 flex-col items-start justify-between rounded-2xl border p-3 text-left transition',
                 selected
-                  ? 'border-white/30 bg-white/15 text-white shadow-lg'
-                  : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+                  ? 'border-slate-900/25 dark:border-white/30 bg-slate-900/10 dark:bg-white/15 text-slate-900 dark:text-white shadow-lg'
+                  : 'border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85',
               ].join(' ')}
             >
               {option.icon}
               <span>
                 <span className="block text-sm font-medium">{option.label}</span>
-                <span className="mt-0.5 block text-[10px] leading-4 text-white/45">
+                <span className="mt-0.5 block text-[10px] leading-4 text-slate-600 dark:text-white/45">
                   {option.description}
                 </span>
               </span>
@@ -805,8 +805,8 @@ function AppearanceSection({
 
       <div className="mt-8">
         <div>
-          <h4 className="text-sm font-medium text-white">插件主题</h4>
-          <p className="mt-1 text-xs text-white/50">选择由插件注册的整页视觉主题。</p>
+          <h4 className="text-sm font-medium text-slate-900 dark:text-white">插件主题</h4>
+          <p className="mt-1 text-xs text-slate-600 dark:text-white/50">选择由插件注册的整页视觉主题。</p>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="插件主题">
@@ -818,12 +818,12 @@ function AppearanceSection({
             className={[
               'flex min-h-16 flex-col justify-between rounded-2xl border p-3 text-left transition',
               activeThemeId === 'default'
-                ? 'border-white/30 bg-white/15 text-white shadow-lg'
-                : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+                ? 'border-slate-900/25 dark:border-white/30 bg-slate-900/10 dark:bg-white/15 text-slate-900 dark:text-white shadow-lg'
+                : 'border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85',
             ].join(' ')}
           >
             <span className="text-sm font-medium">Default</span>
-            <span className="mt-0.5 block text-[10px] leading-4 text-white/45">项目默认玻璃风格</span>
+            <span className="mt-0.5 block text-[10px] leading-4 text-slate-600 dark:text-white/45">项目默认玻璃风格</span>
           </button>
 
           {themes.map((item) => {
@@ -838,13 +838,13 @@ function AppearanceSection({
                 className={[
                   'flex min-h-16 flex-col justify-between rounded-2xl border p-3 text-left transition',
                   selected
-                    ? 'border-white/30 bg-white/15 text-white shadow-lg'
-                    : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+                    ? 'border-slate-900/25 dark:border-white/30 bg-slate-900/10 dark:bg-white/15 text-slate-900 dark:text-white shadow-lg'
+                    : 'border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85',
                 ].join(' ')}
               >
                 <span className="text-sm font-medium">{item.name}</span>
                 {item.description && (
-                  <span className="mt-0.5 block text-[10px] leading-4 text-white/45">{item.description}</span>
+                  <span className="mt-0.5 block text-[10px] leading-4 text-slate-600 dark:text-white/45">{item.description}</span>
                 )}
               </button>
             )
@@ -871,18 +871,18 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
   return (
     <div className="mt-8">
       <div>
-        <h4 className="text-sm font-medium text-white">壁纸</h4>
-        <p className="mt-1 text-xs text-white/50">选择启动页的背景图片。</p>
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">壁纸</h4>
+        <p className="mt-1 text-xs text-slate-600 dark:text-white/50">选择启动页的背景图片。</p>
       </div>
 
-      <div className="mt-4 h-28 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+      <div className="mt-4 h-28 overflow-hidden rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5">
         {backgroundSrc ? (
           <div
             className="h-full w-full bg-cover bg-center"
             style={{ backgroundImage: `url(${backgroundSrc})` }}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-white/40">
+          <div className="flex h-full items-center justify-center text-xs text-slate-600 dark:text-white/40">
             当前没有背景图片
           </div>
         )}
@@ -892,7 +892,7 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 text-white/60 transition hover:border-white/20 hover:bg-white/10 hover:text-white/85"
+          className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 transition hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85"
         >
           <Upload className="h-4 w-4" />
           <span className="text-xs font-medium">本地图片</span>
@@ -906,8 +906,8 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
           className={[
             'flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border transition',
             urlOpen
-              ? 'border-white/30 bg-white/15 text-white shadow-lg'
-              : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10 hover:text-white/85',
+              ? 'border-slate-900/25 dark:border-white/30 bg-slate-900/10 dark:bg-white/15 text-slate-900 dark:text-white shadow-lg'
+              : 'border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85',
           ].join(' ')}
         >
           <Link className="h-4 w-4" />
@@ -916,7 +916,7 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
         <button
           type="button"
           onClick={() => applyBing()}
-          className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 text-white/60 transition hover:border-white/20 hover:bg-white/10 hover:text-white/85"
+          className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 transition hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85"
         >
           <Globe className="h-4 w-4" />
           <span className="text-xs font-medium">Bing 每日图像</span>
@@ -924,7 +924,7 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
       </div>
 
       {urlOpen && (
-        <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3">
+        <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 p-3">
           <input
             type="text"
             value={urlValue}
@@ -934,7 +934,7 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
             }}
             placeholder="输入图片URL..."
             autoFocus
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+            className="rounded-xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder:text-slate-600 dark:placeholder:text-white/40 focus:border-slate-900/25 dark:focus:border-white/25 focus:outline-none"
           />
           <div className="flex gap-2">
             <button
@@ -943,7 +943,7 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
                 setUrlOpen(false)
                 setUrlValue('')
               }}
-              className="flex-1 rounded-xl px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/10"
+              className="flex-1 rounded-xl px-3 py-1.5 text-xs text-slate-600 dark:text-white/60 transition hover:bg-slate-900/10 dark:hover:bg-white/10"
             >
               取消
             </button>
@@ -951,7 +951,7 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
               type="button"
               onClick={applyUrlInput}
               disabled={!urlValue.trim()}
-              className="flex-1 rounded-xl bg-white/10 px-3 py-1.5 text-xs text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex-1 rounded-xl bg-slate-900/10 dark:bg-white/10 px-3 py-1.5 text-xs text-slate-900 dark:text-white transition hover:bg-slate-900/20 dark:hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
             >
               应用
             </button>
@@ -982,15 +982,15 @@ function WidgetSettingsSection({ entry }: { entry: SettingsEntry }) {
 
   const schema = entry.schema
   if (!schema) {
-    return <p className="text-sm text-white/50">没有可配置的选项。</p>
+    return <p className="text-sm text-slate-600 dark:text-white/50">没有可配置的选项。</p>
   }
   const visibleFields = schema.fields.filter((field) => !field.showWhen || field.showWhen(settings))
 
   return (
     <div className="space-y-5">
       <div>
-        <h4 className="text-sm font-medium text-white">{schema.title}</h4>
-        {schema.description && <p className="mt-1 text-xs text-white/50">{schema.description}</p>}
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">{schema.title}</h4>
+        {schema.description && <p className="mt-1 text-xs text-slate-600 dark:text-white/50">{schema.description}</p>}
       </div>
       {visibleFields.map((field) => (
         <SettingField

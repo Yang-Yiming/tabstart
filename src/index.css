@@ -37,21 +37,25 @@ button {
 }
 
 :root {
-  --glass-widget-bg: rgba(255, 255, 255, 0.08);
-  --glass-widget-border: rgba(255, 255, 255, 0.15);
-  --glass-widget-hover-bg: rgba(255, 255, 255, 0.12);
-  --glass-widget-hover-border: rgba(255, 255, 255, 0.25);
-  --glass-widget-blur: 24px;
-  --glass-widget-saturate: 150%;
+  --glass-widget-bg: rgba(255, 255, 255, 0.18);
+  --glass-widget-border: rgba(255, 255, 255, 0.28);
+  --glass-widget-hover-bg: rgba(255, 255, 255, 0.24);
+  --glass-widget-hover-border: rgba(255, 255, 255, 0.38);
+  --glass-widget-blur: 28px;
+  --glass-widget-saturate: 170%;
   --glass-widget-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.35);
-  --chrome-button-bg: rgba(0, 0, 0, 0.2);
-  --chrome-button-border: rgba(255, 255, 255, 0.15);
+  --chrome-button-bg: rgba(255, 255, 255, 0.16);
+  --chrome-button-border: rgba(255, 255, 255, 0.30);
   --chrome-button-text: rgba(255, 255, 255, 0.8);
-  --chrome-button-hover-bg: rgba(255, 255, 255, 0.1);
+  --chrome-button-hover-bg: rgba(255, 255, 255, 0.24);
   --chrome-button-hover-text: rgba(255, 255, 255, 1);
   --chrome-panel-bg: rgba(0, 0, 0, 0.6);
   --chrome-panel-border: rgba(255, 255, 255, 0.1);
   --chrome-panel-blur: 36px;
+  --settings-panel-bg: rgba(255, 255, 255, 0.78);
+  --settings-panel-border: rgba(255, 255, 255, 0.35);
+  --toggle-on: rgba(110, 231, 183, 0.8);
+  --toggle-off: rgba(255, 255, 255, 0.15);
   --search-shell-bg: linear-gradient(90deg, rgba(253, 186, 116, 0.4), rgba(147, 197, 253, 0.4));
   --search-shell-border: rgba(255, 255, 255, 0.25);
   --search-shell-blur: 24px;
@@ -70,10 +74,19 @@ button {
   --glass-widget-border: rgba(255, 255, 255, 0.1);
   --glass-widget-hover-bg: rgba(0, 0, 0, 0.2);
   --glass-widget-hover-border: rgba(255, 255, 255, 0.2);
+  --glass-widget-blur: 24px;
+  --glass-widget-saturate: 150%;
   --chrome-button-bg: rgba(0, 0, 0, 0.2);
   --chrome-button-border: rgba(255, 255, 255, 0.15);
+  --chrome-button-text: rgba(255, 255, 255, 0.8);
+  --chrome-button-hover-bg: rgba(255, 255, 255, 0.1);
+  --chrome-button-hover-text: rgba(255, 255, 255, 1);
   --chrome-panel-bg: rgba(0, 0, 0, 0.6);
   --chrome-panel-border: rgba(255, 255, 255, 0.1);
+  --settings-panel-bg: var(--chrome-panel-bg);
+  --settings-panel-border: var(--chrome-panel-border);
+  --toggle-on: rgba(110, 231, 183, 0.8);
+  --toggle-off: rgba(255, 255, 255, 0.15);
 }
 
 .widget-card {
@@ -111,6 +124,19 @@ button {
   background: var(--chrome-panel-bg);
   border-color: var(--chrome-panel-border);
   backdrop-filter: blur(var(--chrome-panel-blur));
+}
+
+.settings-panel {
+  background: var(--settings-panel-bg);
+  border-color: var(--settings-panel-border);
+  backdrop-filter: blur(var(--chrome-panel-blur)) saturate(160%);
+  --toggle-on: rgba(16, 185, 129, 0.8);
+  --toggle-off: rgba(15, 23, 42, 0.15);
+}
+
+.dark .settings-panel {
+  --toggle-on: rgba(110, 231, 183, 0.8);
+  --toggle-off: rgba(255, 255, 255, 0.15);
 }
 
 .search-shell {

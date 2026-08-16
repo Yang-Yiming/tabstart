@@ -8,14 +8,14 @@ interface SettingFieldProps {
 }
 
 const controlClass =
-  'rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white outline-none transition focus:border-white/25'
+  'rounded-lg border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 px-3 py-1.5 text-sm text-slate-900 dark:text-white outline-none transition focus:border-slate-900/25 dark:focus:border-white/25'
 
 export function SettingField({ field, value, onChange }: SettingFieldProps) {
   return (
     <div className="flex items-center justify-between gap-6">
       <div>
-        <h5 className="text-sm font-medium text-white">{field.label}</h5>
-        {field.description && <p className="mt-0.5 text-xs leading-5 text-white/50">{field.description}</p>}
+        <h5 className="text-sm font-medium text-slate-900 dark:text-white">{field.label}</h5>
+        {field.description && <p className="mt-0.5 text-xs leading-5 text-slate-600 dark:text-white/50">{field.description}</p>}
       </div>
       {field.type === 'boolean' && <Toggle checked={Boolean(value)} onChange={onChange} />}
       {field.type === 'select' && (
