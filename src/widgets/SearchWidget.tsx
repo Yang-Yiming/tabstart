@@ -275,7 +275,7 @@ export function SearchWidget() {
               {filteredHistory.map((item) => {
                 const itemEngine = engines.find((engineItem) => engineItem.id === item.engine)
                 return (
-                  <li key={item.query} className="flex items-center gap-2">
+                  <li key={`${item.engine}:${item.query}`} className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => {
