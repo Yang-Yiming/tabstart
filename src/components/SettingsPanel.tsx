@@ -14,16 +14,18 @@ import {
   Upload,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   CLOCK_LOCALE_OPTIONS,
   CLOCK_SETTINGS_KEY,
   DEFAULT_CLOCK_SETTINGS,
+  formatShortcut,
   normalizeClockSettings,
   SEARCH_SETTINGS_KEY,
   DEFAULT_SEARCH_SETTINGS,
   normalizeSearchSettings,
   type ClockSettings,
+  type SearchEngineShortcut,
   type SearchSettings,
 } from '../config/preferences'
 import {
@@ -351,8 +353,10 @@ function SearchSection() {
     DEFAULT_SEARCH_ENGINE,
   )
   const [rawSettings, setSettings] = useLocalStorage<SearchSettings>(SEARCH_SETTINGS_KEY, DEFAULT_SEARCH_SETTINGS)
-  const settings = normalizeSearchSettings(rawSettings)
+  const settings = useMemo(() => normalizeSearchSettings(rawSettings), [rawSettings])
   const enabledEngines = settings.enabledEngines
+  const [recordingKey, setRecordingKey] = useState<SearchEngineKey | null>(null)
+  const [shortcutError, setShortcutError] = useState<string | null>(null)
 
   const currentEngine: SearchEngineKey = enabledEngines.includes(engineKey as SearchEngineKey)
     ? (engineKey as SearchEngineKey)
@@ -366,17 +370,106 @@ function SearchSection() {
     }
 
     setSettings((prev) => {
-      const previous = normalizeSearchSettings(prev).enabledEngines
+      const previous = normalizeSearchSettings(prev)
       if (enabled) {
-        if (previous.includes(key)) return prev
+        if (previous.enabledEngines.includes(key)) return prev
         return {
-          enabledEngines: SEARCH_ENGINE_ORDER.filter((item) => item === key || previous.includes(item)),
+          ...previous,
+          enabledEngines: SEARCH_ENGINE_ORDER.filter(
+            (item) => item === key || previous.enabledEngines.includes(item),
+          ),
         }
       }
-      if (previous.length <= 1 || !previous.includes(key)) return prev
-      return { enabledEngines: previous.filter((item) => item !== key) }
+      if (previous.enabledEngines.length <= 1 || !previous.enabledEngines.includes(key)) return prev
+      return {
+        ...previous,
+        enabledEngines: previous.enabledEngines.filter((item) => item !== key),
+      }
     })
   }
+
+  const updateShortcut = useCallback(
+    (key: SearchEngineKey, shortcut: SearchEngineShortcut | null) => {
+      setSettings((prev) => {
+        const normalized = normalizeSearchSettings(prev)
+        return {
+          ...normalized,
+          shortcuts: {
+            ...normalized.shortcuts,
+            [key]: shortcut,
+          },
+        }
+      })
+    },
+    [setSettings],
+  )
+
+  useEffect(() => {
+    if (!recordingKey) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (e.key === 'Escape') {
+        setRecordingKey(null)
+        setShortcutError(null)
+        return
+      }
+
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        updateShortcut(recordingKey, null)
+        setRecordingKey(null)
+        setShortcutError(null)
+        return
+      }
+
+      if (e.key === 'Meta' || e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'CapsLock') {
+        return
+      }
+
+      const shortcut: SearchEngineShortcut = {
+        key: e.key.length === 1 ? e.key.toLowerCase() : e.key,
+        mod: e.metaKey || e.ctrlKey,
+        alt: e.altKey,
+        shift: e.shiftKey,
+      }
+
+      if (!shortcut.mod && !shortcut.alt && !shortcut.shift) {
+        setShortcutError('快捷键需要包含 ⌘/Ctrl、Alt 或 Shift。')
+        return
+      }
+
+      if (shortcut.mod && !shortcut.alt && !shortcut.shift && shortcut.key.toLowerCase() === 'k') {
+        setShortcutError('⌘K / Ctrl+K 已保留用于聚焦搜索栏。')
+        return
+      }
+
+      const duplicate = SEARCH_ENGINE_ORDER.find((key) => {
+        if (key === recordingKey) return false
+        const existing = settings.shortcuts[key]
+        if (!existing) return false
+        return (
+          existing.key.toLowerCase() === shortcut.key.toLowerCase() &&
+          existing.mod === shortcut.mod &&
+          existing.alt === shortcut.alt &&
+          existing.shift === shortcut.shift
+        )
+      })
+
+      if (duplicate) {
+        setShortcutError(`快捷键已被 ${SEARCH_ENGINES[duplicate].name} 使用。`)
+        return
+      }
+
+      updateShortcut(recordingKey, shortcut)
+      setRecordingKey(null)
+      setShortcutError(null)
+    }
+
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [recordingKey, settings.shortcuts, updateShortcut])
 
   return (
     <div className="mt-8">
@@ -384,7 +477,7 @@ function SearchSection() {
         <Search className="h-4 w-4 text-white/70" />
         <h4 className="text-sm font-medium text-white">搜索栏</h4>
       </div>
-      <p className="mt-1 text-xs text-white/50">选择默认搜索引擎，以及搜索栏中显示的引擎。</p>
+      <p className="mt-1 text-xs text-white/50">选择默认搜索引擎、显示的引擎，以及每个引擎的快捷键。</p>
 
       <div className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex items-center justify-between gap-6">
@@ -422,6 +515,62 @@ function SearchSection() {
               )
             })}
           </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-4">
+          <h5 className="text-sm font-medium text-white">搜索引擎快捷键</h5>
+          <p className="mt-0.5 text-xs leading-5 text-white/50">
+            点击快捷键后按下新的组合键；Esc 取消，Backspace 清除。
+          </p>
+          <div className="mt-3 flex flex-col gap-1">
+            {SEARCH_ENGINE_ORDER.map((key) => {
+              const shortcut = settings.shortcuts[key] ?? null
+              const recording = recordingKey === key
+              return (
+                <div
+                  key={key}
+                  className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-white/5"
+                >
+                  <span className="text-sm text-white/85">{SEARCH_ENGINES[key].name}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (recording) {
+                          setRecordingKey(null)
+                          setShortcutError(null)
+                        } else {
+                          setRecordingKey(key)
+                          setShortcutError(null)
+                        }
+                      }}
+                      className={[
+                        'min-w-24 rounded-lg border px-3 py-1.5 text-xs font-medium transition',
+                        recording
+                          ? 'border-sky-300/30 bg-sky-400/10 text-sky-100'
+                          : shortcut
+                            ? 'border-white/10 bg-white/5 text-white/80 hover:border-white/20 hover:bg-white/10'
+                            : 'border-dashed border-white/15 bg-transparent text-white/40 hover:border-white/25 hover:text-white/70',
+                      ].join(' ')}
+                    >
+                      {recording ? '按下组合键...' : shortcut ? formatShortcut(shortcut) : '点击录制'}
+                    </button>
+                    {shortcut && !recording && (
+                      <button
+                        type="button"
+                        onClick={() => updateShortcut(key, null)}
+                        className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white/80"
+                        aria-label={`清除 ${SEARCH_ENGINES[key].name} 的快捷键`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {shortcutError && <p className="mt-2 text-xs text-amber-300/80">{shortcutError}</p>}
         </div>
       </div>
     </div>

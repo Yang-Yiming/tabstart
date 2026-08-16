@@ -9,8 +9,10 @@ import {
 } from '../config/search'
 import {
   DEFAULT_SEARCH_SETTINGS,
+  formatShortcut,
   normalizeSearchSettings,
   SEARCH_SETTINGS_KEY,
+  shortcutMatches,
   type SearchSettings,
 } from '../config/preferences'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -79,10 +81,11 @@ export function SearchWidget() {
     DEFAULT_SEARCH_ENGINE,
   )
   const [rawSearchSettings] = useLocalStorage<SearchSettings>(SEARCH_SETTINGS_KEY, DEFAULT_SEARCH_SETTINGS)
-  const enabledEngines = useMemo(
-    () => normalizeSearchSettings(rawSearchSettings).enabledEngines,
+  const searchSettings = useMemo(
+    () => normalizeSearchSettings(rawSearchSettings),
     [rawSearchSettings],
   )
+  const enabledEngines = searchSettings.enabledEngines
 
   const engineKey: SearchEngineKey = enabledEngines.includes(storedEngine as SearchEngineKey)
     ? (storedEngine as SearchEngineKey)
@@ -154,18 +157,17 @@ export function SearchWidget() {
         setHistoryOpen(false)
         inputRef.current?.blur()
       }
-      if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
-        const index = parseInt(e.key, 10) - 1
-        const target = enabledEngines[index]
-        if (target) {
+      for (const key of enabledEngines) {
+        if (shortcutMatches(e, searchSettings.shortcuts[key])) {
           e.preventDefault()
-          selectEngine(target)
+          selectEngine(key)
+          return
         }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [enabledEngines, engineDropdownOpen, selectEngine])
+  }, [enabledEngines, engineDropdownOpen, searchSettings.shortcuts, selectEngine])
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -229,9 +231,10 @@ export function SearchWidget() {
         {engineDropdownOpen && (
           <div className="search-popover absolute left-4 top-full z-50 mt-3 w-52 overflow-hidden rounded-3xl border p-2 shadow-2xl">
             <div className="flex flex-col gap-0.5">
-              {enabledEngines.map((key, index) => {
+              {enabledEngines.map((key) => {
                 const m = engineIcons[key]
                 const definition = SEARCH_ENGINES[key]
+                const shortcutLabel = formatShortcut(searchSettings.shortcuts[key])
                 const isSelected = key === engineKey
                 return (
                   <button
@@ -250,12 +253,13 @@ export function SearchWidget() {
                       </span>
                       <span>{definition.name}</span>
                     </span>
-                    <span className="flex items-center gap-0.5 text-xs text-white/50">
-                      <kbd className="rounded bg-white/10 px-1 py-0.5">⌘</kbd>
-                      <kbd className="rounded bg-white/10 px-1 py-0.5">
-                        {index + 1}
-                      </kbd>
-                    </span>
+                    {shortcutLabel && (
+                      <span className="flex items-center gap-0.5 text-xs text-white/50">
+                        <kbd className="rounded bg-white/10 px-1 py-0.5">
+                          {shortcutLabel}
+                        </kbd>
+                      </span>
+                    )}
                   </button>
                 )
               })}
