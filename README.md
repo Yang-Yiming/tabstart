@@ -14,6 +14,7 @@ A personal browser start page & launchpad dashboard for your new tab.
 | Kanban | 3-column board (drag & drop) + compact list with keyboard shortcuts (`j`/`k` select, `[`/`]` move, `Enter` done) |
 | Pomodoro | Small / large timer variants |
 | DeepSeek | Hardcoded DeepSeek API balance plugin (preset; add your API key in Settings → Widgets → DeepSeek Balance) |
+| OpenCode Go | OpenCode Go subscription usage (5h / weekly / monthly quota bars; add your API key in Settings → Widgets → OpenCode Go) |
 
 > Tasks and Kanban share drag & drop — drag a task between the two widgets and it moves across (completion state follows).
 
@@ -29,7 +30,7 @@ discovered at build time and mounted at runtime; MV3-safe, no remote code loadin
 
 - The **plugin manager** (top-right) lists all plugins with enable/disable toggles. Disabling hides a
   plugin from the grid and the Add-Widget picker, but its layout position is preserved.
-- `deepseek` and `example` are preset plugins; `example` is a copyable template.
+- `deepseek`, `opencode-go` and `example` are preset plugins; `example` is a copyable template.
 - Keys (API keys, etc.) are stored only in your local browser storage.
 
 ### Mini-Cordis runtime
