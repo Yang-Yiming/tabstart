@@ -2,7 +2,7 @@ import { Gauge, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { WidgetCard } from '../../components/WidgetCard'
 import { useStoredState } from '../../hooks/useLocalStorage'
-import { isInPeakWindows, parsePeakWindows } from '../_shared/peakWindows'
+import { isInPeakWindows, parsePeakWindows, PEAK_WINDOWS_JSON } from '../_shared/peakWindows'
 import type { WidgetProps } from '../types'
 import { useWidgetSettings } from '../widgetSettings'
 
@@ -20,16 +20,6 @@ const PREVIEW_DATA = {
     },
   ],
 }
-
-/** Hardcoded local-time surcharge windows for DeepSeek. */
-const PEAK_WINDOWS_JSON = JSON.stringify(
-  [
-    { from: '09:00', to: '12:00' },
-    { from: '14:00', to: '18:00' },
-  ],
-  null,
-  2,
-)
 
 interface CacheData {
   json: unknown

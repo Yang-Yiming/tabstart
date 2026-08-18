@@ -2,6 +2,7 @@ import { Activity, RefreshCw, TriangleAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { WidgetCard } from '../../components/WidgetCard'
 import { useStoredState } from '../../hooks/useLocalStorage'
+import { isInPeakWindows, parsePeakWindows, PEAK_WINDOWS_JSON } from '../_shared/peakWindows'
 import type { WidgetProps } from '../types'
 import { useWidgetSettings } from '../widgetSettings'
 
@@ -133,6 +134,7 @@ export function OpenCodeGoWidget({ widgetKey, preview, compact }: WidgetProps) {
   const showRolling = Boolean(settings.showRolling)
   const showWeekly = Boolean(settings.showWeekly)
   const showMonthly = Boolean(settings.showMonthly)
+  const peakReminder = Boolean(settings.peakReminder)
 
   // Refresh the reset-countdown labels every 30s.
   const [now, setNow] = useState(() => Date.now())
@@ -141,6 +143,15 @@ export function OpenCodeGoWidget({ widgetKey, preview, compact }: WidgetProps) {
     const id = window.setInterval(() => setNow(Date.now()), 30_000)
     return () => window.clearInterval(id)
   }, [isPreview])
+
+  // Peak-window reminder: same local-time surcharge windows as DeepSeek
+  // (shared constant), re-evaluated on the same 30s tick so the card flips
+  // right at the window boundaries.
+  const peakWindows = useMemo(
+    () => (peakReminder ? parsePeakWindows(PEAK_WINDOWS_JSON) : []),
+    [peakReminder],
+  )
+  const inPeak = useMemo(() => isInPeakWindows(peakWindows, new Date(now)), [peakWindows, now])
 
   const [cache, setCache, cacheHydrated] = useStoredState<CacheData | null>(
     `opencode-go-cache:${resolvedKey}`,
@@ -275,7 +286,11 @@ export function OpenCodeGoWidget({ widgetKey, preview, compact }: WidgetProps) {
       className={[
         'flex h-full flex-col',
         compact ? 'gap-2 p-2.5' : 'gap-3 p-4',
-        danger ? '!border-rose-300/70 !shadow-[0_0_26px_-8px_rgba(251,113,133,0.55)]' : '',
+        danger
+          ? '!border-rose-300/70 !shadow-[0_0_26px_-8px_rgba(251,113,133,0.55)]'
+          : inPeak
+            ? '!border-amber-300/70 !shadow-[0_0_26px_-8px_rgba(251,191,36,0.55)]'
+            : '',
       ].join(' ')}
     >
       <div className="flex items-center justify-between gap-2">
@@ -285,6 +300,11 @@ export function OpenCodeGoWidget({ widgetKey, preview, compact }: WidgetProps) {
           {danger && (
             <span className="shrink-0 rounded-full bg-rose-400/20 px-1.5 py-px text-[9px] font-bold uppercase leading-4 tracking-wider text-rose-300">
               Limit
+            </span>
+          )}
+          {inPeak && (
+            <span className="shrink-0 rounded-full bg-amber-400/20 px-1.5 py-px text-[9px] font-bold uppercase leading-4 tracking-wider text-amber-300">
+              Peak
             </span>
           )}
         </div>

@@ -43,6 +43,13 @@ const widget: WidgetDescriptor = {
       },
       {
         type: 'boolean',
+        key: 'peakReminder',
+        label: 'Deepseek 高峰提醒',
+        description: '在 09:00–12:00 与 14:00–18:00 给卡片加琥珀色描边和 Peak 徽章。',
+        default: true,
+      },
+      {
+        type: 'boolean',
         key: 'showRolling',
         label: '显示 5 小时窗口',
         default: true,

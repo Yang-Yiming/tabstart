@@ -9,6 +9,19 @@ export interface PeakWindow {
   to: string
 }
 
+/**
+ * Local-time surcharge windows shared by DeepSeek and OpenCode Go (both bill
+ * double during these hours). Keep them in one place so the two widgets never
+ * drift apart.
+ */
+export const DEFAULT_PEAK_WINDOWS: PeakWindow[] = [
+  { from: '09:00', to: '12:00' },
+  { from: '14:00', to: '18:00' },
+]
+
+/** JSON serialization of {@link DEFAULT_PEAK_WINDOWS}, as consumed by `parsePeakWindows`. */
+export const PEAK_WINDOWS_JSON = JSON.stringify(DEFAULT_PEAK_WINDOWS, null, 2)
+
 function toMinutes(hhmm: string): number | null {
   const match = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim())
   if (!match) return null
