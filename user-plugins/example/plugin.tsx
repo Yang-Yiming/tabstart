@@ -1,6 +1,6 @@
 import { lazy } from 'react'
-import { defineWidgetPlugin } from '../runtime'
-import type { WidgetDescriptor } from '../types'
+import { defineWidgetPlugin } from '@host/plugins/runtime'
+import type { WidgetDescriptor } from '@host/plugins/types'
 
 const widget: WidgetDescriptor = {
   id: 'example',

@@ -3,16 +3,16 @@ import type { HomepagePlugin } from './runtime'
 
 import { plugins as corePlugins } from './core/plugin'
 import { plugins as bookmarksPlugins } from './bookmarks/plugin'
-import { plugins as deepseekPlugins } from './deepseek/plugin'
-import { plugins as opencodeGoPlugins } from './opencode-go/plugin'
-import { plugins as examplePlugins } from './example/plugin'
 import { plugins as heatmapPlugins } from './heatmap/plugin'
 import { plugins as kanbanPlugins } from './kanban/plugin'
-import { plugins as liquidGlassPlugins } from './liquid-glass/plugin'
 import { plugins as notesPlugins } from './notes/plugin'
 import { plugins as pomodoroPlugins } from './pomodoro/plugin'
 import { plugins as streakPlugins } from './streak/plugin'
 import { plugins as todoPlugins } from './todo/plugin'
+import { plugins as examplePlugins } from '@ext/example/plugin'
+import { plugins as deepseekPlugins } from '@ext/my-tabstart-plugins/deepseek/plugin'
+import { plugins as liquidGlassPlugins } from '@ext/my-tabstart-plugins/liquid-glass/plugin'
+import { plugins as opencodeGoPlugins } from '@ext/my-tabstart-plugins/opencode-go/plugin'
 
 export interface EnabledPluginModule {
   dir: string
@@ -22,14 +22,14 @@ export interface EnabledPluginModule {
 export const enabledPluginModules: EnabledPluginModule[] = [
   { dir: 'core', plugins: corePlugins },
   { dir: 'bookmarks', plugins: bookmarksPlugins },
-  { dir: 'deepseek', plugins: deepseekPlugins },
-  { dir: 'opencode-go', plugins: opencodeGoPlugins },
-  { dir: 'example', plugins: examplePlugins },
   { dir: 'heatmap', plugins: heatmapPlugins },
   { dir: 'kanban', plugins: kanbanPlugins },
-  { dir: 'liquid-glass', plugins: liquidGlassPlugins },
   { dir: 'notes', plugins: notesPlugins },
   { dir: 'pomodoro', plugins: pomodoroPlugins },
   { dir: 'streak', plugins: streakPlugins },
   { dir: 'todo', plugins: todoPlugins },
+  { dir: 'example', plugins: examplePlugins },
+  { dir: 'my-tabstart-plugins/deepseek', plugins: deepseekPlugins },
+  { dir: 'my-tabstart-plugins/liquid-glass', plugins: liquidGlassPlugins },
+  { dir: 'my-tabstart-plugins/opencode-go', plugins: opencodeGoPlugins },
 ]

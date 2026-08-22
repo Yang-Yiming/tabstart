@@ -2,9 +2,14 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "es2023",
-    "lib": ["ES2023", "DOM"],
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
     "module": "esnext",
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -16,7 +21,21 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@host/*": [
+        "./src/*"
+      ],
+      "@ext/*": [
+        "./user-plugins/*"
+      ]
+    }
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "user-plugins/example",
+    "user-plugins/my-tabstart-plugins/deepseek",
+    "user-plugins/my-tabstart-plugins/liquid-glass",
+    "user-plugins/my-tabstart-plugins/opencode-go"
+  ]
 }

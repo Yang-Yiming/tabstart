@@ -2,12 +2,8 @@
   "plugins": [
     "core",
     "bookmarks",
-    "deepseek",
-    "opencode-go",
-    "example",
     "heatmap",
     "kanban",
-    "liquid-glass",
     "notes",
     "pomodoro",
     "streak",

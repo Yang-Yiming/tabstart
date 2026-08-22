@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# User plugins: everything here is machine-local except the tracked example template
+user-plugins/*
+!user-plugins/example

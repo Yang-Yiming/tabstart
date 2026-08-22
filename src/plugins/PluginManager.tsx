@@ -187,8 +187,8 @@ function HowToAdd() {
       </h4>
       <ol className="mt-3 list-decimal space-y-1.5 pl-4 text-xs leading-5 text-white/60">
         <li>
-          复制 <code className="rounded bg-white/10 px-1">src/plugins/example/</code> 目录并重命名（如{' '}
-          <code className="rounded bg-white/10 px-1">src/plugins/myplugin/</code>）。
+          复制 <code className="rounded bg-white/10 px-1">user-plugins/example/</code> 目录并重命名（如{' '}
+          <code className="rounded bg-white/10 px-1">user-plugins/myplugin/</code>）。
         </li>
         <li>
           编辑 <code className="rounded bg-white/10 px-1">plugin.tsx</code>：改 widget 的 id / name /

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { WidgetCard } from '../../components/WidgetCard'
-import type { WidgetProps } from '../types'
-import { useWidgetSettings } from '../widgetSettings'
+import { WidgetCard } from '@host/components/WidgetCard'
+import type { WidgetProps } from '@host/plugins/types'
+import { useWidgetSettings } from '@host/plugins/widgetSettings'
 
 /**
  * 示例插件 —— 复制整个 example 目录即可开始写你自己的插件。

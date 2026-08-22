@@ -20,9 +20,27 @@ A personal browser start page & launchpad dashboard for your new tab.
 
 ## Plugins
 
-Every grid widget is a **plugin**. Built-in widgets ship under `src/plugins/<id>/`; each folder contains a
-`plugin.tsx` (metadata + `apply` hook) and the component file(s). The registry auto-discovers every
-folder with a `plugin.tsx` via `import.meta.glob` — no manual registration.
+Every grid widget is a **plugin**. Each plugin folder contains a
+`plugin.tsx` (metadata + `apply` hook) and the component file(s).
+Plugins live in two roots:
+
+```text
+src/plugins/<id>/plugin.tsx          built-in plugins (shipped with tabstart)
+user-plugins/example/plugin.tsx      tracked template — copy this to write your own
+user-plugins/<your-repo>/<plugin>/   your own plugins, managed in your own git repo
+```
+
+- Both `user-plugins/<plugin>/` (depth 1) and `user-plugins/<repo>/<plugin>/` (depth 2) are
+  discovered, so you can keep several plugin repos side by side.
+- Everything under `user-plugins/` is gitignored except `example/`, so your plugins stay in your
+  own repository while the template ships with tabstart.
+- Set `TABSTART_USER_PLUGINS=/some/dir` to point the loader at a different root.
+- User plugins reach host APIs through the `@host/*` alias (e.g. `@host/plugins/runtime`,
+  `@host/components/WidgetCard`); their own dependencies go in a per-plugin `package.json`.
+
+The registry auto-discovers every folder with a `plugin.tsx` at build time via
+`scripts/plugin-sync.ts` — no manual registration. User plugins are always bundled;
+built-ins are toggled in `src/plugins/plugin.config.json`.
 
 The plugin runtime is a small Cordis-style core: each plugin exports an `apply(ctx)` function and can
 contribute widgets, UI slots, or themes through `ctx.widgets` / `ctx.slots` / `ctx.themes`. Plugins are
@@ -30,7 +48,6 @@ discovered at build time and mounted at runtime; MV3-safe, no remote code loadin
 
 - The **plugin manager** (top-right) lists all plugins with enable/disable toggles. Disabling hides a
   plugin from the grid and the Add-Widget picker, but its layout position is preserved.
-- `deepseek`, `opencode-go` and `example` are preset plugins; `example` is a copyable template.
 - Keys (API keys, etc.) are stored only in your local browser storage.
 
 ### Mini-Cordis runtime
@@ -46,10 +63,11 @@ build-time and MV3-safe.
 Runtime flow:
 
 ```text
-registry.ts (import.meta.glob, build-time)
-  → PluginHost mounts enabled plugins
-    → apply(ctx) registers widgets / slots / themes
-      → Dashboard / Slot / ThemeApplier consume registries
+scripts/plugin-sync.ts (build-time scan of both plugin roots)
+  → src/plugins/registry.generated.ts (static imports, MV3-safe)
+    → PluginHost mounts enabled plugins
+      → apply(ctx) registers widgets / slots / themes
+        → Dashboard / Slot / ThemeApplier consume registries
 ```
 
 Built-in slot names: `hero.clock` and `hero.search` (provided by `src/plugins/core/plugin.tsx`).
@@ -61,7 +79,8 @@ theme-plugin example and can be selected in Settings → Appearance.
 
 ### Writing your own plugin
 
-1. Copy `src/plugins/example/` and rename the folder (e.g. `src/plugins/myplugin/`).
+1. Copy `user-plugins/example/` to a new folder under `user-plugins/` (e.g.
+   `user-plugins/my-plugins/myplugin/` — keep it at most two levels below the root).
 2. Edit `plugin.tsx`: change the widget `id`, `name`, grid size (`defaultW/H`, `minW/H`), `order` and the
    `settings` schema (fields render automatically in Settings → Widgets). Export it with
    `export const plugins = [defineWidgetPlugin(widget)]`.
