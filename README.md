@@ -2,6 +2,15 @@
 
 A personal browser start page & launchpad dashboard for your new tab.
 
+## Getting Started
+
+### install to your browser (Edge/Chrome)
+```bash
+bun install
+bun run build:extension
+```
+load `dist` folder as an unpacked extension in your browser
+
 ## Widgets
 
 | Widget | Description |
@@ -13,8 +22,6 @@ A personal browser start page & launchpad dashboard for your new tab.
 | Tasks (Todo) | Daily / weekly tasks & goals with recurrence |
 | Kanban | 3-column board (drag & drop) + compact list with keyboard shortcuts (`j`/`k` select, `[`/`]` move, `Enter` done) |
 | Pomodoro | Small / large timer variants |
-| DeepSeek | Hardcoded DeepSeek API balance plugin (preset; add your API key in Settings → Widgets → DeepSeek Balance) |
-| OpenCode Go | OpenCode Go subscription usage (5h / weekly / monthly quota bars; add your API key in Settings → Widgets → OpenCode Go) |
 
 > Tasks and Kanban share drag & drop — drag a task between the two widgets and it moves across (completion state follows).
 
@@ -52,7 +59,7 @@ discovered at build time and mounted at runtime; MV3-safe, no remote code loadin
 
 ### Mini-Cordis runtime
 
-`src/plugins/runtime.ts` is a small Cordis-style core. It does **not** load remote code; discovery stays
+`src/plugins/runtime.ts` is a small [Cordis](https://github.com/cordiverse/cordis)-style core. It does **not** load remote code; discovery stays
 build-time and MV3-safe.
 
 - **`HomepageContext`** — `effect()`, `on() / emit()`, `plugin()`, `get() / provide()` plus built-in registries.
@@ -90,12 +97,7 @@ theme-plugin example and can be selected in Settings → Appearance.
    (MV3 needs a static allow-list — there is no runtime prompt).
 5. Rebuild (`bun run build:extension`) — the plugin appears in the picker and the manager automatically.
 
-### Legacy key migration
-
-The old `Gauge` widget and its presets were removed. On first load after upgrading, stored layout and
-setting keys are rewritten automatically: `gauge:deepseek-balance` → `deepseek` (your API key carries
-over), `kanban:full` / `kanban:compact` → `kanban-full` / `kanban-compact`, `pomodoro:*` →
-`pomodoro-*`; `gauge:custom` instances are dropped.
+For reference, [this](https://github.com/Yang-Yiming/my-tabstart-plugins) is the repo of my user-plugins.
 
 ## Tech Stack
 
@@ -103,21 +105,6 @@ over), `kanban:full` / `kanban:compact` → `kanban-full` / `kanban-compact`, `p
 - Tailwind CSS 3
 - react-grid-layout
 - Lucide Icons
-
-## Getting Started
-
-### install to your browser (Edge/Chrome)
-```bash
-bun install
-bun run build:extension
-```
-load `dist` folder as an unpacked extension in your browser
-
-### check the lookings
-```bash
-bun install
-bun run dev
-```
 
 ## preview
 
