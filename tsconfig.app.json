@@ -35,7 +35,7 @@
     "src",
     "user-plugins/example",
     "user-plugins/my-tabstart-plugins/deepseek",
-    "user-plugins/my-tabstart-plugins/liquid-glass",
+    "user-plugins/my-tabstart-plugins/glass-effect",
     "user-plugins/my-tabstart-plugins/opencode-go"
   ]
 }

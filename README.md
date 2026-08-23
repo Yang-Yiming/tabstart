@@ -49,6 +49,27 @@ The registry auto-discovers every folder with a `plugin.tsx` at build time via
 `scripts/plugin-sync.ts` — no manual registration. User plugins are always bundled;
 built-ins are toggled in `src/plugins/plugin.config.json`.
 
+> **Before building** after a fresh clone (or when user plugins change), run
+> `bun run plugin:sync`. It scans both plugin roots, installs per-plugin
+> dependencies and writes the local `src/plugins/registry.generated.ts`
+> (gitignored) and updates `tsconfig.app.json`. The `build` / `dev` scripts
+> already run it first, but running it explicitly avoids stale-state surprises
+> (e.g. a renamed user-plugin folder leaving old `node_modules/.vite` cache
+> entries that break dev imports — clear `node_modules/.vite` if you hit that).
+
+## TODO
+
+- **Design flaw — generated registry hard-references external user plugins.**
+  `src/plugins/registry.generated.ts` (and the user-plugin `include`/`@ext`
+  paths in `tsconfig.app.json`) reference `user-plugins/…` folders that are
+  gitignored here and live in separate repos. So after a fresh clone of this
+  repo, the committed `tsconfig.app.json` can point at plugin folders that
+  don't exist, and `registry.generated.ts` is ignored entirely — the build only
+  works after running `plugin:sync` with the user plugins present. Ideally the
+  registry should only bundle built-in plugins (plus anything present), or the
+  user-plugin path should be tracked/configurable instead of silently embedded
+  in generated files.
+
 The plugin runtime is a small Cordis-style core: each plugin exports an `apply(ctx)` function and can
 contribute widgets, UI slots, or themes through `ctx.widgets` / `ctx.slots` / `ctx.themes`. Plugins are
 discovered at build time and mounted at runtime; MV3-safe, no remote code loading.
