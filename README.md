@@ -41,21 +41,19 @@ user-plugins/<your-repo>/<plugin>/   your own plugins, managed in your own git r
   discovered, so you can keep several plugin repos side by side.
 - Everything under `user-plugins/` is gitignored except `example/`, so your plugins stay in your
   own repository while the template ships with tabstart.
-- Set `TABSTART_USER_PLUGINS=/some/dir` to point the loader at a different root.
 - User plugins reach host APIs through the `@host/*` alias (e.g. `@host/plugins/runtime`,
   `@host/components/WidgetCard`); their own dependencies go in a per-plugin `package.json`.
 
-The registry auto-discovers every folder with a `plugin.tsx` at build time via
-`scripts/plugin-sync.ts` — no manual registration. User plugins are always bundled;
-built-ins are toggled in `src/plugins/plugin.config.json`.
+Plugin discovery is bundler-native: Vite statically expands `import.meta.glob` patterns over both
+roots (`src/plugins/*/plugin.tsx` and `user-plugins/**/plugin.tsx`), so whatever exists on disk is
+bundled — no generated files, no tsconfig rewriting, and a fresh clone builds out of the box.
+Built-ins are toggled in `src/plugins/plugin.config.json`; user plugins are always bundled.
+Adding or removing a plugin folder takes effect on the next dev-server start / build.
 
-> **Before building** after a fresh clone (or when user plugins change), run
-> `bun run plugin:sync`. It scans both plugin roots, installs per-plugin
-> dependencies and writes the local `src/plugins/registry.generated.ts`
-> (gitignored) and updates `tsconfig.app.json`. The `build` / `dev` scripts
-> already run it first, but running it explicitly avoids stale-state surprises
-> (e.g. a renamed user-plugin folder leaving old `node_modules/.vite` cache
-> entries that break dev imports — clear `node_modules/.vite` if you hit that).
+> The only job left for `bun run plugin:sync` is installing per-plugin dependencies (plugins that
+> ship their own `package.json`). The `build` / `dev` scripts already run it first; if stale
+> `node_modules/.vite` cache entries break dev imports after renaming plugin folders, clear them
+> and restart the dev server.
 
 The plugin runtime is a small Cordis-style core: each plugin exports an `apply(ctx)` function and can
 contribute widgets, UI slots, or themes through `ctx.widgets` / `ctx.slots` / `ctx.themes`. Plugins are
@@ -78,11 +76,10 @@ build-time and MV3-safe.
 Runtime flow:
 
 ```text
-scripts/plugin-sync.ts (build-time scan of both plugin roots)
-  → src/plugins/registry.generated.ts (static imports, MV3-safe)
-    → PluginHost mounts enabled plugins
-      → apply(ctx) registers widgets / slots / themes
-        → Dashboard / Slot / ThemeApplier consume registries
+src/plugins/registry.ts (static import.meta.glob over both plugin roots, MV3-safe)
+  → PluginHost mounts enabled plugins
+    → apply(ctx) registers widgets / slots / themes
+      → Dashboard / Slot / ThemeApplier consume registries
 ```
 
 Built-in slot names: `hero.clock` and `hero.search` (provided by `src/plugins/core/plugin.tsx`).
@@ -121,16 +118,3 @@ For reference, [this](https://github.com/Yang-Yiming/my-tabstart-plugins) is the
 ## License
 
 MIT
-
-## TODO
-
-- **Design flaw — generated registry hard-references external user plugins.**
-  `src/plugins/registry.generated.ts` (and the user-plugin `include`/`@ext`
-  paths in `tsconfig.app.json`) reference `user-plugins/…` folders that are
-  gitignored here and live in separate repos. So after a fresh clone of this
-  repo, the committed `tsconfig.app.json` can point at plugin folders that
-  don't exist, and `registry.generated.ts` is ignored entirely — the build only
-  works after running `plugin:sync` with the user plugins present. Ideally the
-  registry should only bundle built-in plugins (plus anything present), or the
-  user-plugin path should be tracked/configurable instead of silently embedded
-  in generated files.
