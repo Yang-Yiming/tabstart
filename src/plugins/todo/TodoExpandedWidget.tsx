@@ -12,6 +12,7 @@ import {
   isCompleted,
   isOverdue,
   isScheduledForDate,
+  moveTodoItem,
   removeTodoItem,
   toggleTodoItem,
   useTodoStore,
@@ -38,6 +39,7 @@ export function TodoExpandedWidget() {
   const [kanbanStore, setKanbanStore] = useKanbanStore()
   const { settings } = useWidgetSettings('todo')
   const carryOverOverdue = Boolean(settings.carryOverOverdue)
+  const completedToBottom = Boolean(settings.completedToBottom)
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [adding, setAdding] = useState<TodoHorizon | null>(null)
   const [draft, setDraft] = useState('')
@@ -47,6 +49,13 @@ export function TodoExpandedWidget() {
   const goals = useMemo(() => store.items.filter((item) => item.horizon === 'goal'), [store.items])
 
   const columns = useMemo(() => {
+    // Same display order rules as the grid widget: stored (manual) order,
+    // overdue floats up in the Today column, completed sinks when enabled.
+    const rank = (horizon: TodoHorizon, item: TodoItem) => {
+      if (completedToBottom && isCompleted(item, selectedDate)) return 2
+      if (horizon === 'daily' && isOverdue(item)) return 0
+      return 1
+    }
     const todayKey = formatDateKey(new Date())
     const selectedKey = formatDateKey(selectedDate)
     const byHorizon = (horizon: TodoHorizon) => store.items.filter((item) => item.horizon === horizon)
@@ -57,11 +66,11 @@ export function TodoExpandedWidget() {
             isScheduledForDate(item, selectedDate) ||
             (selectedKey === todayKey && carryOverOverdue && isOverdue(item)),
         )
-        .sort((a, b) => Number(isOverdue(b)) - Number(isOverdue(a))),
-      weekly: byHorizon('weekly'),
-      goal: byHorizon('goal'),
+        .sort((a, b) => rank('daily', a) - rank('daily', b)),
+      weekly: byHorizon('weekly').sort((a, b) => rank('weekly', a) - rank('weekly', b)),
+      goal: byHorizon('goal').sort((a, b) => rank('goal', a) - rank('goal', b)),
     }
-  }, [carryOverOverdue, selectedDate, store.items])
+  }, [carryOverOverdue, completedToBottom, selectedDate, store.items])
 
   const toggleItem = (item: TodoItem) => {
     setStore((prev) => ({ ...prev, items: toggleTodoItem(prev.items, item, selectedDate) }))
@@ -69,6 +78,10 @@ export function TodoExpandedWidget() {
 
   const removeItem = (id: string) => {
     setStore((prev) => ({ ...prev, items: removeTodoItem(prev.items, id) }))
+  }
+
+  const handleReorder = (draggedId: string, beforeId?: string) => {
+    setStore((prev) => ({ ...prev, items: moveTodoItem(prev.items, draggedId, beforeId) }))
   }
 
   const addItem = (horizon: TodoHorizon) => {
@@ -90,9 +103,16 @@ export function TodoExpandedWidget() {
   }
 
   const handleTaskDrop = (event: DragEvent, horizon: TodoHorizon) => {
+    const dragged = getDragData(event)
+    if (dragged?.source === 'todo') {
+      // Internal drag: dropping on a column background moves the item to its end.
+      event.preventDefault()
+      setDragOver(null)
+      handleReorder(dragged.id)
+      return
+    }
     event.preventDefault()
     setDragOver(null)
-    const dragged = getDragData(event)
     if (!dragged || dragged.source !== 'kanban') return
     const { kanban, todo } = transferKanbanToTodo(
       kanbanStore,
@@ -182,13 +202,13 @@ export function TodoExpandedWidget() {
                 ) : horizon === 'goal' ? (
                   <div className="space-y-1">
                     {items.map((goal) => (
-                      <GoalRow key={goal.id} goal={goal} items={store.items} onToggle={toggleItem} onRemove={removeItem} />
+                      <GoalRow key={goal.id} goal={goal} items={store.items} onToggle={toggleItem} onRemove={removeItem} onReorder={handleReorder} />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-0.5">
                     {items.map((item) => (
-                      <TaskRow key={item.id} item={item} goals={goals} date={selectedDate} onToggle={toggleItem} onRemove={removeItem} />
+                      <TaskRow key={item.id} item={item} goals={goals} date={selectedDate} onToggle={toggleItem} onRemove={removeItem} onReorder={handleReorder} />
                     ))}
                   </div>
                 )}

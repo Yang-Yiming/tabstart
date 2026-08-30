@@ -25,6 +25,13 @@ const widget: WidgetDescriptor = {
         description: '未完成的过期任务会自动出现在今天的列表中，直到完成。',
         default: true,
       },
+      {
+        type: 'boolean',
+        key: 'completedToBottom',
+        label: '完成任务自动沉底',
+        description: '已完成的任务自动排在列表末尾；列表顺序仍以手动拖动为准。',
+        default: true,
+      },
     ],
   },
 }

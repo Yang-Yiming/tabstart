@@ -10,10 +10,26 @@ export interface DraggedTask {
 
 export const DRAG_MIME = 'application/x-tabstart-task'
 
+/**
+ * Last task drag started via setDragData. dataTransfer.getData is off-limits
+ * during dragover (protected mode), so handlers that must behave differently
+ * for internal todo reordering vs. cross-widget transfers read this instead.
+ */
+let activeDrag: DraggedTask | null = null
+
 export function setDragData(event: DragEvent, drag: DraggedTask) {
+  activeDrag = drag
   const payload = JSON.stringify(drag)
   event.dataTransfer.setData(DRAG_MIME, payload)
   event.dataTransfer.setData('text/plain', payload)
+}
+
+export function getActiveDrag(): DraggedTask | null {
+  return activeDrag
+}
+
+export function clearActiveDrag() {
+  activeDrag = null
 }
 
 export function getDragData(event: DragEvent): DraggedTask | null {

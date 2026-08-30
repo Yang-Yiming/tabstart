@@ -69,6 +69,21 @@ export function removeTodoItem(items: TodoItem[], id: string): TodoItem[] {
     .map((candidate) => (candidate.parentId === id ? { ...candidate, parentId: undefined } : candidate))
 }
 
+/**
+ * Move an item to sit right before `beforeId` in the stored array (which is
+ * the manual display order), or to the end when `beforeId` is omitted. Views
+ * filter this array, so relative order within a view follows it.
+ */
+export function moveTodoItem(items: TodoItem[], id: string, beforeId?: string): TodoItem[] {
+  const dragged = items.find((candidate) => candidate.id === id)
+  if (!dragged) return items
+  const without = items.filter((candidate) => candidate.id !== id)
+  const index = beforeId ? without.findIndex((candidate) => candidate.id === beforeId) : -1
+  if (index === -1) return [...without, dragged]
+  without.splice(index, 0, dragged)
+  return without
+}
+
 export function isRecurring(item: TodoItem) {
   return item.recurrence !== 'none'
 }

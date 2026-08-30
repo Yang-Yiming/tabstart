@@ -91,11 +91,24 @@ export function moveTaskToPrevColumn(tasks: KanbanTask[], taskId: string): Kanba
   return moveTask(tasks, taskId, prevColumn(task.column))
 }
 
-export function toggleTaskComplete(tasks: KanbanTask[], taskId: string): KanbanTask[] {
+/**
+ * Toggle completion. With `advance` (default) the task jumps to the done
+ * column (or back to its origin); without it the task is marked complete
+ * in place (stays in its column, `completedAt` set) so the board order
+ * is untouched.
+ */
+export function toggleTaskComplete(tasks: KanbanTask[], taskId: string, advance = true): KanbanTask[] {
   const task = tasks.find((candidate) => candidate.id === taskId)
   if (!task) return tasks
   if (task.column === 'done') {
     return moveTask(tasks, taskId, task.completedFrom ?? 'todo')
   }
-  return moveTask(tasks, taskId, 'done')
+  if (advance) {
+    return moveTask(tasks, taskId, 'done')
+  }
+  return tasks.map((candidate) =>
+    candidate.id === taskId
+      ? { ...candidate, completedAt: candidate.completedAt ? undefined : new Date().toISOString() }
+      : candidate,
+  )
 }

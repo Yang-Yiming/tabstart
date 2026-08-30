@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat, SquareKanban, Trash2 } from 'lucide-react'
 import { WidgetCard } from '../../components/WidgetCard'
-import { getDragData, isTaskDrag, setDragData, transferTodoToKanban } from '../_shared/taskTransfer'
+import { getDragData, isTaskDrag, setDragData, transferTodoToKanban, clearActiveDrag } from '../_shared/taskTransfer'
 import { useTodoStore } from '../todo/todo'
+import { useWidgetSettings } from '../widgetSettings'
+import type { WidgetProps } from '../types'
 import {
   KANBAN_COLUMNS,
   moveTask,
@@ -28,7 +30,14 @@ function createId() {
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-export function KanbanFullWidget() {
+/** `advanceOnComplete` is on unless explicitly disabled for this instance. */
+function useAdvanceOnComplete(widgetKey?: string) {
+  const { settings } = useWidgetSettings(widgetKey ?? 'kanban-compact')
+  return settings.advanceOnComplete !== false
+}
+
+export function KanbanFullWidget({ widgetKey }: WidgetProps) {
+  const advance = useAdvanceOnComplete(widgetKey ?? 'kanban-full')
   const [store, setStore] = useKanbanStore()
   const [todoStore, setTodoStore] = useTodoStore()
   const [addingColumn, setAddingColumn] = useState<KanbanColumnId | null>(null)
@@ -143,6 +152,7 @@ export function KanbanFullWidget() {
                         onDragEnd={() => {
                           setDraggingId(null)
                           setDragOver(null)
+                          clearActiveDrag()
                         }}
                         className={[
                           'group/task flex items-start gap-1.5 rounded-xl border border-white/10 bg-white/[0.06] p-2 transition cursor-grab active:cursor-grabbing',
@@ -150,11 +160,11 @@ export function KanbanFullWidget() {
                           draggingId === task.id ? 'opacity-40' : '',
                         ].join(' ')}
                       >
-                        <TaskToggle task={task} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id) }))} />
+                        <TaskToggle task={task} advance={advance} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
                         <div className="min-w-0 flex-1 pt-0.5">
                           <EditableTitle
                             task={task}
-                            done={task.column === 'done'}
+                            done={task.column === 'done' || Boolean(task.completedAt)}
                             onRename={handleRename}
                             className="block w-full truncate text-[12px] leading-snug"
                           />
@@ -197,7 +207,8 @@ export function KanbanFullWidget() {
   )
 }
 
-export function KanbanCompactWidget() {
+export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
+  const advance = useAdvanceOnComplete(widgetKey)
   const [store, setStore] = useKanbanStore()
   const [todoStore, setTodoStore] = useTodoStore()
   const [column, setColumn] = useState<KanbanColumnId>('todo')
@@ -245,7 +256,7 @@ export function KanbanCompactWidget() {
         case 'Enter': {
           if (!selectedId) return
           event.preventDefault()
-          setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, selectedId) }))
+          setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, selectedId, advance) }))
           break
         }
         case 'ArrowDown':
@@ -268,7 +279,7 @@ export function KanbanCompactWidget() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [active, selectedId, selectedIndex, setStore, store.tasks, tasks])
+  }, [active, advance, selectedId, selectedIndex, setStore, store.tasks, tasks])
 
   const addItem = (title: string) => {
     const trimmed = title.trim()
@@ -418,6 +429,7 @@ export function KanbanCompactWidget() {
                 onDragEnd={() => {
                   setDraggingId(null)
                   setDragOver(null)
+                  clearActiveDrag()
                 }}
                 onClick={() => setSelectedId(task.id)}
                 className={[
@@ -427,11 +439,11 @@ export function KanbanCompactWidget() {
                   draggingId === task.id ? 'opacity-40' : '',
                 ].join(' ')}
               >
-                <TaskToggle task={task} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id) }))} />
+                <TaskToggle task={task} advance={advance} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
                 <div className="min-w-0 flex-1">
                   <EditableTitle
                     task={task}
-                    done={task.column === 'done'}
+                    done={task.column === 'done' || Boolean(task.completedAt)}
                     onRename={handleRename}
                     className="block w-full truncate text-[13px] leading-tight"
                   />
@@ -500,11 +512,14 @@ export function KanbanCompactWidget() {
 
 interface TaskToggleProps {
   task: KanbanTask
+  /** Mirror of the instance's `advanceOnComplete` setting, for label + title. */
+  advance?: boolean
   onToggle: (taskId: string) => void
 }
 
-function TaskToggle({ task, onToggle }: TaskToggleProps) {
-  const done = task.column === 'done'
+function TaskToggle({ task, advance = true, onToggle }: TaskToggleProps) {
+  const done = task.column === 'done' || Boolean(task.completedAt)
+  const inPlace = !advance && task.column !== 'done'
   return (
     <button
       type="button"
@@ -514,7 +529,11 @@ function TaskToggle({ task, onToggle }: TaskToggleProps) {
       }}
       className="mt-0.5 shrink-0 text-white/45 transition hover:text-emerald-200"
       aria-label={done ? 'Mark incomplete' : 'Complete task'}
-      title={done ? `Move back to ${task.completedFrom ?? 'todo'}` : 'Move to Done'}
+      title={
+        inPlace
+          ? done ? 'Mark incomplete' : 'Mark complete'
+          : done ? `Move back to ${task.completedFrom ?? 'todo'}` : 'Move to Done'
+      }
     >
       {done ? (
         <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-300/80 text-emerald-950">

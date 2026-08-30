@@ -3,7 +3,7 @@ import { Check, ChevronLeft, ChevronRight, Circle, Plus, Repeat2, Target, Trash2
 import { WidgetCard } from '../../components/WidgetCard'
 import { formatDateKey } from '../_shared/activity'
 import { useKanbanStore } from '../kanban/kanban'
-import { getDragData, isTaskDrag, setDragData, transferKanbanToTodo } from '../_shared/taskTransfer'
+import { getActiveDrag, clearActiveDrag, getDragData, isTaskDrag, setDragData, transferKanbanToTodo } from '../_shared/taskTransfer'
 import { useWidgetSettings } from '../widgetSettings'
 import {
   addDays,
@@ -13,6 +13,7 @@ import {
   isOverdue,
   isRecurring,
   isScheduledForDate,
+  moveTodoItem,
   removeTodoItem,
   toggleTodoItem,
   useTodoStore,
@@ -34,6 +35,7 @@ export function TodoWidget() {
   const [kanbanStore, setKanbanStore] = useKanbanStore()
   const { settings } = useWidgetSettings('todo')
   const carryOverOverdue = Boolean(settings.carryOverOverdue)
+  const completedToBottom = Boolean(settings.completedToBottom)
   const [view, setView] = useState<View>('daily')
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
@@ -44,6 +46,14 @@ export function TodoWidget() {
 
   const goals = useMemo(() => store.items.filter((item) => item.horizon === 'goal'), [store.items])
   const visibleItems = useMemo(() => {
+    // Stable display order: manual (stored) order first, then partitioned —
+    // overdue items float up in the daily view, completed items sink when
+    // the `completedToBottom` setting is on.
+    const rank = (item: TodoItem) => {
+      if (completedToBottom && isCompleted(item, selectedDate)) return 2
+      if (view === 'daily' && isOverdue(item)) return 0
+      return 1
+    }
     if (view === 'daily') {
       const todayKey = formatDateKey(new Date())
       const selectedKey = formatDateKey(selectedDate)
@@ -53,10 +63,10 @@ export function TodoWidget() {
             isScheduledForDate(item, selectedDate) ||
             (selectedKey === todayKey && carryOverOverdue && isOverdue(item)),
         )
-        .sort((a, b) => Number(isOverdue(b)) - Number(isOverdue(a)))
+        .sort((a, b) => rank(a) - rank(b))
     }
-    return store.items.filter((item) => item.horizon === view)
-  }, [carryOverOverdue, selectedDate, store.items, view])
+    return store.items.filter((item) => item.horizon === view).sort((a, b) => rank(a) - rank(b))
+  }, [carryOverOverdue, completedToBottom, selectedDate, store.items, view])
 
   const addItem = () => {
     const title = draft.trim()
@@ -85,13 +95,24 @@ export function TodoWidget() {
     setStore((prev) => ({ ...prev, items: removeTodoItem(prev.items, id) }))
   }
 
+  const handleReorder = (draggedId: string, beforeId?: string) => {
+    setStore((prev) => ({ ...prev, items: moveTodoItem(prev.items, draggedId, beforeId) }))
+  }
+
   const completedCount = visibleItems.filter((item) => isCompleted(item, selectedDate)).length
   const selectedDateLabel = formatDateLabel(selectedDate)
 
   const handleTaskDrop = (event: DragEvent) => {
+    const dragged = getDragData(event)
+    if (dragged?.source === 'todo') {
+      // Internal drag: dropping on the list background moves the item to the end.
+      event.preventDefault()
+      setDragOver(false)
+      handleReorder(dragged.id)
+      return
+    }
     event.preventDefault()
     setDragOver(false)
-    const dragged = getDragData(event)
     if (!dragged || dragged.source !== 'kanban') return
     const { kanban, todo } = transferKanbanToTodo(
       kanbanStore,
@@ -188,13 +209,13 @@ export function TodoWidget() {
         ) : view === 'goal' ? (
           <div className="space-y-1">
             {visibleItems.map((goal) => (
-              <GoalRow key={goal.id} goal={goal} items={store.items} onToggle={toggleItem} onRemove={removeItem} />
+              <GoalRow key={goal.id} goal={goal} items={store.items} onToggle={toggleItem} onRemove={removeItem} onReorder={handleReorder} />
             ))}
           </div>
         ) : (
           <div className="space-y-0.5">
             {visibleItems.map((item) => (
-              <TaskRow key={item.id} item={item} goals={goals} date={selectedDate} onToggle={toggleItem} onRemove={removeItem} />
+              <TaskRow key={item.id} item={item} goals={goals} date={selectedDate} onToggle={toggleItem} onRemove={removeItem} onReorder={handleReorder} />
             ))}
           </div>
         )}
@@ -275,12 +296,54 @@ interface TaskRowProps {
   date: Date
   onToggle: (item: TodoItem) => void
   onRemove: (id: string) => void
+  /** Present when the parent supports manual reorder via drag & drop. */
+  onReorder?: (draggedId: string, beforeId: string) => void
 }
 
-export function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps) {
+function useReorderDropTarget<T extends { id: string }>({
+  item,
+  onReorder,
+}: {
+  item: T
+  onReorder?: (draggedId: string, beforeId: string) => void
+}) {
+  const [dropActive, setDropActive] = useState(false)
+  /** The in-flight drag only when it is an internal todo drag onto another row. */
+  const activeTodoDrag = () => {
+    if (!onReorder) return null
+    const active = getActiveDrag()
+    return active && active.source === 'todo' && active.id !== item.id ? active : null
+  }
+  return {
+    dropActive,
+    dragHandlers: {
+      onDragEnd: clearActiveDrag,
+      onDragOver: (event: DragEvent) => {
+        if (!activeTodoDrag()) return
+        event.preventDefault()
+        event.stopPropagation()
+        event.dataTransfer.dropEffect = 'move'
+        setDropActive(true)
+      },
+      onDragLeave: () => setDropActive(false),
+      onDrop: (event: DragEvent) => {
+        if (!onReorder) return
+        const active = activeTodoDrag()
+        if (!active) return
+        event.preventDefault()
+        event.stopPropagation()
+        setDropActive(false)
+        onReorder(active.id, item.id)
+      },
+    },
+  }
+}
+
+export function TaskRow({ item, goals, date, onToggle, onRemove, onReorder }: TaskRowProps) {
   const done = isCompleted(item, date)
   const goal = goals.find((candidate) => candidate.id === item.parentId)
   const overdue = isOverdue(item)
+  const { dropActive, dragHandlers } = useReorderDropTarget({ item, onReorder })
   return (
     <div
       draggable
@@ -288,7 +351,11 @@ export function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps)
         event.dataTransfer.effectAllowed = 'move'
         setDragData(event, { source: 'todo', id: item.id })
       }}
-      className="group/task flex min-h-8 items-center gap-2 rounded-lg px-1.5 transition hover:bg-white/[0.06]"
+      {...dragHandlers}
+      className={[
+        'group/task flex min-h-8 items-center gap-2 rounded-lg px-1.5 transition hover:bg-white/[0.06]',
+        dropActive ? 'bg-white/10 ring-1 ring-white/40' : '',
+      ].join(' ')}
     >
       <button type="button" onClick={() => onToggle(item)} className="shrink-0 text-white/45 transition hover:text-emerald-200" aria-label={done ? 'Mark incomplete' : 'Complete task'}>
         {done ? <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-300/80 text-emerald-950"><Check className="h-3 w-3" /></span> : <Circle className="h-4 w-4" />}
@@ -313,14 +380,17 @@ interface GoalRowProps {
   items: TodoItem[]
   onToggle: (item: TodoItem) => void
   onRemove: (id: string) => void
+  /** Present when the parent supports manual reorder via drag & drop. */
+  onReorder?: (draggedId: string, beforeId: string) => void
 }
 
-export function GoalRow({ goal, items, onToggle, onRemove }: GoalRowProps) {
+export function GoalRow({ goal, items, onToggle, onRemove, onReorder }: GoalRowProps) {
   const children = items.filter((item) => item.parentId === goal.id)
   const completed = children.filter((item) => isCompleted(item)).length
   const progress = children.length > 0 ? Math.round((completed / children.length) * 100) : 0
   const next = children.find((item) => !isCompleted(item))
   const done = isCompleted(goal)
+  const { dropActive, dragHandlers } = useReorderDropTarget({ item: goal, onReorder })
   return (
     <div
       draggable
@@ -328,7 +398,11 @@ export function GoalRow({ goal, items, onToggle, onRemove }: GoalRowProps) {
         event.dataTransfer.effectAllowed = 'move'
         setDragData(event, { source: 'todo', id: goal.id })
       }}
-      className="group/task rounded-xl px-2 py-1.5 transition hover:bg-white/[0.06]"
+      {...dragHandlers}
+      className={[
+        'group/task rounded-xl px-2 py-1.5 transition hover:bg-white/[0.06]',
+        dropActive ? 'bg-white/10 ring-1 ring-white/40' : '',
+      ].join(' ')}
     >
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => onToggle(goal)} className="shrink-0 text-white/40 transition hover:text-emerald-200" aria-label={done ? 'Reopen goal' : 'Complete goal'}>
