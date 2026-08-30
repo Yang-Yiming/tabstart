@@ -14,6 +14,7 @@ const pomodoroCompact: WidgetDescriptor = {
   minH: 1,
   builtin: true,
   order: 70,
+  expandTo: 'pomodoro-large',
 }
 
 const pomodoroLarge: WidgetDescriptor = {

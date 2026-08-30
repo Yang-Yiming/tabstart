@@ -166,6 +166,29 @@ button {
   color: var(--clock-date-text);
 }
 
+/* While a widget is expanded, the grid recedes iOS-folder style. */
+.dashboard-grid {
+  transition:
+    transform 280ms ease,
+    filter 280ms ease;
+}
+
+.dashboard-grid.dashboard-grid--obscured {
+  transform: scale(0.98);
+  filter: blur(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-grid {
+    transition: none;
+  }
+
+  .dashboard-grid.dashboard-grid--obscured {
+    transform: none;
+    filter: none;
+  }
+}
+
 .dashboard-grid .react-grid-placeholder {
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 1.5rem;

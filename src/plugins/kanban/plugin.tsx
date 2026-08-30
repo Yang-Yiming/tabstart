@@ -27,6 +27,7 @@ const kanbanCompact: WidgetDescriptor = {
   minH: 2,
   builtin: true,
   order: 61,
+  expandTo: 'kanban-full',
 }
 
 export const plugins = [defineWidgetPlugin(kanbanFull), defineWidgetPlugin(kanbanCompact)]

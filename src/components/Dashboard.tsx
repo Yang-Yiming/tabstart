@@ -1,13 +1,20 @@
 import { Suspense, useCallback, useMemo, useState } from 'react'
-import { GripVertical, Plus, RotateCcw, X } from 'lucide-react'
+import { GripVertical, Maximize2, Plus, RotateCcw, X } from 'lucide-react'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
+import {
+  DASHBOARD_SETTINGS_KEY,
+  DEFAULT_DASHBOARD_SETTINGS,
+  normalizeDashboardSettings,
+  type DashboardSettings,
+} from '../config/preferences'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useWidgets } from '../plugins/hooks'
 import { canonicalKey, groupWidgets, resolveWidget, useEnabledPlugins } from '../plugins/registry'
 import type { WidgetDescriptor } from '../plugins/types'
+import { ExpandedWidgetOverlay } from './ExpandedWidgetOverlay'
 import { ThemeSurface } from './ThemeSurface'
 import { WidgetPreview } from './WidgetPreview'
 
@@ -100,8 +107,25 @@ export function Dashboard({ isEditing }: Props) {
     debounceMs: 350,
   })
   const [addPanelOpen, setAddPanelOpen] = useState(false)
+  const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  const [rawDashboardSettings] = useLocalStorage<DashboardSettings>(
+    DASHBOARD_SETTINGS_KEY,
+    DEFAULT_DASHBOARD_SETTINGS,
+  )
+  const showExpandButton = normalizeDashboardSettings(rawDashboardSettings).showExpandButton
   const { isEnabled } = useEnabledPlugins()
   const widgets = useWidgets()
+
+  /** Target descriptor rendered in the expanded panel for `expandedKey`, if any. */
+  const expandedWidget = useMemo(() => {
+    if (!expandedKey) return null
+    const source = resolveWidget(expandedKey)
+    if (!source) return null
+    const target = source.expandedComponent ? source : source.expandTo ? resolveWidget(source.expandTo) : undefined
+    return target ? { component: target.component, name: target.name } : null
+  }, [expandedKey])
+
+  const closeExpanded = useCallback(() => setExpandedKey(null), [])
 
   /**
    * Canonicalize + clamp every stored layout item. Keeps disabled plugins so
@@ -206,14 +230,41 @@ export function Dashboard({ isEditing }: Props) {
       const plugin = resolveWidget(item.i)
       if (!plugin) return null
       const WidgetComponent = plugin.component
+      const canExpand = Boolean(plugin.expandedComponent || (plugin.expandTo && resolveWidget(plugin.expandTo)))
 
       return (
-        <div key={item.i} className="group/widget relative h-full">
+        <div
+          key={item.i}
+          className="group/widget relative h-full"
+          onClick={(event) => {
+            if (isEditing || !canExpand || !(event.metaKey || event.ctrlKey)) return
+            // Skip when the modifier-click lands on an interactive child
+            // (tab, checkbox, link...) so their own handlers stay authoritative.
+            const target = event.target as HTMLElement | null
+            if (target?.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]')) return
+            setExpandedKey(item.i)
+          }}
+        >
           <div className="h-full [&>*]:h-full">
             <Suspense fallback={<div className="h-full rounded-2xl bg-black/20 backdrop-blur-xl" />}>
               <WidgetComponent widgetKey={item.i} compact={item.h === 1} />
             </Suspense>
           </div>
+
+          {!isEditing && canExpand && showExpandButton && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                setExpandedKey(item.i)
+              }}
+              className="absolute -right-2 -top-2 z-20 rounded-full border border-white/15 bg-black/60 p-1.5 text-white/70 opacity-0 shadow-lg backdrop-blur-xl transition hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover/widget:opacity-100"
+              aria-label={`Expand ${plugin.name}`}
+              title={`Expand ${plugin.name} (⌘/Ctrl + click)`}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
+          )}
 
           {isEditing && (
             <>
@@ -243,10 +294,16 @@ export function Dashboard({ isEditing }: Props) {
         </div>
       )
     })
-  }, [displayLayouts, handleRemove, isEditing])
+  }, [displayLayouts, handleRemove, isEditing, showExpandButton])
 
   return (
-    <div className={['dashboard-grid relative', isEditing ? 'is-editing' : ''].join(' ')}>
+    <div
+      className={[
+        'dashboard-grid relative',
+        isEditing ? 'is-editing' : '',
+        expandedKey ? 'dashboard-grid--obscured' : '',
+      ].join(' ')}
+    >
       <ResponsiveGridLayout
         layouts={displayLayouts}
         breakpoints={BREAKPOINTS}
@@ -264,6 +321,16 @@ export function Dashboard({ isEditing }: Props) {
       >
         {renderedWidgets}
       </ResponsiveGridLayout>
+
+      {expandedWidget && expandedKey && (
+        <ExpandedWidgetOverlay
+          key={expandedKey}
+          component={expandedWidget.component}
+          name={expandedWidget.name}
+          widgetKey={expandedKey}
+          onClose={closeExpanded}
+        />
+      )}
 
       {isEditing && (
         <div className="mt-5 flex flex-col items-center gap-3">

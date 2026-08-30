@@ -83,6 +83,19 @@ export interface WidgetDescriptor {
   builtin?: boolean
   /** Display order inside its group (lower first). */
   order?: number
+  /**
+   * Widget id rendered when this instance is expanded into the large centered
+   * panel (e.g. `kanban-compact` → `kanban-full`). The target must be another
+   * registered widget id; both share the same data store, so grid and expanded
+   * views stay in sync. The expanded instance reuses the source widgetKey.
+   */
+  expandTo?: string
+  /**
+   * Alternative to `expandTo`: a bespoke component for the expanded panel,
+   * for widgets that don't map onto an existing large variant. Takes
+   * precedence over `expandTo` when both are set.
+   */
+  expandedComponent?: ComponentType<WidgetProps>
 }
 
 /** A UI slot contributed by a plugin (topbar action, settings section, shell overlay...). */

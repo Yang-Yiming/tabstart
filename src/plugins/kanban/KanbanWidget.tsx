@@ -95,7 +95,7 @@ export function KanbanFullWidget() {
             <div
               key={column}
               className={[
-                'flex min-h-0 flex-1 flex-col gap-1.5 rounded-2xl border border-white/10 bg-black/15 p-2 transition',
+                'flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 rounded-2xl border border-white/10 bg-black/15 p-2 transition',
                 isDropColumn && !dragOver?.taskId ? 'border-white/30 bg-black/25' : '',
               ].join(' ')}
               onDragOver={(event) => {

@@ -256,3 +256,23 @@ export function normalizeClockSettings(settings: ClockSettings | null | undefine
     locale: settings?.locale || DEFAULT_CLOCK_SETTINGS.locale,
   }
 }
+
+export const DASHBOARD_SETTINGS_KEY = 'homepage-dashboard-settings-v1'
+
+export interface DashboardSettings {
+  /** Show the hover expand badge on widget cards (⌘/Ctrl + click always works). */
+  showExpandButton: boolean
+}
+
+export const DEFAULT_DASHBOARD_SETTINGS: DashboardSettings = {
+  showExpandButton: true,
+}
+
+/** Normalize persisted dashboard settings so partial stored objects still work. */
+export function normalizeDashboardSettings(
+  settings: DashboardSettings | null | undefined,
+): DashboardSettings {
+  return {
+    showExpandButton: settings?.showExpandButton ?? DEFAULT_DASHBOARD_SETTINGS.showExpandButton,
+  }
+}

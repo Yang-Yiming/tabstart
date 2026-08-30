@@ -4,6 +4,7 @@ import {
   Globe,
   LayoutGrid,
   Link,
+  Maximize2,
   Monitor,
   Moon,
   Palette,
@@ -21,14 +22,18 @@ import { ThemeSurface } from './ThemeSurface'
 import {
   CLOCK_LOCALE_OPTIONS,
   CLOCK_SETTINGS_KEY,
+  DASHBOARD_SETTINGS_KEY,
   DEFAULT_CLOCK_SETTINGS,
+  DEFAULT_DASHBOARD_SETTINGS,
+  DEFAULT_SEARCH_SETTINGS,
   formatShortcut,
   normalizeClockSettings,
-  SEARCH_SETTINGS_KEY,
-  DEFAULT_SEARCH_SETTINGS,
+  normalizeDashboardSettings,
   normalizeSearchSettings,
+  SEARCH_SETTINGS_KEY,
   shortcutEquals,
   type ClockSettings,
+  type DashboardSettings,
   type SearchEngineItem,
   type SearchEngineShortcut,
   type SearchSettings,
@@ -292,9 +297,45 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
 function GeneralSection() {
   return (
     <>
+      <DashboardSection />
       <ClockSection />
       <SearchSection />
     </>
+  )
+}
+
+function DashboardSection() {
+  const [rawSettings, setSettings] = useLocalStorage<DashboardSettings>(
+    DASHBOARD_SETTINGS_KEY,
+    DEFAULT_DASHBOARD_SETTINGS,
+  )
+  const settings = normalizeDashboardSettings(rawSettings)
+
+  const update = (patch: Partial<DashboardSettings>) => {
+    setSettings((prev) => ({
+      ...DEFAULT_DASHBOARD_SETTINGS,
+      ...normalizeDashboardSettings(prev),
+      ...patch,
+    }))
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <Maximize2 className="h-4 w-4 text-slate-600 dark:text-white/70" />
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">仪表盘</h4>
+      </div>
+      <p className="mt-1 text-xs text-slate-600 dark:text-white/50">主页网格与 widget 交互方式。</p>
+
+      <div className="mt-4 space-y-4 rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 p-4">
+        <ToggleRow
+          label="放大角标按钮"
+          description="悬停 widget 卡片时显示放大角标；关闭后仍可按住 ⌘/Ctrl 并点击卡片来放大。"
+          checked={settings.showExpandButton}
+          onChange={(value) => update({ showExpandButton: value })}
+        />
+      </div>
+    </div>
   )
 }
 
