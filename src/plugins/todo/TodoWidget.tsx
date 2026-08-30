@@ -7,11 +7,14 @@ import { getDragData, isTaskDrag, setDragData, transferKanbanToTodo } from '../_
 import { useWidgetSettings } from '../widgetSettings'
 import {
   addDays,
+  createId,
+  formatDateLabel,
   isCompleted,
   isOverdue,
   isRecurring,
   isScheduledForDate,
-  recurrenceCompletionKey,
+  removeTodoItem,
+  toggleTodoItem,
   useTodoStore,
   type TodoHorizon,
   type TodoItem,
@@ -25,12 +28,6 @@ const VIEW_LABELS: Array<{ id: View; label: string }> = [
   { id: 'weekly', label: 'Week' },
   { id: 'goal', label: 'Goals' },
 ]
-
-function createId() {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`
-}
 
 export function TodoWidget() {
   const [store, setStore] = useTodoStore()
@@ -81,29 +78,11 @@ export function TodoWidget() {
   }
 
   const toggleItem = (item: TodoItem) => {
-    const completionKey = recurrenceCompletionKey(item, selectedDate)
-    setStore((prev) => ({
-      ...prev,
-      items: prev.items.map((candidate) => {
-        if (candidate.id !== item.id) return candidate
-        if (!isRecurring(candidate)) {
-          return { ...candidate, completedAt: candidate.completedAt ? undefined : new Date().toISOString() }
-        }
-        const dates = new Set(candidate.completedDates ?? [])
-        if (dates.has(completionKey)) dates.delete(completionKey)
-        else dates.add(completionKey)
-        return { ...candidate, completedDates: [...dates] }
-      }),
-    }))
+    setStore((prev) => ({ ...prev, items: toggleTodoItem(prev.items, item, selectedDate) }))
   }
 
   const removeItem = (id: string) => {
-    setStore((prev) => ({
-      ...prev,
-      items: prev.items
-        .filter((item) => item.id !== id)
-        .map((item) => item.parentId === id ? { ...item, parentId: undefined } : item),
-    }))
+    setStore((prev) => ({ ...prev, items: removeTodoItem(prev.items, id) }))
   }
 
   const completedCount = visibleItems.filter((item) => isCompleted(item, selectedDate)).length
@@ -298,7 +277,7 @@ interface TaskRowProps {
   onRemove: (id: string) => void
 }
 
-function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps) {
+export function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps) {
   const done = isCompleted(item, date)
   const goal = goals.find((candidate) => candidate.id === item.parentId)
   const overdue = isOverdue(item)
@@ -329,15 +308,6 @@ function TaskRow({ item, goals, date, onToggle, onRemove }: TaskRowProps) {
   )
 }
 
-function formatDateLabel(date: Date) {
-  const key = formatDateKey(date)
-  const today = formatDateKey(new Date())
-  const tomorrow = formatDateKey(addDays(new Date(), 1))
-  if (key === today) return 'Today'
-  if (key === tomorrow) return 'Tomorrow'
-  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
 interface GoalRowProps {
   goal: TodoItem
   items: TodoItem[]
@@ -345,7 +315,7 @@ interface GoalRowProps {
   onRemove: (id: string) => void
 }
 
-function GoalRow({ goal, items, onToggle, onRemove }: GoalRowProps) {
+export function GoalRow({ goal, items, onToggle, onRemove }: GoalRowProps) {
   const children = items.filter((item) => item.parentId === goal.id)
   const completed = children.filter((item) => isCompleted(item)).length
   const progress = children.length > 0 ? Math.round((completed / children.length) * 100) : 0

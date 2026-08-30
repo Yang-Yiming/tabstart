@@ -121,7 +121,8 @@ export function Dashboard({ isEditing }: Props) {
     if (!expandedKey) return null
     const source = resolveWidget(expandedKey)
     if (!source) return null
-    const target = source.expandedComponent ? source : source.expandTo ? resolveWidget(source.expandTo) : undefined
+    if (source.expandedComponent) return { component: source.expandedComponent, name: source.name }
+    const target = source.expandTo ? resolveWidget(source.expandTo) : undefined
     return target ? { component: target.component, name: target.name } : null
   }, [expandedKey])
 

@@ -41,6 +41,34 @@ export function useTodoStore() {
   return useLocalStorage<TodoStore>(TODO_STORAGE_KEY, createDefaultTodoStore(), { debounceMs: 200 })
 }
 
+export function createId() {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+/** Toggle an item's completion; recurring items toggle the given date's key. */
+export function toggleTodoItem(items: TodoItem[], item: TodoItem, date = new Date()): TodoItem[] {
+  const completionKey = recurrenceCompletionKey(item, date)
+  return items.map((candidate) => {
+    if (candidate.id !== item.id) return candidate
+    if (!isRecurring(candidate)) {
+      return { ...candidate, completedAt: candidate.completedAt ? undefined : new Date().toISOString() }
+    }
+    const dates = new Set(candidate.completedDates ?? [])
+    if (dates.has(completionKey)) dates.delete(completionKey)
+    else dates.add(completionKey)
+    return { ...candidate, completedDates: [...dates] }
+  })
+}
+
+/** Remove an item and unlink any children pointing at it. */
+export function removeTodoItem(items: TodoItem[], id: string): TodoItem[] {
+  return items
+    .filter((candidate) => candidate.id !== id)
+    .map((candidate) => (candidate.parentId === id ? { ...candidate, parentId: undefined } : candidate))
+}
+
 export function isRecurring(item: TodoItem) {
   return item.recurrence !== 'none'
 }
@@ -66,6 +94,15 @@ export function addDays(date: Date, days: number) {
 
 export function dateFromKey(key: string) {
   return new Date(`${key}T12:00:00`)
+}
+
+export function formatDateLabel(date: Date) {
+  const key = formatDateKey(date)
+  const today = formatDateKey(new Date())
+  const tomorrow = formatDateKey(addDays(new Date(), 1))
+  if (key === today) return 'Today'
+  if (key === tomorrow) return 'Tomorrow'
+  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 function startDate(item: TodoItem) {

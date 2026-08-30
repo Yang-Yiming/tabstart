@@ -7,6 +7,7 @@ const widget: WidgetDescriptor = {
   name: 'Tasks',
   group: 'Tasks',
   component: lazy(() => import('./TodoWidget').then((m) => ({ default: m.TodoWidget }))),
+  expandedComponent: lazy(() => import('./TodoExpandedWidget').then((m) => ({ default: m.TodoExpandedWidget }))),
   defaultW: 2,
   defaultH: 2,
   minW: 2,
