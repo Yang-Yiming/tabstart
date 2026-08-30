@@ -12,9 +12,25 @@ export function ClockWidget() {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [])
+    if (settings.showSeconds) {
+      const id = setInterval(() => setNow(new Date()), 1000)
+      return () => clearInterval(id)
+    }
+
+    // Without seconds there is nothing to show between minute flips, so tick
+    // once aligned to the next wall-clock minute (plus a small buffer) and
+    // reschedule from there — 1 render/minute instead of 60/minute.
+    let timeout: number
+    const schedule = () => {
+      const delay = 60_000 - (Date.now() % 60_000) + 50
+      timeout = window.setTimeout(() => {
+        setNow(new Date())
+        schedule()
+      }, delay)
+    }
+    schedule()
+    return () => window.clearTimeout(timeout)
+  }, [settings.showSeconds])
 
   const time = now.toLocaleTimeString(settings.locale, {
     hour: '2-digit',

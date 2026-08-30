@@ -1,4 +1,4 @@
-import { Blocks, Layers, Plus, Puzzle, X } from 'lucide-react'
+import { Layers, Plus, Puzzle, X } from 'lucide-react'
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { RevealOnMount } from '../components/RevealOnMount'
 import { Toggle } from '../components/Toggle'
@@ -14,19 +14,17 @@ type TabId = 'builtin' | 'external'
  * for adding new plugins.
  * Plugins live in the repo under src/plugins/<id>/ — no runtime authoring.
  */
-export function PluginManager() {
-  const [open, setOpen] = useState(false)
+export function PluginManager({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<TabId>('builtin')
   const { isEnabled, setEnabled } = useEnabledPlugins()
 
   useEffect(() => {
-    if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
+  }, [onClose])
 
   const builtins = pluginDescriptors.filter((plugin) => plugin.builtin)
   const external = pluginDescriptors.filter((plugin) => !plugin.builtin)
@@ -37,25 +35,13 @@ export function PluginManager() {
   ]
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="chrome-button rounded-full border p-2.5 shadow-lg transition"
-        aria-label="Plugins"
-        title="Plugins"
+    <RevealOnMount className="fixed inset-0 z-50" onClose={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <Suspense
+        fallback={
+          <div className="chrome-panel absolute left-1/2 top-1/2 h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border shadow-2xl" />
+        }
       >
-        <Blocks className="h-4 w-4" />
-      </button>
-
-      {open && (
-        <RevealOnMount className="fixed inset-0 z-50" onClose={() => setOpen(false)}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <Suspense
-            fallback={
-              <div className="chrome-panel absolute left-1/2 top-1/2 h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border shadow-2xl" />
-            }
-          >
             <ThemeSurface
               onClick={(event) => event.stopPropagation()}
               fallbackClassName="chrome-panel"
@@ -70,7 +56,7 @@ export function PluginManager() {
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 className="rounded-full p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
                 aria-label="Close"
               >
@@ -131,10 +117,8 @@ export function PluginManager() {
               )}
             </div>
           </ThemeSurface>
-          </Suspense>
-        </RevealOnMount>
-      )}
-    </div>
+      </Suspense>
+    </RevealOnMount>
   )
 }
 

@@ -10,7 +10,6 @@ import {
   Palette,
   Plus,
   Search,
-  Settings,
   SlidersHorizontal,
   Sun,
   Upload,
@@ -59,6 +58,7 @@ interface SettingsPanelProps {
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
   background: BackgroundControls
+  onClose: () => void
 }
 
 interface Category {
@@ -96,8 +96,7 @@ const categories: Category[] = [
   { id: 'widgets', name: 'Widgets', icon: <LayoutGrid className="h-4 w-4" /> },
 ]
 
-export function SettingsPanel({ theme, onThemeChange, background }: SettingsPanelProps) {
-  const [open, setOpen] = useState(false)
+export function SettingsPanel({ theme, onThemeChange, background, onClose }: SettingsPanelProps) {
   const [active, setActive] = useState<'general' | 'appearance' | 'widgets'>('general')
   const [widgetsOpen, setWidgetsOpen] = useState(false)
   const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
@@ -141,13 +140,12 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
   }
 
   useEffect(() => {
-    if (!open) return
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
+      if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
+  }, [onClose])
 
   useEffect(() => {
     if (active === 'widgets' && !activeEntry && sidebarGroups.length > 0) {
@@ -159,25 +157,13 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
     active === 'general' ? 'General' : active === 'appearance' ? 'Appearance' : (activeEntry?.label ?? 'Widgets')
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="chrome-button rounded-full border p-2.5 shadow-lg transition"
-        aria-label="Settings"
-        title="Settings"
+    <RevealOnMount className="fixed inset-0 z-50" onClose={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <Suspense
+        fallback={
+          <div className="chrome-panel settings-panel absolute left-1/2 top-1/2 h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border shadow-2xl" />
+        }
       >
-        <Settings className="h-4 w-4" />
-      </button>
-
-      {open && (
-        <RevealOnMount className="fixed inset-0 z-50" onClose={() => setOpen(false)}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <Suspense
-            fallback={
-              <div className="chrome-panel settings-panel absolute left-1/2 top-1/2 h-[620px] w-[780px] max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border shadow-2xl" />
-            }
-          >
             <ThemeSurface
               onClick={(event) => event.stopPropagation()}
               fallbackClassName="chrome-panel settings-panel"
@@ -262,7 +248,7 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">{headerTitle}</h3>
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={onClose}
                   className="rounded-full p-2 text-slate-600 dark:text-white/60 transition hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white"
                   aria-label="Close"
                 >
@@ -287,10 +273,8 @@ export function SettingsPanel({ theme, onThemeChange, background }: SettingsPane
               </div>
             </div>
           </ThemeSurface>
-          </Suspense>
-        </RevealOnMount>
-      )}
-    </div>
+      </Suspense>
+    </RevealOnMount>
   )
 }
 

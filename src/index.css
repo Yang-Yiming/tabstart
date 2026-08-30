@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -166,11 +164,11 @@ button {
   color: var(--clock-date-text);
 }
 
-/* While a widget is expanded, the grid recedes iOS-folder style. */
+/* While a widget is expanded, the grid recedes iOS-folder style.
+   Only `transform` is transitioned: animating `filter: blur` forces
+   re-rasterization of every backdrop-filter layer each frame. */
 .dashboard-grid {
-  transition:
-    transform 280ms ease,
-    filter 280ms ease;
+  transition: transform 280ms ease;
 }
 
 .dashboard-grid.dashboard-grid--obscured {
