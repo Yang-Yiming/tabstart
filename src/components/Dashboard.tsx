@@ -338,7 +338,7 @@ export function Dashboard({ isEditing }: Props) {
           {addPanelOpen ? (
             <ThemeSurface
               fallbackClassName="border border-white/10 bg-black/35 backdrop-blur-2xl"
-              className="w-full max-w-3xl rounded-3xl p-5 shadow-2xl"
+              className="relative w-full max-w-3xl rounded-3xl p-5 shadow-2xl"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold text-white/85">Add a Widget</span>
