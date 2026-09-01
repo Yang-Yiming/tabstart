@@ -303,17 +303,17 @@ export function SearchWidget() {
                           selectEngine(item.engine)
                         }
                       }}
-                      className="flex flex-1 items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10"
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10"
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/10 text-xs">
                         {engineIcon(itemEngine, true)}
                       </span>
-                      <span className="truncate">{item.query}</span>
+                      <span className="min-w-0 truncate">{item.query}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => removeHistory(item.query)}
-                      className="rounded-xl p-2 text-white/50 transition hover:bg-white/10 hover:text-white/80"
+                      className="shrink-0 rounded-xl p-2 text-white/50 transition hover:bg-white/10 hover:text-white/80"
                       aria-label="Remove from history"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
