@@ -144,6 +144,15 @@ export default function App() {
 
   const [isEditing, setIsEditing] = useState(false)
 
+  // Exposed for the glass-effect theme's own-content refraction: a
+  // fixed-attachment copy of the wallpaper that must stay pixel-aligned with
+  // the background layer below. Set during render (idempotent) so glass
+  // surfaces can read it on their first paint, before any effect runs.
+  document.documentElement.style.setProperty(
+    '--homepage-wallpaper',
+    backgroundSrc ? `url(${backgroundSrc})` : 'none',
+  )
+
   useEffect(() => {
     // One-time rewrite of legacy widget keys (e.g. gauge:deepseek-balance) to plugin ids.
     migratePluginKeys().catch(() => {})
