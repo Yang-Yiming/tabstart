@@ -1,22 +1,22 @@
 import { Suspense } from 'react'
 import type { WidgetDescriptor } from '../plugins/types'
+import { gridItemSize } from '../lib/grid'
 
-const CELL = 128
-const GAP = 16
 const MAX_W = 240
 const MAX_H = 240
 
 interface Props {
   plugin: WidgetDescriptor
   onClick: () => void
+  /** Real grid column width measured from the dashboard; falls back to a nominal 4-col layout. */
+  colWidth: number
 }
 
-export function WidgetPreview({ plugin, onClick }: Props) {
-  const fullW = plugin.defaultW * CELL + (plugin.defaultW - 1) * GAP
-  const fullH = plugin.defaultH * CELL + (plugin.defaultH - 1) * GAP
-  const scale = Math.min(MAX_W / fullW, MAX_H / fullH, 1)
-  const w = Math.round(fullW * scale)
-  const h = Math.round(fullH * scale)
+export function WidgetPreview({ plugin, onClick, colWidth }: Props) {
+  const full = gridItemSize(colWidth, plugin.defaultW, plugin.defaultH)
+  const scale = Math.min(MAX_W / full.width, MAX_H / full.height, 1)
+  const w = Math.round(full.width * scale)
+  const h = Math.round(full.height * scale)
 
   return (
     <div
@@ -38,7 +38,7 @@ export function WidgetPreview({ plugin, onClick }: Props) {
       >
         <div
           className="pointer-events-none origin-top-left"
-          style={{ width: fullW, height: fullH, transform: `scale(${scale})` }}
+          style={{ width: full.width, height: full.height, transform: `scale(${scale})` }}
         >
           <div className="h-full w-full [&>*]:h-full">
             <Suspense fallback={<div className="h-full w-full rounded-3xl bg-white/5" />}>

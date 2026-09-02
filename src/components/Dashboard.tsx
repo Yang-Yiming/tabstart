@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { GripVertical, Maximize2, Plus, RotateCcw, X } from 'lucide-react'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import type { Layout, Layouts } from 'react-grid-layout'
@@ -14,6 +14,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useWidgets } from '../plugins/hooks'
 import { canonicalKey, groupWidgets, resolveWidget, useEnabledPlugins } from '../plugins/registry'
 import type { WidgetDescriptor } from '../plugins/types'
+import { BREAKPOINTS, COLS, GRID_MARGIN, GRID_ROW_HEIGHT, colWidthForWidth } from '../lib/grid'
 import { ExpandedWidgetOverlay } from './ExpandedWidgetOverlay'
 import { ThemeSurface } from './ThemeSurface'
 import { WidgetPreview } from './WidgetPreview'
@@ -23,10 +24,7 @@ interface Props {
 }
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
-const BREAKPOINTS = { lg: 960, md: 640, sm: 0 }
-const COLS = { lg: 4, md: 2, sm: 1 }
 const LAYOUT_KEY = 'homepage-widget-layouts-v1'
-const GRID_ROW_HEIGHT = 112
 
 const DEFAULT_LAYOUTS: Layouts = {
   lg: [
@@ -115,6 +113,23 @@ export function Dashboard({ isEditing }: Props) {
   const showExpandButton = normalizeDashboardSettings(rawDashboardSettings).showExpandButton
   const { isEnabled } = useEnabledPlugins()
   const widgets = useWidgets()
+
+  const gridRef = useRef<HTMLDivElement>(null)
+  const [gridWidth, setGridWidth] = useState(() => window.innerWidth)
+
+  useEffect(() => {
+    const el = gridRef.current
+    if (!el) return
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width
+      if (width) setGridWidth(width)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  /** Real grid geometry so add-widget previews match live widget proportions. */
+  const previewColWidth = colWidthForWidth(gridWidth)
 
   /** Target descriptor rendered in the expanded panel for `expandedKey`, if any. */
   const expandedWidget = useMemo(() => {
@@ -299,6 +314,7 @@ export function Dashboard({ isEditing }: Props) {
 
   return (
     <div
+      ref={gridRef}
       className={[
         'dashboard-grid relative',
         isEditing ? 'is-editing' : '',
@@ -310,7 +326,7 @@ export function Dashboard({ isEditing }: Props) {
         breakpoints={BREAKPOINTS}
         cols={COLS}
         rowHeight={GRID_ROW_HEIGHT}
-        margin={[16, 16]}
+        margin={[GRID_MARGIN, GRID_MARGIN]}
         containerPadding={[0, 0]}
         isDraggable={isEditing}
         isResizable={isEditing}
@@ -364,7 +380,12 @@ export function Dashboard({ isEditing }: Props) {
                       </span>
                       <div className="flex flex-wrap items-end gap-5">
                         {group.plugins.map((plugin) => (
-                          <WidgetPreview key={plugin.id} plugin={plugin} onClick={() => handleAdd(plugin.id)} />
+                          <WidgetPreview
+                            key={plugin.id}
+                            plugin={plugin}
+                            colWidth={previewColWidth}
+                            onClick={() => handleAdd(plugin.id)}
+                          />
                         ))}
                       </div>
                     </div>
