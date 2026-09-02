@@ -26,3 +26,6 @@ dist-ssr
 # User plugins: everything here is machine-local except the tracked example template
 user-plugins/*
 !user-plugins/example
+
+# Local agent tooling
+.zcode/
