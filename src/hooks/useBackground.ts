@@ -7,6 +7,11 @@ import {
   localDateKey,
   type BingDailyImage,
 } from '../lib/bingImage'
+import {
+  deleteBackgroundImage,
+  loadBackgroundImage,
+  saveBackgroundImage,
+} from '../lib/imageStore'
 import { useStoredState } from './useLocalStorage'
 
 export interface BackgroundState {
@@ -40,7 +45,8 @@ export function useBackground(): BackgroundControls {
   )
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const resetFileBgRef = useRef(false)
+  const restoreFileBgRef = useRef(false)
+  const uploadedFileRef = useRef(false)
   const autoCheckedBingDateRef = useRef<string | null>(null)
   const migratedDefaultBackgroundRef = useRef(false)
 
@@ -57,19 +63,34 @@ export function useBackground(): BackgroundControls {
     setBg((current) => ({ ...current, mode: 'bing', src: BING_DAILY_FALLBACK_URL }))
   }, [bg.mode, bg.src, bgHydrated, setBg])
 
-  // A blob URL persisted from a previous session is no longer valid, so fall back
-  // to the default background if the stored mode is 'file'.
+  // The custom image itself is persisted in IndexedDB; once the stored state
+  // has hydrated, rebuild a session object URL for it. If the blob is missing
+  // (cleared storage, IndexedDB unavailable) fall back to the default
+  // background instead of keeping a dead reference.
   useEffect(() => {
-    if (resetFileBgRef.current) return
-    resetFileBgRef.current = true
-    if (bg.mode === 'file') {
-      setBg({
-        src: homepageConfig.background.src,
-        overlay: homepageConfig.background.overlay,
-        mode: 'url',
-      })
+    if (!bgHydrated || restoreFileBgRef.current) return
+    restoreFileBgRef.current = true
+    if (bg.mode !== 'file' || uploadedFileRef.current) return
+
+    let cancelled = false
+    loadBackgroundImage().then((record) => {
+      if (cancelled) return
+      if (!record) {
+        setBg({
+          src: homepageConfig.background.src,
+          overlay: homepageConfig.background.overlay,
+          mode: 'url',
+        })
+        return
+      }
+      setFileUrl(URL.createObjectURL(record.blob))
+    })
+    return () => {
+      cancelled = true
+      // Allow the re-run after a StrictMode double-mount to restore again.
+      restoreFileBgRef.current = false
     }
-  }, [bg.mode, setBg])
+  }, [bg.mode, bgHydrated, setBg])
 
   useEffect(() => {
     return () => {
@@ -79,13 +100,23 @@ export function useBackground(): BackgroundControls {
 
   const backgroundSrc = bg.mode === 'file' && fileUrl ? fileUrl : bg.src
 
+  const releaseFileUrl = useCallback(() => {
+    if (fileUrl) URL.revokeObjectURL(fileUrl)
+    setFileUrl(null)
+  }, [fileUrl])
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
+    uploadedFileRef.current = true
     if (fileUrl) URL.revokeObjectURL(fileUrl)
     const url = URL.createObjectURL(file)
     setFileUrl(url)
-    setBg((current) => ({ ...current, mode: 'file', src: url }))
+    setBg((current) => ({ ...current, mode: 'file', src: '' }))
+    // One fixed slot in IndexedDB: each upload overwrites the previous image.
+    // On failure the blob URL above still serves this session.
+    saveBackgroundImage(file, file.name).catch(() => {})
   }
 
   const refreshBingBackground = useCallback(async () => {
@@ -121,14 +152,18 @@ export function useBackground(): BackgroundControls {
     (url: string) => {
       const trimmed = url.trim()
       if (!trimmed) return
+      releaseFileUrl()
+      deleteBackgroundImage()
       setBg((current) => ({ ...current, mode: 'url', src: trimmed }))
     },
-    [setBg],
+    [releaseFileUrl, setBg],
   )
 
   const applyBing = useCallback(() => {
+    releaseFileUrl()
+    deleteBackgroundImage()
     refreshBingBackground().catch(() => {})
-  }, [refreshBingBackground])
+  }, [refreshBingBackground, releaseFileUrl])
 
   return {
     bg,
