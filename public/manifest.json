@@ -6,14 +6,15 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["storage"],
+  "permissions": ["storage", "geolocation"],
   "host_permissions": [
     "https://www.bing.com/*",
     "https://bing.ee123.net/*",
     "https://api.deepseek.com/*",
     "https://opencode.ai/*",
     "https://api.open-meteo.com/*",
-    "https://geocoding-api.open-meteo.com/*"
+    "https://geocoding-api.open-meteo.com/*",
+    "https://api.bigdatacloud.net/*"
   ],
   "icons": {
     "16": "icons/icon-16.png",
