@@ -24,6 +24,15 @@ const COLUMN_META: Record<KanbanColumnId, { label: string; dot: string }> = {
   done: { label: 'Done', dot: 'bg-emerald-300/80' },
 }
 
+function useColumnMeta(widgetKey?: string) {
+  const { settings } = useWidgetSettings(widgetKey ?? 'kanban-compact')
+  return {
+    todo: { ...COLUMN_META.todo, label: String(settings.todoLabel || COLUMN_META.todo.label) },
+    doing: { ...COLUMN_META.doing, label: String(settings.doingLabel || COLUMN_META.doing.label) },
+    done: { ...COLUMN_META.done, label: String(settings.doneLabel || COLUMN_META.done.label) },
+  } satisfies Record<KanbanColumnId, { label: string; dot: string }>
+}
+
 function createId() {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
@@ -38,6 +47,7 @@ function useAdvanceOnComplete(widgetKey?: string) {
 
 export function KanbanFullWidget({ widgetKey }: WidgetProps) {
   const advance = useAdvanceOnComplete(widgetKey ?? 'kanban-full')
+  const columnMeta = useColumnMeta(widgetKey ?? 'kanban-full')
   const [store, setStore] = useKanbanStore()
   const [todoStore, setTodoStore] = useTodoStore()
   const [addingColumn, setAddingColumn] = useState<KanbanColumnId | null>(null)
@@ -117,7 +127,7 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
             >
               <div className="flex items-center gap-1.5 px-1">
                 <span className={['h-1.5 w-1.5 rounded-full', COLUMN_META[column].dot].join(' ')} />
-                <span className="text-[11px] font-medium text-white/70">{COLUMN_META[column].label}</span>
+                <span className="text-[11px] font-medium text-white/70">{columnMeta[column].label}</span>
                 <span className="font-mono text-[9px] text-white/35">{tasks.length}</span>
               </div>
 
@@ -160,7 +170,7 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
                           draggingId === task.id ? 'opacity-40' : '',
                         ].join(' ')}
                       >
-                        <TaskToggle task={task} advance={advance} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
+                        <TaskToggle task={task} advance={advance} columnMeta={columnMeta} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
                         <div className="min-w-0 flex-1 pt-0.5">
                           <EditableTitle
                             task={task}
@@ -185,7 +195,7 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
 
               {addingColumn === column ? (
                 <AddTaskInput
-                  placeholder={`Add to ${COLUMN_META[column].label}...`}
+                  placeholder={`Add to ${columnMeta[column].label}...`}
                   onAdd={(title) => handleAdd(column, title)}
                   onCancel={() => setAddingColumn(null)}
                 />
@@ -209,6 +219,7 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
 
 export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
   const advance = useAdvanceOnComplete(widgetKey)
+  const columnMeta = useColumnMeta(widgetKey)
   const [store, setStore] = useKanbanStore()
   const [todoStore, setTodoStore] = useTodoStore()
   const [column, setColumn] = useState<KanbanColumnId>('todo')
@@ -362,9 +373,9 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
                       ? 'bg-white/20 text-white shadow-sm'
                       : 'text-white/45 hover:text-white/80',
                 ].join(' ')}
-                title={isTarget ? `Move to ${COLUMN_META[option].label}` : undefined}
+                title={isTarget ? `Move to ${columnMeta[option].label}` : undefined}
               >
-                {COLUMN_META[option].label}
+                {columnMeta[option].label}
               </button>
             )
           })}
@@ -401,7 +412,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
             className="flex h-full min-h-20 w-full flex-col items-center justify-center gap-1 text-white/35 transition hover:text-white/60"
           >
             <SquareKanban className="h-5 w-5" />
-            <span className="text-xs">Nothing in {COLUMN_META[column].label}</span>
+            <span className="text-xs">Nothing in {columnMeta[column].label}</span>
           </button>
         ) : (
           <div className="space-y-0.5">
@@ -439,7 +450,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
                   draggingId === task.id ? 'opacity-40' : '',
                 ].join(' ')}
               >
-                <TaskToggle task={task} advance={advance} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
+                <TaskToggle task={task} advance={advance} columnMeta={columnMeta} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
                 <div className="min-w-0 flex-1">
                   <EditableTitle
                     task={task}
@@ -455,7 +466,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
                     handleMovePrev(task.id)
                   }}
                   className="shrink-0 rounded p-1 text-white/35 transition hover:bg-white/10 hover:text-white"
-                  title={`Move to ${COLUMN_META[prevColumn(task.column)].label}`}
+                  title={`Move to ${columnMeta[prevColumn(task.column)].label}`}
                   aria-label="Move to previous column"
                 >
                   <ChevronLeft className="h-3 w-3" />
@@ -467,7 +478,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
                     handleMove(task.id)
                   }}
                   className="shrink-0 rounded p-1 text-white/35 transition hover:bg-white/10 hover:text-white"
-                  title={task.column === 'done' ? 'Move back to Todo' : `Move to ${COLUMN_META[nextColumn(task.column)].label}`}
+                  title={task.column === 'done' ? `Move back to ${columnMeta.todo.label}` : `Move to ${columnMeta[nextColumn(task.column)].label}`}
                   aria-label="Move to next column"
                 >
                   {task.column === 'done' ? <Repeat className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
@@ -490,7 +501,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
       </div>
 
       {adding ? (
-        <AddTaskInput placeholder={`Add to ${COLUMN_META[column].label}...`} onAdd={addItem} onCancel={() => setAdding(false)} />
+        <AddTaskInput placeholder={`Add to ${columnMeta[column].label}...`} onAdd={addItem} onCancel={() => setAdding(false)} />
       ) : (
         <div className="flex items-center justify-between gap-2">
           <button
@@ -514,10 +525,11 @@ interface TaskToggleProps {
   task: KanbanTask
   /** Mirror of the instance's `advanceOnComplete` setting, for label + title. */
   advance?: boolean
+  columnMeta: Record<KanbanColumnId, { label: string; dot: string }>
   onToggle: (taskId: string) => void
 }
 
-function TaskToggle({ task, advance = true, onToggle }: TaskToggleProps) {
+function TaskToggle({ task, advance = true, columnMeta, onToggle }: TaskToggleProps) {
   const done = task.column === 'done' || Boolean(task.completedAt)
   const inPlace = !advance && task.column !== 'done'
   return (
@@ -532,7 +544,7 @@ function TaskToggle({ task, advance = true, onToggle }: TaskToggleProps) {
       title={
         inPlace
           ? done ? 'Mark incomplete' : 'Mark complete'
-          : done ? `Move back to ${task.completedFrom ?? 'todo'}` : 'Move to Done'
+          : done ? `Move back to ${columnMeta[task.completedFrom ?? 'todo'].label}` : `Move to ${columnMeta.done.label}`
       }
     >
       {done ? (

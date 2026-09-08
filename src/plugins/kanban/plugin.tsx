@@ -12,6 +12,12 @@ const advanceOnCompleteField = {
   default: true,
 }
 
+const columnNameFields = [
+  { type: 'text' as const, key: 'todoLabel', label: 'Todo 栏名称', default: 'Todo' },
+  { type: 'text' as const, key: 'doingLabel', label: 'Doing 栏名称', default: 'Doing' },
+  { type: 'text' as const, key: 'doneLabel', label: 'Done 栏名称', default: 'Done' },
+]
+
 const kanbanFull: WidgetDescriptor = {
   id: 'kanban-full',
   name: 'Kanban Board',
@@ -25,7 +31,7 @@ const kanbanFull: WidgetDescriptor = {
   order: 60,
   settings: {
     title: 'Kanban Board',
-    fields: [advanceOnCompleteField],
+    fields: [advanceOnCompleteField, ...columnNameFields],
   },
 }
 
@@ -43,7 +49,7 @@ const kanbanCompact: WidgetDescriptor = {
   expandTo: 'kanban-full',
   settings: {
     title: 'Kanban Compact',
-    fields: [advanceOnCompleteField],
+    fields: [advanceOnCompleteField, ...columnNameFields],
   },
 }
 
