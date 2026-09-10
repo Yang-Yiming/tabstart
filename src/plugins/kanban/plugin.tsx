@@ -12,6 +12,14 @@ const advanceOnCompleteField = {
   default: true,
 }
 
+const autoCompleteDoneColumnField = {
+  type: 'boolean' as const,
+  key: 'autoCompleteDoneColumn',
+  label: '移到第三栏时自动完成',
+  description: '关闭后第三栏只作为普通栏位，移动任务不会自动打勾。',
+  default: true,
+}
+
 const columnNameFields = [
   { type: 'text' as const, key: 'todoLabel', label: 'Todo 栏名称', default: 'Todo' },
   { type: 'text' as const, key: 'doingLabel', label: 'Doing 栏名称', default: 'Doing' },
@@ -31,7 +39,7 @@ const kanbanFull: WidgetDescriptor = {
   order: 60,
   settings: {
     title: 'Kanban Board',
-    fields: [advanceOnCompleteField, ...columnNameFields],
+    fields: [advanceOnCompleteField, autoCompleteDoneColumnField, ...columnNameFields],
   },
 }
 
@@ -49,7 +57,7 @@ const kanbanCompact: WidgetDescriptor = {
   expandTo: 'kanban-full',
   settings: {
     title: 'Kanban Compact',
-    fields: [advanceOnCompleteField, ...columnNameFields],
+    fields: [advanceOnCompleteField, autoCompleteDoneColumnField, ...columnNameFields],
   },
 }
 

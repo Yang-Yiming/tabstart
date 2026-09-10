@@ -56,6 +56,7 @@ export function transferTodoToKanban(
   kanbanStore: KanbanStore,
   taskId: string,
   column: KanbanColumnId,
+  autoCompleteDoneColumn = true,
 ): { todo: TodoStore; kanban: KanbanStore } {
   const item = todoStore.items.find((candidate) => candidate.id === taskId)
   if (!item) return { todo: todoStore, kanban: kanbanStore }
@@ -66,7 +67,9 @@ export function transferTodoToKanban(
     title: item.title,
     column: targetColumn,
     createdAt: item.createdAt,
-    completedAt: targetColumn === 'done' ? (item.completedAt ?? new Date().toISOString()) : undefined,
+    completedAt: isCompleted(item) || targetColumn === 'done' && autoCompleteDoneColumn
+      ? (item.completedAt ?? new Date().toISOString())
+      : undefined,
   }
   return {
     todo: { items: todoStore.items.filter((candidate) => candidate.id !== taskId) },
@@ -84,7 +87,7 @@ export function transferKanbanToTodo(
   const task = kanbanStore.tasks.find((candidate) => candidate.id === taskId)
   if (!task) return { kanban: kanbanStore, todo: todoStore }
 
-  const done = task.column === 'done'
+  const done = Boolean(task.completedAt)
   const item: TodoItem = {
     id: task.id,
     title: task.title,
