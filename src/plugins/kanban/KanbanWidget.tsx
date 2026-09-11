@@ -45,8 +45,14 @@ function useAdvanceOnComplete(widgetKey?: string) {
   return settings.advanceOnComplete !== false
 }
 
+function useAutoCompleteDoneColumn(widgetKey?: string) {
+  const { settings } = useWidgetSettings(widgetKey ?? 'kanban-compact')
+  return settings.autoCompleteDoneColumn !== false
+}
+
 export function KanbanFullWidget({ widgetKey }: WidgetProps) {
   const advance = useAdvanceOnComplete(widgetKey ?? 'kanban-full')
+  const autoCompleteDoneColumn = useAutoCompleteDoneColumn(widgetKey ?? 'kanban-full')
   const columnMeta = useColumnMeta(widgetKey ?? 'kanban-full')
   const [store, setStore] = useKanbanStore()
   const [todoStore, setTodoStore] = useTodoStore()
@@ -64,11 +70,11 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
     event.preventDefault()
     const dragged = getDragData(event)
     if (dragged?.source === 'todo') {
-      const { todo, kanban } = transferTodoToKanban(todoStore, store, dragged.id, column)
+      const { todo, kanban } = transferTodoToKanban(todoStore, store, dragged.id, column, autoCompleteDoneColumn)
       setTodoStore(todo)
       setStore(kanban)
     } else if (draggingId) {
-      setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, column, beforeTaskId) }))
+      setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, column, beforeTaskId, autoCompleteDoneColumn) }))
     }
     setDraggingId(null)
     setDragOver(null)
@@ -91,6 +97,7 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
       title,
       column,
       createdAt: new Date().toISOString(),
+      completedAt: column === 'done' && autoCompleteDoneColumn ? new Date().toISOString() : undefined,
     }
     setStore((prev) => ({ ...prev, tasks: [...prev.tasks, task] }))
     setAddingColumn(null)
@@ -170,11 +177,11 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
                           draggingId === task.id ? 'opacity-40' : '',
                         ].join(' ')}
                       >
-                        <TaskToggle task={task} advance={advance} columnMeta={columnMeta} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
+                        <TaskToggle task={task} advance={advance} autoCompleteDoneColumn={autoCompleteDoneColumn} columnMeta={columnMeta} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance, autoCompleteDoneColumn) }))} />
                         <div className="min-w-0 flex-1 pt-0.5">
                           <EditableTitle
                             task={task}
-                            done={task.column === 'done' || Boolean(task.completedAt)}
+                            done={Boolean(task.completedAt) || autoCompleteDoneColumn && task.column === 'done'}
                             onRename={handleRename}
                             className="block w-full truncate text-[12px] leading-snug"
                           />
@@ -219,6 +226,7 @@ export function KanbanFullWidget({ widgetKey }: WidgetProps) {
 
 export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
   const advance = useAdvanceOnComplete(widgetKey)
+  const autoCompleteDoneColumn = useAutoCompleteDoneColumn(widgetKey)
   const columnMeta = useColumnMeta(widgetKey)
   const [store, setStore] = useKanbanStore()
   const [todoStore, setTodoStore] = useTodoStore()
@@ -251,7 +259,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
           const task = store.tasks.find((candidate) => candidate.id === selectedId)
           if (!task) return
           event.preventDefault()
-          setStore((prev) => ({ ...prev, tasks: moveTaskToNextColumn(prev.tasks, selectedId) }))
+          setStore((prev) => ({ ...prev, tasks: moveTaskToNextColumn(prev.tasks, selectedId, autoCompleteDoneColumn) }))
           setColumn(nextColumn(task.column))
           break
         }
@@ -260,14 +268,14 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
           const task = store.tasks.find((candidate) => candidate.id === selectedId)
           if (!task) return
           event.preventDefault()
-          setStore((prev) => ({ ...prev, tasks: moveTaskToPrevColumn(prev.tasks, selectedId) }))
+          setStore((prev) => ({ ...prev, tasks: moveTaskToPrevColumn(prev.tasks, selectedId, autoCompleteDoneColumn) }))
           setColumn(prevColumn(task.column))
           break
         }
         case 'Enter': {
           if (!selectedId) return
           event.preventDefault()
-          setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, selectedId, advance) }))
+          setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, selectedId, advance, autoCompleteDoneColumn) }))
           break
         }
         case 'ArrowDown':
@@ -290,7 +298,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [active, advance, selectedId, selectedIndex, setStore, store.tasks, tasks])
+  }, [active, advance, autoCompleteDoneColumn, selectedId, selectedIndex, setStore, store.tasks, tasks])
 
   const addItem = (title: string) => {
     const trimmed = title.trim()
@@ -300,18 +308,19 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
       title: trimmed,
       column,
       createdAt: new Date().toISOString(),
+      completedAt: column === 'done' && autoCompleteDoneColumn ? new Date().toISOString() : undefined,
     }
     setStore((prev) => ({ ...prev, tasks: [...prev.tasks, task] }))
     setAdding(false)
   }
 
   const handleMove = (taskId: string) => {
-    setStore((prev) => ({ ...prev, tasks: moveTaskToNextColumn(prev.tasks, taskId) }))
+    setStore((prev) => ({ ...prev, tasks: moveTaskToNextColumn(prev.tasks, taskId, autoCompleteDoneColumn) }))
     setSelectedId(null)
   }
 
   const handleMovePrev = (taskId: string) => {
-    setStore((prev) => ({ ...prev, tasks: moveTaskToPrevColumn(prev.tasks, taskId) }))
+    setStore((prev) => ({ ...prev, tasks: moveTaskToPrevColumn(prev.tasks, taskId, autoCompleteDoneColumn) }))
     setSelectedId(null)
   }
 
@@ -331,12 +340,12 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
     event.preventDefault()
     const dragged = getDragData(event)
     if (dragged?.source === 'todo') {
-      const { todo, kanban } = transferTodoToKanban(todoStore, store, dragged.id, targetColumn)
+      const { todo, kanban } = transferTodoToKanban(todoStore, store, dragged.id, targetColumn, autoCompleteDoneColumn)
       setTodoStore(todo)
       setStore(kanban)
       if (targetColumn !== column) setColumn(targetColumn)
     } else if (draggingId) {
-      setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, targetColumn, beforeTaskId) }))
+      setStore((prev) => ({ ...prev, tasks: moveTask(prev.tasks, draggingId, targetColumn, beforeTaskId, autoCompleteDoneColumn) }))
       if (targetColumn !== column) setColumn(targetColumn)
     }
     setDraggingId(null)
@@ -450,11 +459,11 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
                   draggingId === task.id ? 'opacity-40' : '',
                 ].join(' ')}
               >
-                <TaskToggle task={task} advance={advance} columnMeta={columnMeta} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance) }))} />
+                <TaskToggle task={task} advance={advance} autoCompleteDoneColumn={autoCompleteDoneColumn} columnMeta={columnMeta} onToggle={(id) => setStore((prev) => ({ ...prev, tasks: toggleTaskComplete(prev.tasks, id, advance, autoCompleteDoneColumn) }))} />
                 <div className="min-w-0 flex-1">
                   <EditableTitle
                     task={task}
-                    done={task.column === 'done' || Boolean(task.completedAt)}
+                    done={Boolean(task.completedAt) || autoCompleteDoneColumn && task.column === 'done'}
                     onRename={handleRename}
                     className="block w-full truncate text-[13px] leading-tight"
                   />
@@ -525,12 +534,13 @@ interface TaskToggleProps {
   task: KanbanTask
   /** Mirror of the instance's `advanceOnComplete` setting, for label + title. */
   advance?: boolean
+  autoCompleteDoneColumn?: boolean
   columnMeta: Record<KanbanColumnId, { label: string; dot: string }>
   onToggle: (taskId: string) => void
 }
 
-function TaskToggle({ task, advance = true, columnMeta, onToggle }: TaskToggleProps) {
-  const done = task.column === 'done' || Boolean(task.completedAt)
+function TaskToggle({ task, advance = true, autoCompleteDoneColumn = true, columnMeta, onToggle }: TaskToggleProps) {
+  const done = Boolean(task.completedAt) || autoCompleteDoneColumn && task.column === 'done'
   const inPlace = !advance && task.column !== 'done'
   return (
     <button

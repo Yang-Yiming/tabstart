@@ -50,8 +50,9 @@ export function prevColumn(column: KanbanColumnId): KanbanColumnId {
   return KANBAN_COLUMNS[(KANBAN_COLUMNS.indexOf(column) + KANBAN_COLUMNS.length - 1) % KANBAN_COLUMNS.length]
 }
 
-function withColumn(task: KanbanTask, column: KanbanColumnId): KanbanTask {
+function withColumn(task: KanbanTask, column: KanbanColumnId, autoCompleteDoneColumn = true): KanbanTask {
   if (column === task.column) return task
+  if (!autoCompleteDoneColumn) return { ...task, column }
   return {
     ...task,
     column,
@@ -65,12 +66,13 @@ export function moveTask(
   taskId: string,
   toColumn: KanbanColumnId,
   beforeTaskId?: string,
+  autoCompleteDoneColumn = true,
 ): KanbanTask[] {
   const task = tasks.find((candidate) => candidate.id === taskId)
   if (!task || toColumn === task.column && beforeTaskId === taskId) return tasks
 
   const without = tasks.filter((candidate) => candidate.id !== taskId)
-  const updated = withColumn(task, toColumn)
+  const updated = withColumn(task, toColumn, autoCompleteDoneColumn)
 
   const before = without.find((candidate) => candidate.id === beforeTaskId)
   const beforeIndex = before ? without.indexOf(before) : without.length
@@ -79,16 +81,16 @@ export function moveTask(
   return result
 }
 
-export function moveTaskToNextColumn(tasks: KanbanTask[], taskId: string): KanbanTask[] {
+export function moveTaskToNextColumn(tasks: KanbanTask[], taskId: string, autoCompleteDoneColumn = true): KanbanTask[] {
   const task = tasks.find((candidate) => candidate.id === taskId)
   if (!task) return tasks
-  return moveTask(tasks, taskId, nextColumn(task.column))
+  return moveTask(tasks, taskId, nextColumn(task.column), undefined, autoCompleteDoneColumn)
 }
 
-export function moveTaskToPrevColumn(tasks: KanbanTask[], taskId: string): KanbanTask[] {
+export function moveTaskToPrevColumn(tasks: KanbanTask[], taskId: string, autoCompleteDoneColumn = true): KanbanTask[] {
   const task = tasks.find((candidate) => candidate.id === taskId)
   if (!task) return tasks
-  return moveTask(tasks, taskId, prevColumn(task.column))
+  return moveTask(tasks, taskId, prevColumn(task.column), undefined, autoCompleteDoneColumn)
 }
 
 /**
@@ -97,9 +99,24 @@ export function moveTaskToPrevColumn(tasks: KanbanTask[], taskId: string): Kanba
  * in place (stays in its column, `completedAt` set) so the board order
  * is untouched.
  */
-export function toggleTaskComplete(tasks: KanbanTask[], taskId: string, advance = true): KanbanTask[] {
+export function toggleTaskComplete(
+  tasks: KanbanTask[],
+  taskId: string,
+  advance = true,
+  autoCompleteDoneColumn = true,
+): KanbanTask[] {
   const task = tasks.find((candidate) => candidate.id === taskId)
   if (!task) return tasks
+  if (!autoCompleteDoneColumn) {
+    if (task.completedAt || !advance || task.column === 'done') {
+      return tasks.map((candidate) =>
+        candidate.id === taskId
+          ? { ...candidate, completedAt: candidate.completedAt ? undefined : new Date().toISOString() }
+          : candidate,
+      )
+    }
+    return moveTask(tasks, taskId, 'done')
+  }
   if (task.column === 'done') {
     return moveTask(tasks, taskId, task.completedFrom ?? 'todo')
   }
