@@ -9,7 +9,7 @@ const widget: WidgetDescriptor = {
   component: lazy(() => import('./NotesWidget').then((m) => ({ default: m.NotesWidget }))),
   defaultW: 2,
   defaultH: 2,
-  minW: 2,
+  minW: 1,
   minH: 2,
   builtin: true,
   order: 20,
