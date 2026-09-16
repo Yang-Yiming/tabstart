@@ -39,7 +39,13 @@ function storedSettings(state: WidgetSettingsState, widgetKey: string): WidgetSe
 export function useWidgetSettings(widgetKey: string) {
   const ctx = usePluginHost()
   useSyncExternalStore(ctx.widgets.subscribe, ctx.widgets.getVersion)
-  const [state, setState] = useLocalStorage<WidgetSettingsState>(WIDGET_SETTINGS_KEY, {})
+  // Debounced like the other high-frequency stores (layout, notes): every
+  // keystroke in a widget setting field rewrites and re-serializes the whole
+  // settings map, and the resulting storage event re-renders every
+  // `useWidgetSettings` consumer.
+  const [state, setState] = useLocalStorage<WidgetSettingsState>(WIDGET_SETTINGS_KEY, {}, {
+    debounceMs: 300,
+  })
   const canonical = canonicalKey(widgetKey)
   const schema = ctx.widgets.get(canonical)?.settings ?? null
 

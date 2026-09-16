@@ -84,9 +84,15 @@ function createRegistry<T extends { id: string }>() {
   const items = new Map<string, T>()
   const listeners = new Set<() => void>()
   let version = 0
+  // `list()` feeds `useSyncExternalStore` through `getVersion()`, and React
+  // compares snapshots by identity: returning a fresh array every call means
+  // the store always looks changed, so subscribers can never bail out. The
+  // array is rebuilt only when the contents actually change.
+  let snapshot: T[] = []
 
   const bump = () => {
     version += 1
+    snapshot = Array.from(items.values())
     listeners.forEach((listener) => listener())
   }
 
@@ -103,7 +109,7 @@ function createRegistry<T extends { id: string }>() {
         bump()
       }
     },
-    list: () => Array.from(items.values()),
+    list: () => snapshot,
     get: (id: string) => items.get(id),
     subscribe(listener: () => void) {
       listeners.add(listener)
