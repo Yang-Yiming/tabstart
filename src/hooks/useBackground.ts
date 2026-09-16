@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { homepageConfig } from '../config/homepage'
 import {
   fetchBingDailyImage,
-  BING_DAILY_FALLBACK_URL,
   isBingImageUrl,
   localDateKey,
+  sizedBingWallpaperUrl,
   type BingDailyImage,
 } from '../lib/bingImage'
 import {
@@ -33,9 +33,51 @@ export interface BackgroundControls {
   applyBing: () => void
 }
 
+/**
+ * Viewport size in device pixels, tracked live. The wallpaper is requested at
+ * the resolution of the screen showing it, so a maximize or a move to a denser
+ * display should re-request instead of upscaling the smaller image.
+ */
+function useWallpaperPixels() {
+  const [pixels, setPixels] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    dpr: window.devicePixelRatio,
+  }))
+
+  useEffect(() => {
+    let frame = 0
+    const schedule = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        setPixels((prev) => {
+          const width = window.innerWidth
+          const height = window.innerHeight
+          const dpr = window.devicePixelRatio
+          return prev.width === width && prev.height === height && prev.dpr === dpr
+            ? prev
+            : { width, height, dpr }
+        })
+      })
+    }
+
+    window.addEventListener('resize', schedule)
+    return () => {
+      window.removeEventListener('resize', schedule)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  return pixels
+}
+
 export function useBackground(): BackgroundControls {
+  // No wallpaper until the stored state hydrates (or the daily fetch resolves).
+  // Pointing this at the fallback mirror made every load start a redirect to the
+  // 3.4 MB master before the real (sized, cached) URL was known.
   const [bg, setBg, bgHydrated] = useStoredState<BackgroundState>('homepage-background', {
-    src: BING_DAILY_FALLBACK_URL,
+    src: '',
     overlay: homepageConfig.background.overlay,
     mode: 'bing',
   })
@@ -43,6 +85,7 @@ export function useBackground(): BackgroundControls {
     'homepage-bing-cache',
     null,
   )
+  const wallpaperPixels = useWallpaperPixels()
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const restoreFileBgRef = useRef(false)
@@ -60,7 +103,10 @@ export function useBackground(): BackgroundControls {
     ) return
 
     migratedDefaultBackgroundRef.current = true
-    setBg((current) => ({ ...current, mode: 'bing', src: BING_DAILY_FALLBACK_URL }))
+    // `''` means "Bing, URL not resolved yet"; the daily refresh fills it in.
+    // Writing the fallback mirror here would make the first paint redirect to
+    // the unsized 3.4 MB master.
+    setBg((current) => ({ ...current, mode: 'bing', src: '' }))
   }, [bg.mode, bg.src, bgHydrated, setBg])
 
   // The custom image itself is persisted in IndexedDB; once the stored state
@@ -98,7 +144,9 @@ export function useBackground(): BackgroundControls {
     }
   }, [fileUrl])
 
-  const backgroundSrc = bg.mode === 'file' && fileUrl ? fileUrl : bg.src
+  const backgroundSrc = bg.mode === 'file' && fileUrl
+    ? fileUrl
+    : sizedBingWallpaperUrl(bg.src, wallpaperPixels.width, wallpaperPixels.height, wallpaperPixels.dpr)
 
   const releaseFileUrl = useCallback(() => {
     if (fileUrl) URL.revokeObjectURL(fileUrl)
