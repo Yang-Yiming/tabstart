@@ -1,6 +1,5 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { GripVertical, Maximize2, Plus, RotateCcw, X } from 'lucide-react'
-import { Responsive, WidthProvider } from 'react-grid-layout'
 import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
@@ -10,12 +9,14 @@ import {
   normalizeDashboardSettings,
   type DashboardSettings,
 } from '../config/preferences'
+import { useLazyComponent } from '../hooks/useLazyComponent'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useWidgets } from '../plugins/hooks'
 import { canonicalKey, groupWidgets, resolveWidget, useEnabledPlugins } from '../plugins/registry'
 import type { WidgetDescriptor } from '../plugins/types'
-import { BREAKPOINTS, COLS, GRID_MARGIN, GRID_ROW_HEIGHT, colWidthForWidth } from '../lib/grid'
+import { BREAKPOINTS, COLS, GRID_MARGIN, GRID_ROW_HEIGHT, breakpointForWidth, colWidthForWidth } from '../lib/grid'
 import { ExpandedWidgetOverlay } from './ExpandedWidgetOverlay'
+import { StaticWidgetGrid } from './StaticWidgetGrid'
 import { ThemeSurface } from './ThemeSurface'
 import { WidgetPreview } from './WidgetPreview'
 
@@ -23,7 +24,10 @@ interface Props {
   isEditing: boolean
 }
 
-const ResponsiveGridLayout = WidthProvider(Responsive)
+/** Drag/resize lives behind this chunk; see `GridEditor`. */
+const loadGridEditor = () =>
+  import('./GridEditor').then((m) => ({ default: m.GridEditor }))
+
 const LAYOUT_KEY = 'homepage-widget-layouts-v1'
 
 const DEFAULT_LAYOUTS: Layouts = {
@@ -115,18 +119,32 @@ export function Dashboard({ isEditing }: Props) {
   const widgets = useWidgets()
 
   const gridRef = useRef<HTMLDivElement>(null)
-  const [gridWidth, setGridWidth] = useState(() => window.innerWidth)
+  const [gridWidth, setGridWidth] = useState(0)
 
-  useEffect(() => {
+  /**
+   * Measured before first paint so widgets land at their final size straight
+   * away. Both grids derive their column width from this single measurement:
+   * previously react-grid-layout's `WidthProvider` measured separately and
+   * started from its 1280 px default, so every load laid the widgets out for
+   * 1280 and then snapped them to the real width.
+   */
+  useLayoutEffect(() => {
     const el = gridRef.current
     if (!el) return
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width
-      if (width) setGridWidth(width)
-    })
+    const measure = () => {
+      const width = el.getBoundingClientRect().width
+      if (width > 0) setGridWidth((prev) => (prev === width ? prev : width))
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
+
+  const { component: GridEditor, request: warmGridEditor } = useLazyComponent(loadGridEditor)
+  useEffect(() => {
+    if (isEditing) warmGridEditor()
+  }, [isEditing, warmGridEditor])
 
   /** Real grid geometry so add-widget previews match live widget proportions. */
   const previewColWidth = colWidthForWidth(gridWidth)
@@ -321,23 +339,30 @@ export function Dashboard({ isEditing }: Props) {
         expandedKey ? 'dashboard-grid--obscured' : '',
       ].join(' ')}
     >
-      <ResponsiveGridLayout
-        layouts={displayLayouts}
-        breakpoints={BREAKPOINTS}
-        cols={COLS}
-        rowHeight={GRID_ROW_HEIGHT}
-        margin={[GRID_MARGIN, GRID_MARGIN]}
-        containerPadding={[0, 0]}
-        isDraggable={isEditing}
-        isResizable={isEditing}
-        draggableHandle=".drag-handle"
-        draggableCancel="input,textarea,button,select,a"
-        onLayoutChange={handleLayoutChange}
-        compactType="vertical"
-        useCSSTransforms
-      >
-        {renderedWidgets}
-      </ResponsiveGridLayout>
+      {isEditing && GridEditor ? (
+        <GridEditor
+          layouts={displayLayouts}
+          width={gridWidth}
+          cols={COLS}
+          breakpoints={BREAKPOINTS}
+          rowHeight={GRID_ROW_HEIGHT}
+          margin={[GRID_MARGIN, GRID_MARGIN]}
+          isDraggable
+          isResizable
+          draggableHandle=".drag-handle"
+          draggableCancel="input,textarea,button,select,a"
+          onLayoutChange={handleLayoutChange}
+        >
+          {renderedWidgets}
+        </GridEditor>
+      ) : (
+        <StaticWidgetGrid
+          layout={displayLayouts[breakpointForWidth(gridWidth)] ?? []}
+          containerWidth={gridWidth}
+        >
+          {renderedWidgets}
+        </StaticWidgetGrid>
+      )}
 
       {expandedWidget && expandedKey && (
         <ExpandedWidgetOverlay

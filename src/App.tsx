@@ -1,52 +1,18 @@
 import { Check, Blocks, Pencil, Settings } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Dashboard } from './components/Dashboard'
 import { Slot } from './plugins/Slot'
 import { ThemeApplier } from './plugins/ThemeApplier'
 import { migratePluginKeys } from './plugins/registry'
 import type { ThemeMode } from './config/theme'
 import { useBackground } from './hooks/useBackground'
+import { useLazyComponent } from './hooks/useLazyComponent'
 import { useStoredState } from './hooks/useLocalStorage'
 
 const loadSettingsPanel = () =>
   import('./components/SettingsPanel').then((m) => ({ default: m.SettingsPanel }))
 const loadPluginManager = () =>
   import('./plugins/PluginManager').then((m) => ({ default: m.PluginManager }))
-
-/**
- * Loads a modal component on demand, resolved outside React.lazy's
- * suspend-and-retry cycle: an already-resolved module is stored in state, so
- * the first open commits synchronously instead of throwing the promise and
- * waiting for a scheduler retry (which showed up as a noticeable stall).
- *
- * The chunk is warmed during idle time and on trigger hover/focus, so by the
- * time the user clicks, the component is ready with zero loading state.
- */
-function useLazyModal(load: () => Promise<{ default: ComponentType<any> }>) {
-  const [component, setComponent] = useState<ComponentType<any> | null>(null)
-  const requestedRef = useRef(false)
-
-  const request = useCallback(() => {
-    if (requestedRef.current) return
-    requestedRef.current = true
-    load()
-      .then((m) => setComponent(() => m.default))
-      .catch(() => {
-        requestedRef.current = false
-      })
-  }, [load])
-
-  useEffect(() => {
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(request, { timeout: 3000 })
-      return () => window.cancelIdleCallback(id)
-    }
-    const timer = window.setTimeout(request, 2000)
-    return () => window.clearTimeout(timer)
-  }, [request])
-
-  return { component, request }
-}
 
 function ChromeIconButton({
   label,
@@ -97,7 +63,7 @@ function SettingsButton({
 }) {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
-  const { component: SettingsPanelComponent, request: preload } = useLazyModal(loadSettingsPanel)
+  const { component: SettingsPanelComponent, request: preload } = useLazyComponent(loadSettingsPanel)
 
   return (
     <>
@@ -116,7 +82,7 @@ function SettingsButton({
 function PluginsButton() {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
-  const { component: PluginManagerComponent, request: preload } = useLazyModal(loadPluginManager)
+  const { component: PluginManagerComponent, request: preload } = useLazyComponent(loadPluginManager)
 
   return (
     <>
