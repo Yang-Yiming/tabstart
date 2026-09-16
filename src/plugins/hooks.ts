@@ -32,10 +32,13 @@ export function useThemes(): ThemeDescriptor[] {
   return ctx.themes.list()
 }
 
+/** Storage key holding the selected theme id (see `useActiveTheme`). */
+export const ACTIVE_THEME_KEY = 'homepage-active-theme'
+
 /** The currently selected plugin theme. `activeThemeId` is persisted. */
 export function useActiveTheme() {
   const themes = useThemes()
-  const [activeThemeId, setActiveThemeId] = useLocalStorage<string>('homepage-active-theme', 'default')
+  const [activeThemeId, setActiveThemeId] = useLocalStorage<string>(ACTIVE_THEME_KEY, 'default')
 
   return {
     themes,
