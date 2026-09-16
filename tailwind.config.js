@@ -35,8 +35,10 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        // Resolved from the stacks in index.css, which `data-font` on <html>
+        // swaps between the system fonts and Inter / JetBrains Mono.
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
       },
       animation: {
         'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',

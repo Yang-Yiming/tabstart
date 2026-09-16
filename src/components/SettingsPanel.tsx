@@ -25,6 +25,7 @@ import {
   DEFAULT_CLOCK_SETTINGS,
   DEFAULT_DASHBOARD_SETTINGS,
   DEFAULT_SEARCH_SETTINGS,
+  FONT_FAMILY_OPTIONS,
   formatShortcut,
   normalizeClockSettings,
   normalizeDashboardSettings,
@@ -33,6 +34,7 @@ import {
   shortcutEquals,
   type ClockSettings,
   type DashboardSettings,
+  type FontFamily,
   type SearchEngineItem,
   type SearchEngineShortcut,
   type SearchSettings,
@@ -57,6 +59,8 @@ import { Toggle } from './Toggle'
 interface SettingsPanelProps {
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
+  fontFamily: FontFamily
+  onFontFamilyChange: (font: FontFamily) => void
   background: BackgroundControls
   onClose: () => void
 }
@@ -96,7 +100,14 @@ const categories: Category[] = [
   { id: 'widgets', name: 'Widgets', icon: <LayoutGrid className="h-4 w-4" /> },
 ]
 
-export function SettingsPanel({ theme, onThemeChange, background, onClose }: SettingsPanelProps) {
+export function SettingsPanel({
+  theme,
+  onThemeChange,
+  fontFamily,
+  onFontFamilyChange,
+  background,
+  onClose,
+}: SettingsPanelProps) {
   const [active, setActive] = useState<'general' | 'appearance' | 'widgets'>('general')
   const [widgetsOpen, setWidgetsOpen] = useState(false)
   const [activeWidgetKey, setActiveWidgetKey] = useState<string | null>(null)
@@ -263,6 +274,8 @@ export function SettingsPanel({ theme, onThemeChange, background, onClose }: Set
                   <AppearanceSection
                     theme={theme}
                     onThemeChange={onThemeChange}
+                    fontFamily={fontFamily}
+                    onFontFamilyChange={onFontFamilyChange}
                     background={background}
                   />
                 ) : activeEntry ? (
@@ -793,10 +806,14 @@ function ToggleRow({
 function AppearanceSection({
   theme,
   onThemeChange,
+  fontFamily,
+  onFontFamilyChange,
   background,
 }: {
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
+  fontFamily: FontFamily
+  onFontFamilyChange: (font: FontFamily) => void
   background: BackgroundControls
 }) {
   const { themes, activeThemeId, setActiveThemeId } = useActiveTheme()
@@ -804,6 +821,39 @@ function AppearanceSection({
   return (
     <>
       <div>
+        <h4 className="text-sm font-medium text-slate-900 dark:text-white">字体</h4>
+        <p className="mt-1 text-xs text-slate-600 dark:text-white/50">
+          界面使用的字体系列。系统字体无需联网，加载更快。
+        </p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="字体">
+        {FONT_FAMILY_OPTIONS.map((option) => {
+          const selected = fontFamily === option.value
+          return (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onFontFamilyChange(option.value)}
+              className={[
+                'flex min-h-16 flex-col justify-between rounded-2xl border p-3 text-left transition',
+                selected
+                  ? 'border-slate-900/25 dark:border-white/30 bg-slate-900/10 dark:bg-white/15 text-slate-900 dark:text-white shadow-lg'
+                  : 'border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5 text-slate-600 dark:text-white/60 hover:border-slate-900/20 dark:hover:border-white/20 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white/85',
+              ].join(' ')}
+            >
+              <span className="text-sm font-medium">{option.label}</span>
+              <span className="mt-0.5 block text-[10px] leading-4 text-slate-600 dark:text-white/45">
+                {option.description}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-8">
         <h4 className="text-sm font-medium text-slate-900 dark:text-white">主题</h4>
         <p className="mt-1 text-xs text-slate-600 dark:text-white/50">选择界面的明暗外观。</p>
       </div>

@@ -6,13 +6,35 @@
   color-scheme: light;
 }
 
+/*
+ * Font stacks. `data-font` on <html> selects one; it is written by
+ * `lib/webFonts.ts` before first paint. The default stack is the device's own
+ * fonts, so an install that never opts into the web fonts makes no third-party
+ * request. Tailwind's `font-sans` / `font-mono` utilities resolve through these.
+ *
+ * CJK is not covered by the web fonts at all (Inter and JetBrains Mono ship
+ * latin/cyrillic/greek/vietnamese subsets only), so the system stack is what
+ * Chinese text has always rendered with — including under `inter`.
+ */
+:root {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+    monospace;
+}
+
+:root[data-font='inter'] {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', 'PingFang SC', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 .dark {
   color-scheme: dark;
 }
 
 body {
   @apply m-0 min-h-screen text-white antialiased;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 #root {

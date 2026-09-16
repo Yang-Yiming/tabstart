@@ -17,6 +17,9 @@
  * extension CSP and this page also ships as a browser extension.
  */
 
+import { FONT_FAMILY_KEY, normalizeFontFamily, type FontFamily } from '../config/preferences'
+import { storageArea } from './storage'
+
 const FONT_STYLESHEET =
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap'
 
@@ -57,4 +60,27 @@ export function loadWebFonts(): Promise<void> {
   })
 
   return pending
+}
+
+/**
+ * Tag `<html>` with the selected stack and start the request when it needs one.
+ *
+ * The stacks themselves live in `index.css` as custom properties keyed off
+ * `data-font`, so switching is an attribute write: no React re-render, no
+ * restyled tree, and the browser only downloads the font files when the chosen
+ * stack actually asks for them. Idempotent, so boot and the settings toggle can
+ * both call it.
+ */
+export function applyFontFamily(family: FontFamily): Promise<void> {
+  document.documentElement.dataset.font = family
+  return family === 'inter' ? loadWebFonts() : Promise.resolve()
+}
+
+/**
+ * Apply the stored choice at startup. Read directly rather than through the
+ * React hook so the attribute is set, and the request is in flight, before the
+ * first paint instead of one commit later.
+ */
+export async function initFontFamily(): Promise<void> {
+  await applyFontFamily(normalizeFontFamily(await storageArea.get(FONT_FAMILY_KEY)))
 }

@@ -4,10 +4,18 @@ import { Dashboard } from './components/Dashboard'
 import { Slot } from './plugins/Slot'
 import { ThemeApplier } from './plugins/ThemeApplier'
 import { migratePluginKeys } from './plugins/registry'
+import {
+  DEFAULT_FONT_FAMILY,
+  FONT_FAMILY_KEY,
+  normalizeFontFamily,
+  type FontFamily,
+} from './config/preferences'
 import type { ThemeMode } from './config/theme'
 import { useBackground } from './hooks/useBackground'
+import type { BackgroundControls } from './hooks/useBackground'
 import { useLazyComponent } from './hooks/useLazyComponent'
 import { useStoredState } from './hooks/useLocalStorage'
+import { applyFontFamily } from './lib/webFonts'
 
 const loadSettingsPanel = () =>
   import('./components/SettingsPanel').then((m) => ({ default: m.SettingsPanel }))
@@ -55,11 +63,15 @@ function OverlayFallback({ panelClassName }: { panelClassName: string }) {
 function SettingsButton({
   theme,
   onThemeChange,
+  fontFamily,
+  onFontFamilyChange,
   background,
 }: {
   theme: ThemeMode
   onThemeChange: (theme: ThemeMode) => void
-  background: ReturnType<typeof useBackground>
+  fontFamily: FontFamily
+  onFontFamilyChange: (font: FontFamily) => void
+  background: BackgroundControls
 }) {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
@@ -71,7 +83,14 @@ function SettingsButton({
         <Settings className="h-4 w-4" />
       </ChromeIconButton>
       {open && (SettingsPanelComponent ? (
-        <SettingsPanelComponent theme={theme} onThemeChange={onThemeChange} background={background} onClose={close} />
+        <SettingsPanelComponent
+          theme={theme}
+          onThemeChange={onThemeChange}
+          fontFamily={fontFamily}
+          onFontFamilyChange={onFontFamilyChange}
+          background={background}
+          onClose={close}
+        />
       ) : (
         <OverlayFallback panelClassName="settings-panel" />
       ))}
@@ -100,6 +119,10 @@ function PluginsButton() {
 
 export default function App() {
   const [theme, setTheme] = useStoredState<ThemeMode>('homepage-theme', 'system')
+  const [fontFamily, setFontFamily, fontHydrated] = useStoredState<FontFamily>(
+    FONT_FAMILY_KEY,
+    DEFAULT_FONT_FAMILY,
+  )
   const [systemDark, setSystemDark] = useState(() =>
     window.matchMedia('(prefers-color-scheme: dark)').matches,
   )
@@ -109,6 +132,16 @@ export default function App() {
   const { bg, backgroundSrc } = background
 
   const [isEditing, setIsEditing] = useState(false)
+
+  useEffect(() => {
+    // `webFonts.ts` already applied the stored value at boot. This effect only
+    // has to react to later changes — and it must wait for hydration, because
+    // before that `fontFamily` is still the default and applying it would
+    // overwrite the value boot just resolved (visible as a flash of the system
+    // stack for an Inter user).
+    if (!fontHydrated) return
+    void applyFontFamily(normalizeFontFamily(fontFamily))
+  }, [fontFamily, fontHydrated])
 
   useEffect(() => {
     // One-time rewrite of legacy widget keys (e.g. gauge:deepseek-balance) to plugin ids.
@@ -166,7 +199,13 @@ export default function App() {
             {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
           </button>
 
-          <SettingsButton theme={theme} onThemeChange={setTheme} background={background} />
+          <SettingsButton
+            theme={theme}
+            onThemeChange={setTheme}
+            fontFamily={fontFamily}
+            onFontFamilyChange={setFontFamily}
+            background={background}
+          />
           <PluginsButton />
         </div>
 

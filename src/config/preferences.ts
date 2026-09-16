@@ -276,3 +276,32 @@ export function normalizeDashboardSettings(
     showExpandButton: settings?.showExpandButton ?? DEFAULT_DASHBOARD_SETTINGS.showExpandButton,
   }
 }
+
+export const FONT_FAMILY_KEY = 'homepage-font-family'
+
+/**
+ * `system` uses the device's own fonts, which is the default so that a fresh
+ * install makes no third-party request at all. `inter` pulls the Inter /
+ * JetBrains Mono pair from Google Fonts on demand.
+ */
+export type FontFamily = 'system' | 'inter'
+
+export const DEFAULT_FONT_FAMILY: FontFamily = 'system'
+
+export const FONT_FAMILY_OPTIONS: Array<{ value: FontFamily; label: string; description: string }> = [
+  {
+    value: 'system',
+    label: '系统字体',
+    description: '使用设备自带字体，不加载任何外部字体',
+  },
+  {
+    value: 'inter',
+    label: 'Inter',
+    description: '加载 Inter 与 JetBrains Mono，需要联网',
+  },
+]
+
+/** Normalize a persisted font choice, falling back to the system stack. */
+export function normalizeFontFamily(value: unknown): FontFamily {
+  return value === 'inter' ? 'inter' : DEFAULT_FONT_FAMILY
+}
