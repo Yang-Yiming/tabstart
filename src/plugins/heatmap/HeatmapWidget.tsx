@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Check, Minus, Plus } from 'lucide-react'
 import { WidgetCard } from '../../components/WidgetCard'
@@ -11,6 +11,49 @@ import {
 } from '../_shared/activity'
 
 const WEEKS = 53
+
+interface HeatmapCellProps {
+  /** Stable `Date` instance owned by the memoized `weeks` grid. */
+  day: Date
+  dateKey: string
+  value: number
+  selected: boolean
+  isToday: boolean
+  goal: number
+  onSelect: (day: Date) => void
+}
+
+/**
+ * One day of the grid, memoized because there are 371 of them (53 weeks x 7
+ * days). Every cell used to be rebuilt on each render of the widget, so
+ * selecting a day or editing a value reprocessed the whole year of buttons.
+ */
+const HeatmapCell = memo(function HeatmapCell({
+  day,
+  dateKey,
+  value,
+  selected,
+  isToday,
+  goal,
+  onSelect,
+}: HeatmapCellProps) {
+  return (
+    <button
+      type="button"
+      aria-label={`${dateKey}: ${value}`}
+      onClick={() => onSelect(day)}
+      style={intensityStyle(value, goal)}
+      className={[
+        'aspect-square w-full rounded-[3px] transition',
+        selected
+          ? 'ring-2 ring-white/80'
+          : isToday
+            ? 'ring-1 ring-inset ring-white/60'
+            : 'hover:ring-2 hover:ring-white/40',
+      ].join(' ')}
+    />
+  )
+})
 
 export function HeatmapWidget() {
   const [store, setStore] = useActivityStore()
@@ -67,6 +110,24 @@ export function HeatmapWidget() {
   const getValue = (date: Date) => {
     return getTopicValue(store, activeTopic, date)
   }
+
+  /**
+   * Every cell's value for the active topic, keyed by day. Computing this once
+   * per store/topic change keeps the 371-cell render free of per-cell lookups
+   * and gives the memoized cells primitive props that compare cheaply.
+   */
+  const valuesByKey = useMemo(() => {
+    const values: Record<string, number> = {}
+    for (const days of weeks) {
+      for (const day of days) {
+        values[formatDateKey(day)] = getTopicValue(store, activeTopic, day)
+      }
+    }
+    return values
+  }, [weeks, store, activeTopic])
+
+  const selectedKey = selected ? formatDateKey(selected) : null
+  const selectDay = useCallback((day: Date) => setSelected(day), [])
 
   const setValue = (date: Date, delta: number) => {
     const key = formatDateKey(date)
@@ -185,24 +246,17 @@ export function HeatmapWidget() {
               {weeks.map((days, weekIdx) => (
                 <div key={weekIdx} className="flex flex-col gap-[4px]">
                   {days.map((day) => {
-                    const value = getValue(day)
                     const key = formatDateKey(day)
-                    const isSelected = selected ? formatDateKey(selected) === key : false
                     return (
-                      <button
+                      <HeatmapCell
                         key={key}
-                        type="button"
-                        aria-label={`${key}: ${value}`}
-                        onClick={() => setSelected(day)}
-                        style={intensityStyle(value, goal)}
-                        className={[
-                          'aspect-square w-full rounded-[3px] transition',
-                          isSelected
-                            ? 'ring-2 ring-white/80'
-                            : key === todayKey
-                              ? 'ring-1 ring-inset ring-white/60'
-                              : 'hover:ring-2 hover:ring-white/40',
-                        ].join(' ')}
+                        day={day}
+                        dateKey={key}
+                        value={valuesByKey[key] ?? 0}
+                        selected={selectedKey === key}
+                        isToday={key === todayKey}
+                        goal={goal}
+                        onSelect={selectDay}
                       />
                     )
                   })}
