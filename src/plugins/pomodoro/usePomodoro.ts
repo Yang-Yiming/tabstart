@@ -19,6 +19,12 @@ interface PomodoroState {
  */
 let state: PomodoroState = { mode: 'work', secondsLeft: POMODORO_MODES.work, running: false }
 let intervalId: ReturnType<typeof setInterval> | null = null
+/**
+ * Wall-clock deadline of the running countdown. The tick derives `secondsLeft`
+ * from it instead of decrementing, so time spent in a throttled hidden tab is
+ * not lost — a running pomodoro still measures real elapsed time.
+ */
+let endsAt = 0
 const listeners = new Set<() => void>()
 
 function emit() {
@@ -30,20 +36,39 @@ function commit(next: PomodoroState) {
   emit()
 }
 
+function tick() {
+  const secondsLeft = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000))
+  if (secondsLeft <= 0) {
+    stopInterval()
+    commit({ ...state, secondsLeft: 0, running: false })
+    return
+  }
+  if (secondsLeft !== state.secondsLeft) commit({ ...state, secondsLeft })
+}
+
+function stopInterval() {
+  if (intervalId === null) return
+  clearInterval(intervalId)
+  intervalId = null
+  document.removeEventListener('visibilitychange', handleVisibility)
+}
+
+/** Recompute from the deadline the moment the tab is shown again. */
+function handleVisibility() {
+  if (!document.hidden) tick()
+}
+
 function syncInterval() {
   if (state.running && intervalId === null) {
+    endsAt = Date.now() + state.secondsLeft * 1000
+    // Hidden tabs are throttled and never paint: skip the tick and catch up on
+    // `visibilitychange` rather than burning wakeups in the background.
+    document.addEventListener('visibilitychange', handleVisibility)
     intervalId = setInterval(() => {
-      if (state.secondsLeft <= 1) {
-        clearInterval(intervalId!)
-        intervalId = null
-        commit({ ...state, secondsLeft: 0, running: false })
-        return
-      }
-      commit({ ...state, secondsLeft: state.secondsLeft - 1 })
+      if (!document.hidden) tick()
     }, 1000)
   } else if (!state.running && intervalId !== null) {
-    clearInterval(intervalId)
-    intervalId = null
+    stopInterval()
   }
 }
 
