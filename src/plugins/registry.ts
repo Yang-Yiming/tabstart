@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import config from './plugin.config.json'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { storageArea } from '../lib/storage'
@@ -142,16 +143,21 @@ const ENABLED_KEY = 'homepage-plugin-enabled-v1'
 /** Per-plugin enable toggle. Only `false` entries are stored (default: enabled). */
 export function useEnabledPlugins() {
   const [overrides, setOverrides] = useLocalStorage<Record<string, boolean>>(ENABLED_KEY, {})
-  const isEnabled = (id: string) => overrides[id] !== false
-  const setEnabled = (id: string, enabled: boolean) => {
-    setOverrides((prev) => {
-      const next = { ...prev }
-      if (enabled) delete next[id]
-      else next[id] = false
-      return next
-    })
-  }
-  return { overrides, isEnabled, setEnabled }
+  // Stable identities: `Dashboard` feeds both into `useMemo`, so returning new
+  // closures every render invalidated every derived list and layout.
+  const isEnabled = useCallback((id: string) => overrides[id] !== false, [overrides])
+  const setEnabled = useCallback(
+    (id: string, enabled: boolean) => {
+      setOverrides((prev) => {
+        const next = { ...prev }
+        if (enabled) delete next[id]
+        else next[id] = false
+        return next
+      })
+    },
+    [setOverrides],
+  )
+  return useMemo(() => ({ overrides, isEnabled, setEnabled }), [overrides, isEnabled, setEnabled])
 }
 
 /* ------------------------------------------------------------------ */

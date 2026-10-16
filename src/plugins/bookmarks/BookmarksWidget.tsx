@@ -4,6 +4,7 @@ import { WidgetCard } from '../../components/WidgetCard'
 import {
   guessIcon,
   iconMap,
+  newBookmarkId,
   useBookmarkStore,
   type BookmarkGroup,
   type BookmarkLink,
@@ -11,19 +12,20 @@ import {
 
 export function BookmarksWidget() {
   const [groups, setGroups] = useBookmarkStore()
-  const [newGroupIndex, setNewGroupIndex] = useState<number | null>(null)
+  const [newGroupId, setNewGroupId] = useState<string | null>(null)
 
-  const updateGroup = (index: number, updater: (group: BookmarkGroup) => BookmarkGroup) => {
-    setGroups((prev) => prev.map((group, i) => (i === index ? updater(group) : group)))
+  const updateGroup = (id: string, updater: (group: BookmarkGroup) => BookmarkGroup) => {
+    setGroups((prev) => prev.map((group) => (group.id === id ? updater(group) : group)))
   }
 
-  const removeGroup = (index: number) => {
-    setGroups((prev) => prev.filter((_, i) => i !== index))
+  const removeGroup = (id: string) => {
+    setGroups((prev) => prev.filter((group) => group.id !== id))
   }
 
   const addGroup = () => {
-    setGroups((prev) => [...prev, { title: 'New Group', links: [] }])
-    setNewGroupIndex(groups.length)
+    const id = newBookmarkId('group')
+    setGroups((prev) => [...prev, { id, title: 'New Group', links: [] }])
+    setNewGroupId(id)
   }
 
   return (
@@ -43,15 +45,14 @@ export function BookmarksWidget() {
           </button>
         ) : (
           <div className="flex flex-col gap-5">
-            {groups.map((group, index) => (
+            {groups.map((group) => (
               <Group
-                key={index}
+                key={group.id}
                 group={group}
-                index={index}
                 onUpdate={updateGroup}
                 onRemove={removeGroup}
-                autoFocus={index === newGroupIndex}
-                onInitialEditDone={() => setNewGroupIndex(null)}
+                autoFocus={group.id === newGroupId}
+                onInitialEditDone={() => setNewGroupId(null)}
               />
             ))}
           </div>
@@ -71,17 +72,17 @@ export function BookmarksWidget() {
 
 interface GroupProps {
   group: BookmarkGroup
-  index: number
-  onUpdate: (index: number, updater: (group: BookmarkGroup) => BookmarkGroup) => void
-  onRemove: (index: number) => void
+  onUpdate: (id: string, updater: (group: BookmarkGroup) => BookmarkGroup) => void
+  onRemove: (id: string) => void
   autoFocus?: boolean
   onInitialEditDone?: () => void
 }
 
-function Group({ group, index, onUpdate, onRemove, autoFocus = false, onInitialEditDone }: GroupProps) {
+function Group({ group, onUpdate, onRemove, autoFocus = false, onInitialEditDone }: GroupProps) {
   const [editingTitle, setEditingTitle] = useState(autoFocus)
   const [titleDraft, setTitleDraft] = useState(group.title)
   const [adding, setAdding] = useState(false)
+  const groupId = group.id
 
   const doneTitleEdit = () => {
     setEditingTitle(false)
@@ -91,26 +92,26 @@ function Group({ group, index, onUpdate, onRemove, autoFocus = false, onInitialE
   const saveTitle = () => {
     const title = titleDraft.trim()
     if (!title) return
-    onUpdate(index, (candidate) => ({ ...candidate, title }))
+    onUpdate(groupId, (candidate) => ({ ...candidate, title }))
     doneTitleEdit()
   }
 
   const addLink = (link: BookmarkLink) => {
-    onUpdate(index, (candidate) => ({ ...candidate, links: [...candidate.links, link] }))
+    onUpdate(groupId, (candidate) => ({ ...candidate, links: [...candidate.links, link] }))
     setAdding(false)
   }
 
-  const updateLink = (linkIndex: number, updater: (link: BookmarkLink) => BookmarkLink) => {
-    onUpdate(index, (candidate) => ({
+  const updateLink = (linkId: string, updater: (link: BookmarkLink) => BookmarkLink) => {
+    onUpdate(groupId, (candidate) => ({
       ...candidate,
-      links: candidate.links.map((link, i) => (i === linkIndex ? updater(link) : link)),
+      links: candidate.links.map((link) => (link.id === linkId ? updater(link) : link)),
     }))
   }
 
-  const removeLink = (linkIndex: number) => {
-    onUpdate(index, (candidate) => ({
+  const removeLink = (linkId: string) => {
+    onUpdate(groupId, (candidate) => ({
       ...candidate,
-      links: candidate.links.filter((_, i) => i !== linkIndex),
+      links: candidate.links.filter((link) => link.id !== linkId),
     }))
   }
 
@@ -144,7 +145,7 @@ function Group({ group, index, onUpdate, onRemove, autoFocus = false, onInitialE
         </button>
         <button
           type="button"
-          onClick={() => onRemove(index)}
+          onClick={() => onRemove(groupId)}
           className="shrink-0 p-0.5 text-white/0 transition group-hover/header:text-white/30 hover:!text-red-200"
           aria-label="Delete group"
         >
@@ -152,12 +153,12 @@ function Group({ group, index, onUpdate, onRemove, autoFocus = false, onInitialE
         </button>
       </div>
       <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
-        {group.links.map((link, linkIndex) => (
+        {group.links.map((link) => (
           <LinkRow
-            key={linkIndex}
+            key={link.id}
             link={link}
-            onUpdate={(updater) => updateLink(linkIndex, updater)}
-            onRemove={() => removeLink(linkIndex)}
+            onUpdate={(updater) => updateLink(link.id, updater)}
+            onRemove={() => removeLink(link.id)}
           />
         ))}
       </ul>
@@ -247,6 +248,7 @@ function LinkForm({ onSave, onCancel, initial }: LinkFormProps) {
   const submit = () => {
     if (!canSave) return
     onSave({
+      id: initial?.id ?? newBookmarkId('link'),
       title: title.trim(),
       url: url.trim(),
       icon: initial?.icon ?? guessIcon(url),

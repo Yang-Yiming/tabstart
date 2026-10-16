@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 import { ThemeSurface } from './ThemeSurface'
 
 interface WidgetCardProps {
@@ -6,7 +6,7 @@ interface WidgetCardProps {
   className?: string
 }
 
-export function WidgetCard({ children, className = '' }: WidgetCardProps) {
+export const WidgetCard = memo(function WidgetCard({ children, className = '' }: WidgetCardProps) {
   return (
     <ThemeSurface
       fallbackClassName="widget-card border"
@@ -19,4 +19,4 @@ export function WidgetCard({ children, className = '' }: WidgetCardProps) {
       {children}
     </ThemeSurface>
   )
-}
+})

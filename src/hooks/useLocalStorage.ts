@@ -99,6 +99,9 @@ export function useStoredState<T>(
       changedBeforeHydrateRef.current = !hydrated
       setStored((prev) => {
         const next = typeof value === 'function' ? (value as (prev: T) => T)(prev) : value
+        // A no-op update (same reference, e.g. a filter/map that matched
+        // nothing) must not re-serialize storage or wake peer subscribers.
+        if (next === prev) return prev
         latestRef.current = next
         persist(next)
         window.queueMicrotask(() => {

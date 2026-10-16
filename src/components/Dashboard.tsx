@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { GripVertical, Maximize2, Plus, RotateCcw, X } from 'lucide-react'
 import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
@@ -60,6 +60,35 @@ function cloneLayouts(layouts: Layouts): Layouts {
   )
 }
 
+/** Hoisted so the grid does not receive a fresh array identity every render. */
+const GRID_MARGIN_PAIR: [number, number] = [GRID_MARGIN, GRID_MARGIN]
+
+/** Structural equality for normalized layouts: identical geometry → same object. */
+function layoutsEqual(a: Layouts, b: Layouts): boolean {
+  const breakpoints = new Set([...Object.keys(a), ...Object.keys(b)])
+  for (const bp of breakpoints) {
+    const left = a[bp] ?? []
+    const right = b[bp] ?? []
+    if (left.length !== right.length) return false
+    for (let i = 0; i < left.length; i += 1) {
+      const l = left[i]
+      const r = right[i]
+      if (
+        l.i !== r.i ||
+        l.x !== r.x ||
+        l.y !== r.y ||
+        l.w !== r.w ||
+        l.h !== r.h ||
+        l.minW !== r.minW ||
+        l.minH !== r.minH
+      ) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
 function withWidgetLimits(item: Layout, breakpoint: keyof typeof COLS, plugin?: WidgetDescriptor): Layout {
   const cols = COLS[breakpoint]
   const minW = Math.min(plugin?.minW ?? 1, cols)
@@ -103,6 +132,97 @@ function createLayoutItem(key: string, breakpoint: keyof typeof COLS, layout: La
     minH: plugin?.minH ?? 1,
   }
 }
+
+interface DashboardSlotProps {
+  widgetKey: string
+  component: WidgetDescriptor['component']
+  name: string
+  compact: boolean
+  canExpand: boolean
+  showExpandButton: boolean
+  isEditing: boolean
+  onExpand: (key: string) => void
+  onRemove: (key: string) => void
+}
+
+/**
+ * One widget slot, memoized so unrelated dashboard state (an app-level
+ * background image resolving, a resize tick that only moves this slot) does not
+ * re-render the widget body. Every prop is stable by identity: the component
+ * comes from the build-time registry, and the callbacks are `useCallback`s.
+ */
+const DashboardSlot = memo(function DashboardSlot({
+  widgetKey,
+  component: WidgetComponent,
+  name,
+  compact,
+  canExpand,
+  showExpandButton,
+  isEditing,
+  onExpand,
+  onRemove,
+}: DashboardSlotProps) {
+  return (
+    <div
+      className="group/widget relative h-full"
+      onClick={(event) => {
+        if (isEditing || !canExpand || !(event.metaKey || event.ctrlKey)) return
+        // Skip when the modifier-click lands on an interactive child
+        // (tab, checkbox, link...) so their own handlers stay authoritative.
+        const target = event.target as HTMLElement | null
+        if (target?.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]')) return
+        onExpand(widgetKey)
+      }}
+    >
+      <div className="h-full [&>*]:h-full">
+        <Suspense fallback={<div className="h-full rounded-2xl bg-black/20 backdrop-blur-xl" />}>
+          <WidgetComponent widgetKey={widgetKey} compact={compact} />
+        </Suspense>
+      </div>
+
+      {!isEditing && canExpand && showExpandButton && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onExpand(widgetKey)
+          }}
+          className="absolute -right-2 -top-2 z-20 rounded-full border border-white/15 bg-black/60 p-1.5 text-white/70 opacity-0 shadow-lg backdrop-blur-xl transition hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover/widget:opacity-100"
+          aria-label={`Expand ${name}`}
+          title={`Expand ${name} (⌘/Ctrl + click)`}
+        >
+          <Maximize2 className="h-4 w-4" />
+        </button>
+      )}
+
+      {isEditing && (
+        <>
+          <div
+            className="drag-handle absolute left-2 top-2 z-20 cursor-grab rounded-full border border-white/10 bg-black/25 p-1.5 text-white/65 shadow-lg backdrop-blur-xl transition hover:bg-white/15 hover:text-white active:cursor-grabbing"
+            aria-label="Move widget"
+            title="Move widget"
+            role="button"
+            tabIndex={0}
+          >
+            <GripVertical className="h-4 w-4" />
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRemove(widgetKey)
+            }}
+            className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-black/25 p-1.5 text-white/65 shadow-lg backdrop-blur-xl transition hover:bg-red-500/20 hover:text-red-100"
+            aria-label="Remove widget"
+            title="Remove widget"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </>
+      )}
+    </div>
+  )
+})
 
 export function Dashboard({ isEditing }: Props) {
   const [layouts, setLayouts] = useLocalStorage<Layouts>(LAYOUT_KEY, DEFAULT_LAYOUTS, {
@@ -160,6 +280,7 @@ export function Dashboard({ isEditing }: Props) {
   }, [expandedKey])
 
   const closeExpanded = useCallback(() => setExpandedKey(null), [])
+  const handleExpand = useCallback((key: string) => setExpandedKey(key), [])
 
   /**
    * Canonicalize + clamp every stored layout item. Keeps disabled plugins so
@@ -208,13 +329,17 @@ export function Dashboard({ isEditing }: Props) {
   const handleLayoutChange = useCallback(
     (_currentLayout: Layout[], allLayouts: Layouts) => {
       setLayouts((prev) => {
+        const previous = normalizeLayouts(prev)
         const merged: Layouts = {}
         for (const bp of Object.keys(COLS) as Array<keyof typeof COLS>) {
           const incoming = allLayouts[bp] ?? []
-          const preserved = normalizeBreakpoint((normalizeLayouts(prev)[bp] ?? []).filter((item) => !isEnabled(item.i)), bp)
+          const preserved = normalizeBreakpoint((previous[bp] ?? []).filter((item) => !isEnabled(item.i)), bp)
           merged[bp] = normalizeBreakpoint([...incoming, ...preserved], bp)
         }
-        return merged
+        // RGL fires `onLayoutChange` on drag/resize stop even when nothing
+        // moved; returning the previous reference skips the re-render and the
+        // debounced re-serialization in that case.
+        return layoutsEqual(merged, previous) ? prev : merged
       })
     },
     [isEnabled, normalizeLayouts, setLayouts],
@@ -263,72 +388,24 @@ export function Dashboard({ isEditing }: Props) {
     return (displayLayouts.lg ?? []).map((item) => {
       const plugin = resolveWidget(item.i)
       if (!plugin) return null
-      const WidgetComponent = plugin.component
       const canExpand = Boolean(plugin.expandedComponent || (plugin.expandTo && resolveWidget(plugin.expandTo)))
 
       return (
-        <div
+        <DashboardSlot
           key={item.i}
-          className="group/widget relative h-full"
-          onClick={(event) => {
-            if (isEditing || !canExpand || !(event.metaKey || event.ctrlKey)) return
-            // Skip when the modifier-click lands on an interactive child
-            // (tab, checkbox, link...) so their own handlers stay authoritative.
-            const target = event.target as HTMLElement | null
-            if (target?.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]')) return
-            setExpandedKey(item.i)
-          }}
-        >
-          <div className="h-full [&>*]:h-full">
-            <Suspense fallback={<div className="h-full rounded-2xl bg-black/20 backdrop-blur-xl" />}>
-              <WidgetComponent widgetKey={item.i} compact={item.h === 1} />
-            </Suspense>
-          </div>
-
-          {!isEditing && canExpand && showExpandButton && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
-                setExpandedKey(item.i)
-              }}
-              className="absolute -right-2 -top-2 z-20 rounded-full border border-white/15 bg-black/60 p-1.5 text-white/70 opacity-0 shadow-lg backdrop-blur-xl transition hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover/widget:opacity-100"
-              aria-label={`Expand ${plugin.name}`}
-              title={`Expand ${plugin.name} (⌘/Ctrl + click)`}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </button>
-          )}
-
-          {isEditing && (
-            <>
-              <div
-                className="drag-handle absolute left-2 top-2 z-20 cursor-grab rounded-full border border-white/10 bg-black/25 p-1.5 text-white/65 shadow-lg backdrop-blur-xl transition hover:bg-white/15 hover:text-white active:cursor-grabbing"
-                aria-label="Move widget"
-                title="Move widget"
-                role="button"
-                tabIndex={0}
-              >
-                <GripVertical className="h-4 w-4" />
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleRemove(item.i)
-                }}
-                className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-black/25 p-1.5 text-white/65 shadow-lg backdrop-blur-xl transition hover:bg-red-500/20 hover:text-red-100"
-                aria-label="Remove widget"
-                title="Remove widget"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </>
-          )}
-        </div>
+          widgetKey={item.i}
+          component={plugin.component}
+          name={plugin.name}
+          compact={item.h === 1}
+          canExpand={canExpand}
+          showExpandButton={showExpandButton}
+          isEditing={isEditing}
+          onExpand={handleExpand}
+          onRemove={handleRemove}
+        />
       )
     })
-  }, [displayLayouts, handleRemove, isEditing, showExpandButton])
+  }, [displayLayouts, handleExpand, handleRemove, isEditing, showExpandButton])
 
   return (
     <div
@@ -346,7 +423,7 @@ export function Dashboard({ isEditing }: Props) {
           cols={COLS}
           breakpoints={BREAKPOINTS}
           rowHeight={GRID_ROW_HEIGHT}
-          margin={[GRID_MARGIN, GRID_MARGIN]}
+          margin={GRID_MARGIN_PAIR}
           isDraggable
           isResizable
           draggableHandle=".drag-handle"
