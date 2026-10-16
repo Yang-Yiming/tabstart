@@ -1,4 +1,15 @@
-import { Suspense, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  Suspense,
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
 import { GripVertical, Maximize2, Plus, RotateCcw, X } from 'lucide-react'
 import type { Layout, Layouts } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
@@ -143,6 +154,15 @@ interface DashboardSlotProps {
   isEditing: boolean
   onExpand: (key: string) => void
   onRemove: (key: string) => void
+  /**
+   * Injected by the grid, not by `Dashboard`. Both grids position widgets by
+   * cloning the child and putting the geometry on it directly — `StaticWidgetGrid`
+   * with `cloneElement`, react-grid-layout through its `GridItem` — so the slot
+   * must forward `className`, `style` and `ref` to its root element or every
+   * widget loses its size and position and stretches to fill the grid.
+   */
+  className?: string
+  style?: CSSProperties
 }
 
 /**
@@ -151,7 +171,7 @@ interface DashboardSlotProps {
  * re-render the widget body. Every prop is stable by identity: the component
  * comes from the build-time registry, and the callbacks are `useCallback`s.
  */
-const DashboardSlot = memo(function DashboardSlot({
+const DashboardSlot = memo(forwardRef<HTMLDivElement, DashboardSlotProps>(function DashboardSlot({
   widgetKey,
   component: WidgetComponent,
   name,
@@ -161,10 +181,14 @@ const DashboardSlot = memo(function DashboardSlot({
   isEditing,
   onExpand,
   onRemove,
-}: DashboardSlotProps) {
+  className,
+  style,
+}, ref) {
   return (
     <div
-      className="group/widget relative h-full"
+      ref={ref}
+      className={['group/widget relative h-full', className].filter(Boolean).join(' ')}
+      style={style}
       onClick={(event) => {
         if (isEditing || !canExpand || !(event.metaKey || event.ctrlKey)) return
         // Skip when the modifier-click lands on an interactive child
@@ -222,7 +246,7 @@ const DashboardSlot = memo(function DashboardSlot({
       )}
     </div>
   )
-})
+}))
 
 export function Dashboard({ isEditing }: Props) {
   const [layouts, setLayouts] = useLocalStorage<Layouts>(LAYOUT_KEY, DEFAULT_LAYOUTS, {
