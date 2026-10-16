@@ -1,4 +1,4 @@
-import { Children, cloneElement, isValidElement, useMemo, type ReactElement, type ReactNode } from 'react'
+import { Children, cloneElement, isValidElement, memo, useMemo, type ReactElement, type ReactNode } from 'react'
 import { compactLayout, itemRect, layoutContainerHeight, type GridItem } from '../lib/grid'
 
 interface StaticWidgetGridProps<T extends GridItem> {
@@ -24,7 +24,7 @@ interface StaticWidgetGridProps<T extends GridItem> {
  * Interactivity is unaffected — the children keep their own handlers. Editing
  * still runs on RGL, mounted on demand by `GridEditor`.
  */
-export function StaticWidgetGrid<T extends GridItem>({
+function StaticWidgetGridComponent<T extends GridItem>({
   layout,
   containerWidth,
   children,
@@ -65,3 +65,11 @@ export function StaticWidgetGrid<T extends GridItem>({
     </div>
   )
 }
+
+/**
+ * Memoized so unrelated dashboard state (background image resolving, editing
+ * toggle) does not re-run the clone pass when the layout and width are
+ * unchanged. The cast preserves the generic props signature that `memo`
+ * cannot express.
+ */
+export const StaticWidgetGrid = memo(StaticWidgetGridComponent) as typeof StaticWidgetGridComponent

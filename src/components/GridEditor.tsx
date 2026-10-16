@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Responsive } from 'react-grid-layout'
 import type { Layout, Layouts } from 'react-grid-layout'
 import type { ReactNode } from 'react'
@@ -17,6 +18,9 @@ interface GridEditorProps {
   children: ReactNode
 }
 
+/** Module constant: a fresh array each render would defeat prop memoization. */
+const CONTAINER_PADDING: [number, number] = [0, 0]
+
 /**
  * The dashboard grid with drag/resize enabled, split into its own chunk so
  * react-grid-layout stays out of the entry bundle.
@@ -30,7 +34,7 @@ interface GridEditorProps {
  * — every widget was laid out for 1280 and then snapped once the real width
  * arrived. The dashboard measures the container itself and both grids share it.
  */
-export function GridEditor({
+export const GridEditor = memo(function GridEditor({
   layouts,
   width,
   cols,
@@ -52,7 +56,7 @@ export function GridEditor({
       breakpoints={breakpoints}
       rowHeight={rowHeight}
       margin={margin}
-      containerPadding={[0, 0]}
+      containerPadding={CONTAINER_PADDING}
       isDraggable={isDraggable}
       isResizable={isResizable}
       draggableHandle={draggableHandle}
@@ -64,4 +68,4 @@ export function GridEditor({
       {children}
     </Responsive>
   )
-}
+})
