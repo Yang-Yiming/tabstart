@@ -1,17 +1,31 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   CLOCK_SETTINGS_KEY,
   DEFAULT_CLOCK_SETTINGS,
   normalizeClockSettings,
 } from '../config/preferences'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useVisibility } from '../hooks/useVisibility'
 
 export function ClockWidget() {
   const [rawSettings] = useLocalStorage(CLOCK_SETTINGS_KEY, DEFAULT_CLOCK_SETTINGS)
   const settings = normalizeClockSettings(rawSettings)
   const [now, setNow] = useState(new Date())
+  const visible = useVisibility()
+  const wasHiddenRef = useRef(false)
 
   useEffect(() => {
+    // Hidden tabs are throttled and never paint, so drop the schedule entirely
+    // and rebuild it (with a catch-up render) when the page comes back.
+    if (!visible) {
+      wasHiddenRef.current = true
+      return
+    }
+    if (wasHiddenRef.current) {
+      wasHiddenRef.current = false
+      setNow(new Date())
+    }
+
     if (settings.showSeconds) {
       const id = setInterval(() => setNow(new Date()), 1000)
       return () => clearInterval(id)
@@ -30,7 +44,7 @@ export function ClockWidget() {
     }
     schedule()
     return () => window.clearTimeout(timeout)
-  }, [settings.showSeconds])
+  }, [settings.showSeconds, visible])
 
   const time = now.toLocaleTimeString(settings.locale, {
     hour: '2-digit',

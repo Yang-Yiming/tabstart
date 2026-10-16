@@ -187,15 +187,15 @@ button {
 }
 
 /* While a widget is expanded, the grid recedes iOS-folder style.
-   Only `transform` is transitioned: animating `filter: blur` forces
-   re-rasterization of every backdrop-filter layer each frame. */
+   The obscured state uses `transform` only: an ancestor `filter` (e.g. the
+   `blur(2px)` this used to apply) forces a full re-raster of every
+   backdrop-filter layer beneath it and changes the backdrop root. */
 .dashboard-grid {
   transition: transform 280ms ease;
 }
 
 .dashboard-grid.dashboard-grid--obscured {
   transform: scale(0.98);
-  filter: blur(2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -205,7 +205,6 @@ button {
 
   .dashboard-grid.dashboard-grid--obscured {
     transform: none;
-    filter: none;
   }
 }
 

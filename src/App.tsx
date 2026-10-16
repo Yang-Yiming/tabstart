@@ -140,7 +140,8 @@ export default function App() {
     // overwrite the value boot just resolved (visible as a flash of the system
     // stack for an Inter user).
     if (!fontHydrated) return
-    void applyFontFamily(normalizeFontFamily(fontFamily))
+    // A storage/extension failure must not surface as an unhandled rejection.
+    void applyFontFamily(normalizeFontFamily(fontFamily)).catch(() => {})
   }, [fontFamily, fontHydrated])
 
   useEffect(() => {

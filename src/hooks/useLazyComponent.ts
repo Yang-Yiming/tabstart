@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react'
+import { useCallback, useRef, useState, type ComponentType } from 'react'
 
 /**
  * Resolves a lazily-imported component outside React.lazy's suspend-and-retry
@@ -6,10 +6,9 @@ import { useCallback, useEffect, useRef, useState, type ComponentType } from 're
  * commits synchronously instead of throwing the promise and waiting for a
  * scheduler retry (which showed up as a noticeable stall).
  *
- * The chunk is warmed during idle time and on trigger hover/focus, so by the
- * time the user interacts the component is ready with zero loading state.
- * `component` stays null while the chunk is still in flight; callers decide
- * what to show in the meantime.
+ * The chunk is warmed on trigger hover/focus, so by the time the user interacts
+ * the component is ready with zero loading state. `component` stays null while
+ * the chunk is still in flight; callers decide what to show in the meantime.
  */
 export function useLazyComponent(load: () => Promise<{ default: ComponentType<any> }>) {
   const [component, setComponent] = useState<ComponentType<any> | null>(null)
@@ -24,15 +23,6 @@ export function useLazyComponent(load: () => Promise<{ default: ComponentType<an
         requestedRef.current = false
       })
   }, [load])
-
-  useEffect(() => {
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(request, { timeout: 3000 })
-      return () => window.cancelIdleCallback(id)
-    }
-    const timer = window.setTimeout(request, 2000)
-    return () => window.clearTimeout(timer)
-  }, [request])
 
   return { component, request }
 }
