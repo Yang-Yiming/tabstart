@@ -14,9 +14,6 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom'],
   },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'development'),
-  },
   plugins: [react()],
   server: {
     proxy: {
