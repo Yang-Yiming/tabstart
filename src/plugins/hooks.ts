@@ -1,5 +1,5 @@
 import { createContext, useContext, useSyncExternalStore } from 'react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useStoredState } from '../hooks/useLocalStorage'
 import type { HomepageContext } from './runtime'
 import type { SlotDescriptor, ThemeDescriptor, WidgetDescriptor } from './types'
 
@@ -38,7 +38,7 @@ export const ACTIVE_THEME_KEY = 'homepage-active-theme'
 /** The currently selected plugin theme. `activeThemeId` is persisted. */
 export function useActiveTheme() {
   const themes = useThemes()
-  const [activeThemeId, setActiveThemeId, activeThemeHydrated] = useLocalStorage<string>(
+  const [activeThemeId, setActiveThemeId, activeThemeHydrated] = useStoredState<string>(
     ACTIVE_THEME_KEY,
     'default',
   )
