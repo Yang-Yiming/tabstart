@@ -72,7 +72,7 @@ function useWallpaperPixels() {
   return pixels
 }
 
-export function useBackground(): BackgroundControls {
+export function useBackground(enabled = true): BackgroundControls {
   // No wallpaper until the stored state hydrates (or the daily fetch resolves).
   // Pointing this at the fallback mirror made every load start a redirect to the
   // 3.4 MB master before the real (sized, cached) URL was known.
@@ -96,6 +96,7 @@ export function useBackground(): BackgroundControls {
   // Existing installs with the old empty default should adopt Bing once.
   useEffect(() => {
     if (
+      !enabled ||
       !bgHydrated ||
       migratedDefaultBackgroundRef.current ||
       bg.mode !== 'url' ||
@@ -107,14 +108,14 @@ export function useBackground(): BackgroundControls {
     // Writing the fallback mirror here would make the first paint redirect to
     // the unsized 3.4 MB master.
     setBg((current) => ({ ...current, mode: 'bing', src: '' }))
-  }, [bg.mode, bg.src, bgHydrated, setBg])
+  }, [bg.mode, bg.src, bgHydrated, enabled, setBg])
 
   // The custom image itself is persisted in IndexedDB; once the stored state
   // has hydrated, rebuild a session object URL for it. If the blob is missing
   // (cleared storage, IndexedDB unavailable) fall back to the default
   // background instead of keeping a dead reference.
   useEffect(() => {
-    if (!bgHydrated || restoreFileBgRef.current) return
+    if (!enabled || !bgHydrated || restoreFileBgRef.current) return
     restoreFileBgRef.current = true
     if (bg.mode !== 'file' || uploadedFileRef.current) return
 
@@ -136,7 +137,17 @@ export function useBackground(): BackgroundControls {
       // Allow the re-run after a StrictMode double-mount to restore again.
       restoreFileBgRef.current = false
     }
-  }, [bg.mode, bgHydrated, setBg])
+  }, [bg.mode, bgHydrated, enabled, setBg])
+
+  // A wallpaper-free theme must also release any already-restored object URL
+  // and allow the custom image to be restored if the theme is switched back.
+  useEffect(() => {
+    if (enabled) return
+    restoreFileBgRef.current = false
+    if (!fileUrl) return
+    URL.revokeObjectURL(fileUrl)
+    setFileUrl(null)
+  }, [enabled, fileUrl])
 
   useEffect(() => {
     return () => {
@@ -144,9 +155,11 @@ export function useBackground(): BackgroundControls {
     }
   }, [fileUrl])
 
-  const backgroundSrc = bg.mode === 'file' && fileUrl
-    ? fileUrl
-    : sizedBingWallpaperUrl(bg.src, wallpaperPixels.width, wallpaperPixels.height, wallpaperPixels.dpr)
+  const backgroundSrc = enabled
+    ? bg.mode === 'file' && fileUrl
+      ? fileUrl
+      : sizedBingWallpaperUrl(bg.src, wallpaperPixels.width, wallpaperPixels.height, wallpaperPixels.dpr)
+    : ''
 
   const releaseFileUrl = useCallback(() => {
     if (fileUrl) URL.revokeObjectURL(fileUrl)
@@ -182,7 +195,7 @@ export function useBackground(): BackgroundControls {
 
   // Refresh the Bing wallpaper once per day while it is the active background.
   useEffect(() => {
-    if (!bgHydrated || !bingCacheHydrated) return
+    if (!enabled || !bgHydrated || !bingCacheHydrated) return
 
     const today = localDateKey()
     if (autoCheckedBingDateRef.current === today) return
@@ -194,7 +207,7 @@ export function useBackground(): BackgroundControls {
 
     autoCheckedBingDateRef.current = today
     refreshBingBackground().catch(() => {})
-  }, [bg.mode, bg.src, bgHydrated, bingCache?.url, bingCacheHydrated, refreshBingBackground])
+  }, [bg.mode, bg.src, bgHydrated, bingCache?.url, bingCacheHydrated, enabled, refreshBingBackground])
 
   const applyUrl = useCallback(
     (url: string) => {

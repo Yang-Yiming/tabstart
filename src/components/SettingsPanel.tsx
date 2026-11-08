@@ -817,6 +817,7 @@ function AppearanceSection({
   background: BackgroundControls
 }) {
   const { themes, activeThemeId, setActiveThemeId } = useActiveTheme()
+  const activeTheme = themes.find((item) => item.id === activeThemeId)
 
   return (
     <>
@@ -936,12 +937,12 @@ function AppearanceSection({
         </div>
       </div>
 
-      <WallpaperSection background={background} />
+      <WallpaperSection background={background} disabled={activeTheme?.supportsWallpaper === false} />
     </>
   )
 }
 
-function WallpaperSection({ background }: { background: BackgroundControls }) {
+function WallpaperSection({ background, disabled }: { background: BackgroundControls; disabled: boolean }) {
   const { backgroundSrc, fileInputRef, handleFileChange, applyUrl, applyBing } = background
   const [urlOpen, setUrlOpen] = useState(false)
   const [urlValue, setUrlValue] = useState('')
@@ -956,9 +957,13 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
     <div className="mt-8">
       <div>
         <h4 className="text-sm font-medium text-slate-900 dark:text-white">壁纸</h4>
-        <p className="mt-1 text-xs text-slate-600 dark:text-white/50">选择启动页的背景图片。</p>
+        <p className="mt-1 text-xs text-slate-600 dark:text-white/50">
+          {disabled ? '当前平面主题不使用壁纸；切换到其他主题后可继续编辑。' : '选择启动页的背景图片。'}
+        </p>
       </div>
 
+      {!disabled && (
+        <>
       <div className="mt-4 h-28 overflow-hidden rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-white/5">
         {backgroundSrc ? (
           <div
@@ -1050,6 +1055,8 @@ function WallpaperSection({ background }: { background: BackgroundControls }) {
         className="hidden"
         onChange={handleFileChange}
       />
+        </>
+      )}
     </div>
   )
 }

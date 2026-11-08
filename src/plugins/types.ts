@@ -112,6 +112,8 @@ export interface ThemeDescriptor {
   id: string
   name: string
   description?: string
+  /** Whether the active wallpaper remains visible behind this theme. Defaults to true. */
+  supportsWallpaper?: boolean
   /** Class applied to the document root while the theme is active. */
   rootClass?: string
   /** CSS custom properties applied to the document root while active. */

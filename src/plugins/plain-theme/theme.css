@@ -1,0 +1,370 @@
+:root[data-theme='plain-theme'] {
+  --plain-page-bg: #f7f8fa;
+  --plain-surface: #ffffff;
+  --plain-surface-muted: #f1f3f5;
+  --plain-surface-hover: #e9edf1;
+  --plain-border: #dcdfe3;
+  --plain-border-strong: #c7ccd2;
+  --plain-text: #1f2328;
+  --plain-text-muted: #656d76;
+  --plain-text-subtle: #8b949e;
+  --plain-accent: #2563eb;
+  --plain-accent-soft: #e8f0fe;
+  --plain-backdrop: rgba(31, 35, 40, 0.28);
+  --plain-shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.06), 0 1px 4px rgba(31, 35, 40, 0.04);
+  --plain-shadow-md: 0 6px 18px rgba(31, 35, 40, 0.1);
+  --clock-time-text: var(--plain-text);
+  --clock-date-text: var(--plain-text-muted);
+}
+
+:root.dark[data-theme='plain-theme'] {
+  --plain-page-bg: #202124;
+  --plain-surface: #2b2d30;
+  --plain-surface-muted: #35373b;
+  --plain-surface-hover: #3c3f43;
+  --plain-border: #44474d;
+  --plain-border-strong: #55585e;
+  --plain-text: #e8eaed;
+  --plain-text-muted: #a0a6ad;
+  --plain-text-subtle: #858b92;
+  --plain-accent: #79a8ff;
+  --plain-accent-soft: rgba(121, 168, 255, 0.14);
+  --plain-backdrop: rgba(0, 0, 0, 0.4);
+  --plain-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22), 0 1px 4px rgba(0, 0, 0, 0.16);
+  --plain-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='plain-theme'] body {
+  background-color: var(--plain-page-bg);
+  color: var(--plain-text);
+}
+
+:root[data-theme='plain-theme'] .app-wallpaper,
+:root[data-theme='plain-theme'] .app-wallpaper-overlay {
+  display: none !important;
+}
+
+/* Surfaces --------------------------------------------------------------- */
+
+:root[data-theme='plain-theme'] .theme-surface {
+  background-color: var(--plain-surface) !important;
+  border-color: var(--plain-border) !important;
+  box-shadow: var(--plain-shadow-sm) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-theme='plain-theme'] .theme-surface[class~='rounded-3xl'] {
+  border-radius: 1.25rem !important;
+}
+
+:root[data-theme='plain-theme'] .widget-card {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+  transform: none;
+  transition-duration: 180ms !important;
+}
+
+:root[data-theme='plain-theme'] .widget-card:hover {
+  background-color: var(--plain-surface) !important;
+  border-color: var(--plain-border-strong) !important;
+  box-shadow: var(--plain-shadow-sm) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Shell controls --------------------------------------------------------- */
+
+:root[data-theme='plain-theme'] .app-toolbar button {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: var(--plain-text-muted) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-theme='plain-theme'] .app-toolbar button:hover {
+  background-color: var(--plain-surface-muted) !important;
+  color: var(--plain-text) !important;
+}
+
+:root[data-theme='plain-theme'] .app-toolbar button[aria-pressed='true'] {
+  background-color: var(--plain-accent-soft) !important;
+  border-color: color-mix(in srgb, var(--plain-accent) 26%, transparent) !important;
+  color: var(--plain-accent) !important;
+}
+
+/* Clock ------------------------------------------------------------------ */
+
+:root[data-theme='plain-theme'] .clock-time,
+:root[data-theme='plain-theme'] .clock-date {
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+/* Search ----------------------------------------------------------------- */
+
+:root[data-theme='plain-theme'] .search-shell {
+  border: 1px solid var(--plain-border) !important;
+  background: var(--plain-surface) !important;
+  background-image: none !important;
+  box-shadow: var(--plain-shadow-sm) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-theme='plain-theme'] .search-shell:hover,
+:root[data-theme='plain-theme'] .search-shell:focus-within {
+  border-color: var(--plain-border-strong) !important;
+  box-shadow: var(--plain-shadow-md) !important;
+}
+
+:root[data-theme='plain-theme'] .search-shell + form input {
+  color: var(--plain-text) !important;
+}
+
+:root[data-theme='plain-theme'] .search-shell + form input::placeholder {
+  color: var(--plain-text-muted) !important;
+}
+
+:root[data-theme='plain-theme'] .search-shell + form button {
+  color: var(--plain-text-muted) !important;
+}
+
+:root[data-theme='plain-theme'] .search-shell + form button:hover {
+  background-color: var(--plain-surface-muted) !important;
+  color: var(--plain-text) !important;
+}
+
+/* Settings and plugin panels -------------------------------------------- */
+
+:root[data-theme='plain-theme'] .settings-panel {
+  background-color: var(--plain-surface) !important;
+  border-color: var(--plain-border) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-theme='plain-theme'] .settings-sidebar {
+  background-color: var(--plain-surface-muted) !important;
+  border-color: var(--plain-border) !important;
+}
+
+:root[data-theme='plain-theme'] [class~='bg-black/50'] {
+  background-color: var(--plain-backdrop) !important;
+}
+
+:root[data-theme='plain-theme'] [class*='backdrop-blur'] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Neutral utility compatibility ----------------------------------------- */
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:text-white'] {
+  color: var(--plain-text) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/25'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/30'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/35'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/40'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/45'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/50'] {
+  color: var(--plain-text-subtle) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/55'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/60'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/65'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/70'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/75'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/80'] {
+  color: var(--plain-text-muted) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/85'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='text-white/90'] {
+  color: var(--plain-text) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class*='dark:text-white/'] {
+  color: var(--plain-text-muted) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-white/5'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-white/10'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/10'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/15'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/20'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/25'] {
+  background-color: var(--plain-surface-muted) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-white/15'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-white/20'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-white/25'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/30'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/35'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/45'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='bg-black/60'] {
+  background-color: var(--plain-surface-hover) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:bg-white/5']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:bg-white/10']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:bg-white/15']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:bg-white/20']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:bg-white/25']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:hover:bg-white/5']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:hover:bg-white/10']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:hover:bg-white/20']:hover {
+  background-color: var(--plain-surface-hover) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='border-white/10'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='border-white/15'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='border-white/20'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='border-white/25'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='border-white/30'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='border-white/40'],
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:border-white/10'] {
+  border-color: var(--plain-border) !important;
+}
+
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:border-white/20']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='hover:border-white/30']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:hover:border-white/20']:hover,
+:root[data-theme='plain-theme']
+  :is(.theme-surface, .dashboard-grid, .app-toolbar, .search-shell + form, [role='dialog'])
+  [class~='dark:hover:border-white/30']:hover {
+  border-color: var(--plain-border-strong) !important;
+}
+
+:root[data-theme='plain-theme'] [class~='ring-white/10'] {
+  --tw-ring-color: var(--plain-border) !important;
+}
+
+:root[data-theme='plain-theme'] [class~='placeholder:text-white/70']::placeholder,
+:root[data-theme='plain-theme'] [class~='placeholder:text-white/60']::placeholder,
+:root[data-theme='plain-theme'] [class~='dark:placeholder:text-white/40']::placeholder {
+  color: var(--plain-text-muted) !important;
+}
+
+:root[data-theme='plain-theme'] [class~='shadow-2xl'],
+:root[data-theme='plain-theme'] [class~='shadow-lg'],
+:root[data-theme='plain-theme'] [class~='shadow'] {
+  box-shadow: var(--plain-shadow-sm) !important;
+}
+
+:root[data-theme='plain-theme'] .dashboard-grid .react-grid-placeholder {
+  border: 1px dashed var(--plain-border-strong) !important;
+  border-radius: 1rem !important;
+  background: var(--plain-surface-muted) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:root[data-theme='plain-theme'] .dashboard-grid .react-grid-item.react-draggable-dragging .theme-surface,
+:root[data-theme='plain-theme'] .dashboard-grid .react-grid-item.resizing .theme-surface {
+  box-shadow: var(--plain-shadow-md) !important;
+}

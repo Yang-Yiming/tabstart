@@ -11,14 +11,14 @@ export function ThemeSurface({ fallbackClassName, className, children, ...props 
 
   if (Surface === undefined || Surface === null) {
     return (
-      <div {...props} className={[fallbackClassName, className].filter(Boolean).join(' ')}>
+      <div {...props} className={['theme-surface', fallbackClassName, className].filter(Boolean).join(' ')}>
         {children}
       </div>
     )
   }
 
   return (
-    <Surface {...props} className={[className].filter(Boolean).join(' ')}>
+    <Surface {...props} className={['theme-surface', className].filter(Boolean).join(' ')}>
       {children}
     </Surface>
   )

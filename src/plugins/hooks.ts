@@ -38,11 +38,15 @@ export const ACTIVE_THEME_KEY = 'homepage-active-theme'
 /** The currently selected plugin theme. `activeThemeId` is persisted. */
 export function useActiveTheme() {
   const themes = useThemes()
-  const [activeThemeId, setActiveThemeId] = useLocalStorage<string>(ACTIVE_THEME_KEY, 'default')
+  const [activeThemeId, setActiveThemeId, activeThemeHydrated] = useLocalStorage<string>(
+    ACTIVE_THEME_KEY,
+    'default',
+  )
 
   return {
     themes,
     activeThemeId,
+    activeThemeHydrated,
     setActiveThemeId,
     activeTheme: themes.find((theme) => theme.id === activeThemeId) ?? null,
   }

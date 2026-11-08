@@ -1,6 +1,7 @@
 import { Check, Blocks, Pencil, Settings } from 'lucide-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Dashboard } from './components/Dashboard'
+import { useActiveTheme } from './plugins/hooks'
 import { Slot } from './plugins/Slot'
 import { ThemeApplier } from './plugins/ThemeApplier'
 import { migratePluginKeys } from './plugins/registry'
@@ -128,7 +129,11 @@ export default function App() {
   )
   const dark = theme === 'dark' || (theme === 'system' && systemDark)
 
-  const background = useBackground()
+  const { activeTheme, activeThemeId, activeThemeHydrated } = useActiveTheme()
+  const wallpaperEnabled =
+    activeThemeHydrated &&
+    (activeThemeId === 'default' || (activeTheme !== null && activeTheme.supportsWallpaper !== false))
+  const background = useBackground(wallpaperEnabled)
   const { bg, backgroundSrc } = background
 
   const [isEditing, setIsEditing] = useState(false)
@@ -168,26 +173,31 @@ export default function App() {
 
   return (
     <>
-      <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundColor: '#121826',
-          backgroundImage: backgroundSrc ? `url(${backgroundSrc})` : undefined,
-        }}
-      />
-      <div
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background: `radial-gradient(ellipse at 50% 0%, rgba(0,0,0,${Math.max(0.1, bg.overlay - 0.15)}) 0%, rgba(0,0,0,${bg.overlay}) 70%)`,
-        }}
-      />
+      {wallpaperEnabled && (
+        <>
+          <div
+            className="app-wallpaper fixed inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundColor: '#121826',
+              backgroundImage: backgroundSrc ? `url(${backgroundSrc})` : undefined,
+            }}
+          />
+          <div
+            className="app-wallpaper-overlay pointer-events-none fixed inset-0"
+            style={{
+              background: `radial-gradient(ellipse at 50% 0%, rgba(0,0,0,${Math.max(0.1, bg.overlay - 0.15)}) 0%, rgba(0,0,0,${bg.overlay}) 70%)`,
+            }}
+          />
+        </>
+      )}
 
       <ThemeApplier />
       <div className="relative">
-        <div className="absolute right-5 top-5 z-50 flex items-center gap-2">
+        <div className="app-toolbar absolute right-5 top-5 z-50 flex items-center gap-2">
           <button
             type="button"
             onClick={() => setIsEditing((value) => !value)}
+            aria-pressed={isEditing}
             className={[
               'chrome-button rounded-full border p-2.5 shadow-lg transition',
               isEditing
