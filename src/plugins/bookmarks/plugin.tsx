@@ -5,6 +5,7 @@ import type { WidgetDescriptor } from '../types'
 const widget: WidgetDescriptor = {
   id: 'bookmarks',
   name: 'Bookmarks',
+  description: '常用网站分组管理，支持快速编辑与访问。',
   group: 'Bookmarks',
   component: lazy(() => import('./BookmarksWidget').then((m) => ({ default: m.BookmarksWidget }))),
   defaultW: 2,

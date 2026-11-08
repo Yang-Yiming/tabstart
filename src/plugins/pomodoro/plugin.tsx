@@ -6,6 +6,7 @@ import type { WidgetDescriptor } from '../types'
 const pomodoroCompact: WidgetDescriptor = {
   id: 'pomodoro-compact',
   name: 'Pomodoro (Small)',
+  description: '紧凑番茄钟，一键开始并切换计时模式。',
   group: 'Pomodoro',
   component: lazy(() => import('./PomodoroWidget').then((m) => ({ default: m.PomodoroCompactWidget }))),
   defaultW: 1,
@@ -20,6 +21,7 @@ const pomodoroCompact: WidgetDescriptor = {
 const pomodoroLarge: WidgetDescriptor = {
   id: 'pomodoro-large',
   name: 'Pomodoro (Large)',
+  description: '大尺寸番茄钟，适合专注计时。',
   group: 'Pomodoro',
   component: lazy(() => import('./PomodoroWidget').then((m) => ({ default: m.PomodoroLargeWidget }))),
   defaultW: 2,

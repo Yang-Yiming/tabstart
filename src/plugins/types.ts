@@ -103,6 +103,7 @@ export interface SlotDescriptor {
   id: string
   slot: string
   component: ComponentType
+  description?: string
   label?: string | (() => string)
   order?: number
 }

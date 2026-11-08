@@ -29,6 +29,7 @@ const columnNameFields = [
 const kanbanFull: WidgetDescriptor = {
   id: 'kanban-full',
   name: 'Kanban Board',
+  description: '三栏拖拽看板，清晰管理任务状态。',
   group: 'Kanban',
   component: lazy(() => import('./KanbanWidget').then((m) => ({ default: m.KanbanFullWidget }))),
   defaultW: 4,
@@ -46,6 +47,7 @@ const kanbanFull: WidgetDescriptor = {
 const kanbanCompact: WidgetDescriptor = {
   id: 'kanban-compact',
   name: 'Kanban Compact',
+  description: '紧凑版看板，支持快捷操作与展开。',
   group: 'Kanban',
   component: lazy(() => import('./KanbanWidget').then((m) => ({ default: m.KanbanCompactWidget }))),
   defaultW: 2,

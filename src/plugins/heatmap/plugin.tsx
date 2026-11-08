@@ -6,6 +6,7 @@ import { HeatmapSettings } from './HeatmapSettings'
 const widget: WidgetDescriptor = {
   id: 'heatmap',
   name: 'Heatmap',
+  description: '以年度热力图查看每日活跃记录。',
   group: 'Heatmap',
   component: lazy(() => import('./HeatmapWidget').then((m) => ({ default: m.HeatmapWidget }))),
   settingsComponent: HeatmapSettings,

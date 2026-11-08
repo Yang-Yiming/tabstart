@@ -5,6 +5,7 @@ import type { WidgetDescriptor } from '../types'
 const widget: WidgetDescriptor = {
   id: 'todo',
   name: 'Tasks',
+  description: '管理今日任务、目标与完成状态。',
   group: 'Tasks',
   component: lazy(() => import('./TodoWidget').then((m) => ({ default: m.TodoWidget }))),
   expandedComponent: lazy(() => import('./TodoExpandedWidget').then((m) => ({ default: m.TodoExpandedWidget }))),

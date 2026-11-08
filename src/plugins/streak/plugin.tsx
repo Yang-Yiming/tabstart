@@ -5,6 +5,7 @@ import type { WidgetDescriptor } from '../types'
 const widget: WidgetDescriptor = {
   id: 'streak',
   name: 'Streak',
+  description: '记录连续完成目标的天数与最佳成绩。',
   group: 'Streak',
   component: lazy(() => import('./StreakWidget').then((m) => ({ default: m.StreakWidget }))),
   defaultW: 1,

@@ -5,6 +5,7 @@ import type { WidgetDescriptor } from '../types'
 const widget: WidgetDescriptor = {
   id: 'notes',
   name: 'Quick Notes',
+  description: '随手记录短文本，内容自动保存在本地。',
   group: 'Quick Notes',
   component: lazy(() => import('./NotesWidget').then((m) => ({ default: m.NotesWidget }))),
   defaultW: 2,
