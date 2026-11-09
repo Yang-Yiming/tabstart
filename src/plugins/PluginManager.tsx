@@ -65,7 +65,11 @@ export function PluginManager({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="px-6 pb-4 pt-4">
-              <div className="flex gap-1 rounded-xl bg-black/30 p-1" role="tablist" aria-label="插件分类">
+              <div
+                className="plugin-manager-tabs flex gap-1 rounded-xl bg-black/30 p-1"
+                role="tablist"
+                aria-label="插件分类"
+              >
                 {tabs.map((tab) => {
                   const active = activeTab === tab.id
                   return (
@@ -76,7 +80,7 @@ export function PluginManager({ onClose }: { onClose: () => void }) {
                       aria-selected={active}
                       onClick={() => setActiveTab(tab.id)}
                       className={[
-                        'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
+                        'plugin-manager-tab flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
                         active
                           ? 'bg-white/15 text-white shadow'
                           : 'text-white/50 hover:bg-white/5 hover:text-white/85',
@@ -86,7 +90,7 @@ export function PluginManager({ onClose }: { onClose: () => void }) {
                       {tab.label}
                       <span
                         className={[
-                          'rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums',
+                          'plugin-manager-count rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums',
                           active ? 'bg-white/15 text-white/80' : 'bg-white/10 text-white/50',
                         ].join(' ')}
                       >

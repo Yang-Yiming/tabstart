@@ -10,6 +10,10 @@
   --plain-text-subtle: #8b949e;
   --plain-accent: #2563eb;
   --plain-accent-soft: #e8f0fe;
+  --plain-toggle-on: #2563eb;
+  --plain-toggle-off: #7f8790;
+  --plain-toggle-thumb: #ffffff;
+  --plain-toggle-thumb-ring: rgba(31, 35, 40, 0.18);
   --plain-backdrop: rgba(31, 35, 40, 0.28);
   --plain-shadow-sm: 0 1px 2px rgba(31, 35, 40, 0.06), 0 1px 4px rgba(31, 35, 40, 0.04);
   --plain-shadow-md: 0 6px 18px rgba(31, 35, 40, 0.1);
@@ -29,6 +33,10 @@
   --plain-text-subtle: #858b92;
   --plain-accent: #79a8ff;
   --plain-accent-soft: rgba(121, 168, 255, 0.14);
+  --plain-toggle-on: #5b8def;
+  --plain-toggle-off: #7f8790;
+  --plain-toggle-thumb: #f7f8fa;
+  --plain-toggle-thumb-ring: rgba(0, 0, 0, 0.35);
   --plain-backdrop: rgba(0, 0, 0, 0.4);
   --plain-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22), 0 1px 4px rgba(0, 0, 0, 0.16);
   --plain-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
@@ -76,21 +84,26 @@
 
 /* Shell controls --------------------------------------------------------- */
 
-:root[data-theme='plain-theme'] .app-toolbar button {
-  background-color: transparent !important;
-  border-color: transparent !important;
+:root[data-theme='plain-theme'] .app-toolbar > button {
+  background-color: var(--plain-surface) !important;
+  border-color: var(--plain-border) !important;
   color: var(--plain-text-muted) !important;
-  box-shadow: none !important;
+  box-shadow: var(--plain-shadow-sm) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
-:root[data-theme='plain-theme'] .app-toolbar button:hover {
+:root[data-theme='plain-theme'] .app-toolbar > button:hover {
   background-color: var(--plain-surface-muted) !important;
+  border-color: var(--plain-border-strong) !important;
   color: var(--plain-text) !important;
 }
 
-:root[data-theme='plain-theme'] .app-toolbar button[aria-pressed='true'] {
+:root[data-theme='plain-theme'] :focus-visible {
+  outline-color: var(--plain-accent);
+}
+
+:root[data-theme='plain-theme'] .app-toolbar > button[aria-pressed='true'] {
   background-color: var(--plain-accent-soft) !important;
   border-color: color-mix(in srgb, var(--plain-accent) 26%, transparent) !important;
   color: var(--plain-accent) !important;
@@ -150,6 +163,16 @@
 :root[data-theme='plain-theme'] .settings-sidebar {
   background-color: var(--plain-surface-muted) !important;
   border-color: var(--plain-border) !important;
+}
+
+/* The settings panel owns local toggle variables in index.css, so map the
+   plain-theme tokens on the panel as well as on the document root. */
+:root[data-theme='plain-theme'],
+:root[data-theme='plain-theme'] .settings-panel {
+  --toggle-on: var(--plain-toggle-on);
+  --toggle-off: var(--plain-toggle-off);
+  --toggle-thumb: var(--plain-toggle-thumb);
+  --toggle-thumb-ring: var(--plain-toggle-thumb-ring);
 }
 
 :root[data-theme='plain-theme'] [class~='bg-black/50'] {
@@ -367,4 +390,34 @@
 :root[data-theme='plain-theme'] .dashboard-grid .react-grid-item.react-draggable-dragging .theme-surface,
 :root[data-theme='plain-theme'] .dashboard-grid .react-grid-item.resizing .theme-surface {
   box-shadow: var(--plain-shadow-md) !important;
+}
+
+
+/* Plugin manager controls ------------------------------------------------ */
+
+:root[data-theme='plain-theme'] .plugin-manager-tabs {
+  background-color: var(--plain-surface-muted) !important;
+  box-shadow: inset 0 0 0 1px var(--plain-border) !important;
+}
+
+:root[data-theme='plain-theme'] .plugin-manager-tab[aria-selected='true'] {
+  background-color: var(--plain-surface) !important;
+  color: var(--plain-text) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--plain-border),
+    var(--plain-shadow-sm) !important;
+}
+
+:root[data-theme='plain-theme'] .plugin-manager-count {
+  background-color: var(--plain-surface-hover) !important;
+  color: var(--plain-text-muted) !important;
+  box-shadow: inset 0 0 0 1px var(--plain-border) !important;
+}
+
+:root[data-theme='plain-theme']
+  .plugin-manager-tab[aria-selected='true']
+  .plugin-manager-count {
+  background-color: var(--plain-accent-soft) !important;
+  color: var(--plain-accent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--plain-accent) 20%, transparent) !important;
 }

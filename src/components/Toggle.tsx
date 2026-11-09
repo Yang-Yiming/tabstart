@@ -10,14 +10,11 @@ export function Toggle({ checked, onChange }: ToggleProps) {
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={[
-        'relative h-5 w-9 shrink-0 rounded-full transition-colors',
-        checked ? 'bg-[var(--toggle-on)]' : 'bg-[var(--toggle-off)]',
-      ].join(' ')}
+      className="toggle-track relative h-5 w-9 shrink-0 rounded-full transition-colors"
     >
       <span
         className={[
-          'absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform',
+          'toggle-thumb absolute left-0.5 top-0.5 h-4 w-4 rounded-full transition-transform',
           checked ? 'translate-x-4' : 'translate-x-0',
         ].join(' ')}
       />
