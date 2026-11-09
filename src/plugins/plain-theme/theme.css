@@ -10,6 +10,7 @@
   --plain-text-subtle: #8b949e;
   --plain-accent: #2563eb;
   --plain-accent-soft: #e8f0fe;
+  --selection-bg: rgba(37, 99, 235, 0.18);
   --plain-toggle-on: #2563eb;
   --plain-toggle-off: #7f8790;
   --plain-toggle-thumb: #ffffff;
@@ -33,6 +34,7 @@
   --plain-text-subtle: #858b92;
   --plain-accent: #79a8ff;
   --plain-accent-soft: rgba(121, 168, 255, 0.14);
+  --selection-bg: rgba(121, 168, 255, 0.24);
   --plain-toggle-on: #5b8def;
   --plain-toggle-off: #7f8790;
   --plain-toggle-thumb: #f7f8fa;
@@ -128,10 +130,16 @@
   backdrop-filter: none !important;
 }
 
-:root[data-theme='plain-theme'] .search-shell:hover,
-:root[data-theme='plain-theme'] .search-shell:focus-within {
+:root[data-theme='plain-theme'] .search-shell:hover {
   border-color: var(--plain-border-strong) !important;
   box-shadow: var(--plain-shadow-md) !important;
+}
+
+:root[data-theme='plain-theme'] .search-control:focus-within .search-shell {
+  border-color: var(--plain-accent) !important;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--plain-accent) 16%, transparent),
+    var(--plain-shadow-md) !important;
 }
 
 :root[data-theme='plain-theme'] .search-shell + form input {

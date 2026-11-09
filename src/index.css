@@ -56,7 +56,39 @@ button {
   outline-color: rgba(255, 255, 255, 0.6);
 }
 
+::selection {
+  background: var(--selection-bg);
+  color: inherit;
+}
+
+/* Controls behave like app chrome. Content remains selectable by default. */
+button,
+label,
+kbd,
+h1,
+h2,
+h3 {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable='true'],
+[data-selectable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.clock-time,
+.clock-date {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 :root {
+  --selection-bg: rgba(255, 255, 255, 0.26);
   --glass-widget-bg: rgba(255, 255, 255, 0.18);
   --glass-widget-border: rgba(255, 255, 255, 0.28);
   --glass-widget-hover-bg: rgba(255, 255, 255, 0.24);
@@ -85,6 +117,8 @@ button {
   --search-shell-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
   --search-shell-hover-border: rgba(255, 255, 255, 0.4);
   --search-shell-hover-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.35);
+  --search-focus-border: rgba(255, 255, 255, 0.62);
+  --search-focus-ring: rgba(255, 255, 255, 0.22);
   --search-popover-bg: rgba(0, 0, 0, 0.3);
   --search-popover-border: rgba(255, 255, 255, 0.1);
   --search-popover-blur: 24px;
@@ -93,6 +127,7 @@ button {
 }
 
 .dark {
+  --selection-bg: rgba(255, 255, 255, 0.2);
   --glass-widget-bg: rgba(0, 0, 0, 0.15);
   --glass-widget-border: rgba(255, 255, 255, 0.1);
   --glass-widget-hover-bg: rgba(0, 0, 0, 0.2);
@@ -110,6 +145,8 @@ button {
   --settings-panel-border: var(--chrome-panel-border);
   --toggle-on: rgba(110, 231, 183, 0.8);
   --toggle-off: rgba(255, 255, 255, 0.15);
+  --search-focus-border: rgba(255, 255, 255, 0.72);
+  --search-focus-ring: rgba(255, 255, 255, 0.18);
 }
 
 .widget-card {
@@ -189,12 +226,43 @@ button {
   border-color: var(--search-shell-border);
   backdrop-filter: blur(var(--search-shell-blur));
   box-shadow: var(--search-shell-shadow);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.search-shell:hover,
-.search-shell:focus-within {
+.search-shell:hover {
   border-color: var(--search-shell-hover-border);
   box-shadow: var(--search-shell-hover-shadow);
+}
+
+.search-control:focus-within .search-shell {
+  border-color: var(--search-focus-border);
+  box-shadow:
+    0 0 0 3px var(--search-focus-ring),
+    var(--search-shell-hover-shadow);
+}
+
+.search-input:focus,
+.search-input:focus-visible {
+  outline: none !important;
+}
+
+.search-control {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.search-control .search-input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+@media (forced-colors: active) {
+  .search-control:focus-within .search-shell {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 
 .search-popover {

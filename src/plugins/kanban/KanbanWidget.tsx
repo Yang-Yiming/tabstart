@@ -521,7 +521,7 @@ export function KanbanCompactWidget({ widgetKey }: WidgetProps) {
             <Plus className="h-3.5 w-3.5" />
             Add task
           </button>
-          <span className="font-mono text-[9px] text-white/25">
+          <span className="select-none font-mono text-[9px] text-white/25">
             drag · j/k select · [ ] move · enter done
           </span>
         </div>
@@ -609,6 +609,7 @@ function EditableTitle({ task, done, onRename, className = '' }: EditableTitlePr
   return (
     <span
       title="Double-click to edit"
+      data-selectable="true"
       onDoubleClick={(event) => {
         event.stopPropagation()
         setDraft(task.title)

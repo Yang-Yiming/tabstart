@@ -360,7 +360,7 @@ export function TaskRow({ item, goals, date, onToggle, onRemove, onReorder }: Ta
       <button type="button" onClick={() => onToggle(item)} className="shrink-0 text-white/45 transition hover:text-emerald-200" aria-label={done ? 'Mark incomplete' : 'Complete task'}>
         {done ? <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-300/80 text-emerald-950"><Check className="h-3 w-3" /></span> : <Circle className="h-4 w-4" />}
       </button>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1" data-selectable="true">
         <div className={['truncate text-[13px] leading-tight transition', done ? 'text-white/30 line-through' : 'text-white/85'].join(' ')}>{item.title}</div>
         {(goal || isRecurring(item) || overdue) && (
           <div className="mt-0.5 flex items-center gap-2 truncate text-[9px] text-white/30">
@@ -408,7 +408,7 @@ export function GoalRow({ goal, items, onToggle, onRemove, onReorder }: GoalRowP
         <button type="button" onClick={() => onToggle(goal)} className="shrink-0 text-white/40 transition hover:text-emerald-200" aria-label={done ? 'Reopen goal' : 'Complete goal'}>
           {done ? <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-300/80 text-emerald-950"><Check className="h-3 w-3" /></span> : <Target className="h-4 w-4" />}
         </button>
-        <span className={['min-w-0 flex-1 truncate text-[13px] font-medium', done ? 'text-white/30 line-through' : 'text-white/85'].join(' ')}>{goal.title}</span>
+        <span className={['min-w-0 flex-1 truncate text-[13px] font-medium', done ? 'text-white/30 line-through' : 'text-white/85'].join(' ')} data-selectable="true">{goal.title}</span>
         <span className="font-mono text-[9px] text-white/35">{progress}%</span>
         <button type="button" onClick={() => onRemove(goal.id)} className="p-1 text-white/0 transition group-hover/task:text-white/30 hover:!text-red-200" aria-label="Delete goal"><Trash2 className="h-3 w-3" /></button>
       </div>

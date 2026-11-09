@@ -192,7 +192,7 @@ export function SearchWidget() {
 
   return (
       <div ref={containerRef} className="relative w-full">
-      <div className="group relative mx-auto w-[85%] max-w-xl transition-all duration-500 ease-in-out hover:w-[95%] focus-within:w-[95%]">
+      <div className="search-control group relative mx-auto w-[85%] max-w-xl transition-all duration-500 ease-in-out hover:w-[95%] focus-within:w-[95%]">
         <ThemeSurface
           aria-hidden="true"
           fallbackClassName="search-shell border"
@@ -208,7 +208,7 @@ export function SearchWidget() {
               setEngineDropdownOpen((prev) => !prev)
               setHistoryOpen(false)
             }}
-            className="absolute left-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 focus:outline-none"
+            className="absolute left-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10"
             aria-label="选择搜索引擎"
           >
             <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-focus-within:opacity-100">
@@ -227,7 +227,7 @@ export function SearchWidget() {
               setEngineDropdownOpen(false)
             }}
             placeholder="搜索"
-            className="w-full bg-transparent text-center text-lg text-white placeholder:text-white/70 focus:outline-none"
+            className="search-input w-full bg-transparent text-center text-lg text-white placeholder:text-white/70"
           />
 
           <button

@@ -230,7 +230,7 @@ export function HeatmapWidget() {
 
         <div className="min-w-0 flex-1 overflow-x-auto px-0.5 pb-0.5">
           <div className="min-w-[680px]">
-            <div className="relative h-4">
+            <div className="relative h-4 select-none">
               {monthLabels.map(({ weekIdx, label }) => (
                 <span
                   key={`${label}-${weekIdx}`}
@@ -266,7 +266,7 @@ export function HeatmapWidget() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-1.5 text-[10px] text-white/50">
+        <div className="flex select-none items-center justify-end gap-1.5 text-[10px] text-white/50">
           <span>Less</span>
           {legendValues(goal).map((v, i) => (
             <div key={i} className="h-3 w-3 rounded-[3px]" style={intensityStyle(v, goal)} />
