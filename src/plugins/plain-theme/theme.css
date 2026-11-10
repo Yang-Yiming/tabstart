@@ -20,6 +20,17 @@
   --plain-shadow-md: 0 6px 18px rgba(31, 35, 40, 0.1);
   --clock-time-text: var(--plain-text);
   --clock-date-text: var(--plain-text-muted);
+  --heatmap-empty: #eef1f4;
+  --heatmap-low: #f8dd87;
+  --heatmap-medium: #efb83e;
+  --heatmap-high: #c77812;
+  --heatmap-complete: #2f9e63;
+  --heatmap-over: #18794e;
+  --heatmap-count-max: #d38a18;
+  --heatmap-cell-border: rgba(31, 35, 40, 0.08);
+  --heatmap-hover-ring: rgba(37, 99, 235, 0.42);
+  --heatmap-today-ring: var(--plain-accent);
+  --heatmap-selected-ring: var(--plain-accent);
 }
 
 :root.dark[data-theme='plain-theme'] {
@@ -42,6 +53,17 @@
   --plain-backdrop: rgba(0, 0, 0, 0.4);
   --plain-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22), 0 1px 4px rgba(0, 0, 0, 0.16);
   --plain-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --heatmap-empty: rgba(255, 255, 255, 0.1);
+  --heatmap-low: rgba(252, 211, 77, 0.36);
+  --heatmap-medium: rgba(252, 211, 77, 0.62);
+  --heatmap-high: rgba(252, 211, 77, 0.88);
+  --heatmap-complete: rgb(110, 231, 183);
+  --heatmap-over: rgb(5, 150, 105);
+  --heatmap-count-max: rgba(252, 211, 77, 0.72);
+  --heatmap-cell-border: rgba(255, 255, 255, 0.04);
+  --heatmap-hover-ring: rgba(255, 255, 255, 0.4);
+  --heatmap-today-ring: rgba(255, 255, 255, 0.6);
+  --heatmap-selected-ring: rgba(255, 255, 255, 0.8);
 }
 
 :root[data-theme='plain-theme'] body {

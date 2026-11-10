@@ -124,6 +124,17 @@ select,
   --search-popover-blur: 24px;
   --clock-time-text: #ffffff;
   --clock-date-text: rgba(255, 255, 255, 0.8);
+  --heatmap-empty: rgba(255, 255, 255, 0.1);
+  --heatmap-low: rgba(252, 211, 77, 0.36);
+  --heatmap-medium: rgba(252, 211, 77, 0.62);
+  --heatmap-high: rgba(252, 211, 77, 0.88);
+  --heatmap-complete: rgb(110, 231, 183);
+  --heatmap-over: rgb(5, 150, 105);
+  --heatmap-count-max: rgba(252, 211, 77, 0.72);
+  --heatmap-cell-border: rgba(255, 255, 255, 0.04);
+  --heatmap-hover-ring: rgba(255, 255, 255, 0.4);
+  --heatmap-today-ring: rgba(255, 255, 255, 0.6);
+  --heatmap-selected-ring: rgba(255, 255, 255, 0.8);
 }
 
 .dark {
@@ -213,6 +224,24 @@ select,
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.28),
     0 0 0 1px var(--toggle-thumb-ring);
+}
+
+.heatmap-cell,
+.heatmap-swatch {
+  box-shadow: inset 0 0 0 1px var(--heatmap-cell-border);
+}
+
+.heatmap-cell:hover {
+  box-shadow: inset 0 0 0 1px var(--heatmap-hover-ring);
+}
+
+.heatmap-cell[data-today='true'] {
+  box-shadow: inset 0 0 0 1px var(--heatmap-today-ring);
+}
+
+.heatmap-cell[data-selected='true'] {
+  outline: 2px solid var(--heatmap-selected-ring);
+  outline-offset: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {

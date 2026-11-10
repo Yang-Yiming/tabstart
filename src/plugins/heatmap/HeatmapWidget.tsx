@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { Check, Minus, Plus } from 'lucide-react'
 import { WidgetCard } from '../../components/WidgetCard'
+import { getIntensityTone, legendTones } from './intensity'
 import {
   DEFAULT_ACTIVITY_TOPICS,
   addDays,
@@ -41,16 +42,12 @@ const HeatmapCell = memo(function HeatmapCell({
     <button
       type="button"
       aria-label={`${dateKey}: ${value}`}
+      data-intensity={getIntensityTone(value, goal)}
+      data-selected={selected ? 'true' : undefined}
+      data-today={isToday ? 'true' : undefined}
       onClick={() => onSelect(day)}
       style={intensityStyle(value, goal)}
-      className={[
-        'aspect-square w-full rounded-[3px] transition',
-        selected
-          ? 'ring-2 ring-white/80'
-          : isToday
-            ? 'ring-1 ring-inset ring-white/60'
-            : 'hover:ring-2 hover:ring-white/40',
-      ].join(' ')}
+      className="heatmap-cell aspect-square w-full rounded-[3px] transition"
     />
   )
 })
@@ -268,8 +265,12 @@ export function HeatmapWidget() {
 
         <div className="flex select-none items-center justify-end gap-1.5 text-[10px] text-white/50">
           <span>Less</span>
-          {legendValues(goal).map((v, i) => (
-            <div key={i} className="h-3 w-3 rounded-[3px]" style={intensityStyle(v, goal)} />
+          {legendTones(goal).map((tone) => (
+            <div
+              key={tone}
+              className="heatmap-swatch h-3 w-3 rounded-[3px]"
+              style={{ backgroundColor: `var(--heatmap-${tone})` }}
+            />
           ))}
           <span>More</span>
         </div>
@@ -279,31 +280,5 @@ export function HeatmapWidget() {
 }
 
 function intensityStyle(value: number, goal: number): CSSProperties {
-  if (goal <= 0) {
-    if (value === 0) return { backgroundColor: 'rgba(255,255,255,0.1)' }
-    const opacity = Math.min(0.1 + 0.15 * value, 1)
-    return { backgroundColor: `rgba(252,211,77,${opacity.toFixed(2)})` }
-  }
-
-  if (value < goal) {
-    const opacity = 0.1 + 0.9 * (value / goal)
-    return { backgroundColor: `rgba(252,211,77,${opacity.toFixed(2)})` }
-  }
-
-  const ratio = Math.min((value - goal) / goal, 1)
-  const r = Math.round(110 - 105 * ratio)
-  const g = Math.round(231 - 81 * ratio)
-  const b = Math.round(183 - 78 * ratio)
-  return { backgroundColor: `rgb(${r},${g},${b})` }
-}
-
-function legendValues(goal: number): number[] {
-  if (goal <= 0) return [0, 1, 2, 3, 4]
-  return [
-    0,
-    Math.max(1, Math.round(goal * 0.33)),
-    goal,
-    Math.round(goal * 1.5),
-    goal * 2,
-  ]
+  return { backgroundColor: `var(--heatmap-${getIntensityTone(value, goal)})` }
 }

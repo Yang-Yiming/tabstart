@@ -10,6 +10,7 @@
     "build:extension": "bun run build",
     "plugin:sync": "bun scripts/plugin-sync.ts",
     "lint": "oxlint",
+    "test": "bun test",
     "preview": "vite preview"
   },
   "dependencies": {
