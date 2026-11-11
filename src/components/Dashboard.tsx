@@ -8,7 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
+  type HTMLAttributes,
 } from 'react'
 import { GripVertical, Maximize2, Plus, RotateCcw, X } from 'lucide-react'
 import type { Layout, Layouts } from 'react-grid-layout'
@@ -144,7 +144,7 @@ function createLayoutItem(key: string, breakpoint: keyof typeof COLS, layout: La
   }
 }
 
-interface DashboardSlotProps {
+interface DashboardSlotProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   widgetKey: string
   component: WidgetDescriptor['component']
   name: string
@@ -155,14 +155,11 @@ interface DashboardSlotProps {
   onExpand: (key: string) => void
   onRemove: (key: string) => void
   /**
-   * Injected by the grid, not by `Dashboard`. Both grids position widgets by
-   * cloning the child and putting the geometry on it directly — `StaticWidgetGrid`
-   * with `cloneElement`, react-grid-layout through its `GridItem` — so the slot
-   * must forward `className`, `style` and `ref` to its root element or every
-   * widget loses its size and position and stretches to fill the grid.
+   * The grids inject the rest of their props by cloning this element:
+   * geometry/class/ref for positioning, mouse handlers for dragging, and the
+   * resize handles as children. They must all land on the slot's root element;
+   * swallowing any of them makes the widget visible but non-interactive.
    */
-  className?: string
-  style?: CSSProperties
 }
 
 /**
@@ -183,10 +180,13 @@ const DashboardSlot = memo(forwardRef<HTMLDivElement, DashboardSlotProps>(functi
   onRemove,
   className,
   style,
+  children,
+  ...gridProps
 }, ref) {
   return (
     <div
       ref={ref}
+      {...gridProps}
       className={['group/widget relative h-full', className].filter(Boolean).join(' ')}
       style={style}
       onClick={(event) => {
@@ -244,6 +244,7 @@ const DashboardSlot = memo(forwardRef<HTMLDivElement, DashboardSlotProps>(functi
           </button>
         </>
       )}
+      {children}
     </div>
   )
 }))
